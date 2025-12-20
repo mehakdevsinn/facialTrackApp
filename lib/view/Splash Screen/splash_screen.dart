@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'dart:math';
 import 'package:facialtrackapp/utils/widgets/background_widget.dart';
-import 'package:facialtrackapp/view/Splash_Screen/onboard_screen.dart';
+import 'package:facialtrackapp/view/Splash%20Screen/onboard_screen.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -26,8 +26,8 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Auto navigate after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      // Navigator.pushReplacement(
-      //     context, MaterialPageRoute(builder: (_) => const NextScreen()));
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => const OnboardScreen()));
     });
   }
 
@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
                     );
                   },
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 90),
                 const Text(
                   'Facial Track',
                   style: TextStyle(
@@ -93,27 +93,27 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 50),
-                ElevatedButton(
-                  onPressed: () {
+                // ElevatedButton(
+                //   onPressed: () {
 
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>OnboardScreen()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.cyan,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ),
+                //     Navigator.push(context, MaterialPageRoute(builder: (context)=>OnboardScreen()));
+                //   },
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Colors.cyan,
+                //     padding: const EdgeInsets.symmetric(
+                //         horizontal: 50, vertical: 20),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(30),
+                //     ),
+                //   ),
+                //   child: const Text(
+                //     'Next',
+                //     style: TextStyle(
+                //         fontSize: 18,
+                //         fontWeight: FontWeight.bold,
+                //         color: Colors.white),
+                //   ),
+                // ),
               ],
             ),
           ),

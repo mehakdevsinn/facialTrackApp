@@ -1,3 +1,5 @@
+import 'package:facialtrackapp/view/Teacher/Dashborad/teacher_dashboard_screen.dart';
+import 'package:facialtrackapp/view/Teacher/Root%20Screen/root_screen.dart';
 import 'package:flutter/material.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -67,49 +69,54 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 onTapCancel: () {
                   setState(() => _isTeacherPressed = false);
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
-                  transform: _isTeacherPressed
-                      ? Matrix4.translationValues(0, 5, 0)
-                      : Matrix4.identity(),
-                  width: double.infinity,
-                  height: 140,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue, width: 2),
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blue.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.person, color: Colors.blue, size: 40),
-                      SizedBox(height: 10),
-                      Text(
-                        'Teacher',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+                child: InkWell(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>RootScreen()));
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    transform: _isTeacherPressed
+                        ? Matrix4.translationValues(0, 5, 0)
+                        : Matrix4.identity(),
+                    width: double.infinity,
+                    height: 140,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Manage attendance and reports',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.person, color: Colors.blue, size: 40),
+                        SizedBox(height: 10),
+                        Text(
+                          'Teacher',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                        SizedBox(height: 5),
+                        Text(
+                          'Manage attendance and reports',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

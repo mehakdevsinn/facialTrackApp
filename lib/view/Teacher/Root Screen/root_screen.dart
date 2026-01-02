@@ -48,7 +48,7 @@ class _RootScreenState extends State<RootScreen> {
       case 0:
         return const TeacherDashboardScreen();
       case 1:
-        return const StartScreen();
+        return const StartSessionScreen();
       case 2:
         return const ReportScreen();
       case 3:

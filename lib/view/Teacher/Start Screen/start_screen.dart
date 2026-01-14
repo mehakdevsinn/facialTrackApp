@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
 import 'package:flutter/material.dart';
 
 class StartSessionScreen extends StatefulWidget {
@@ -11,168 +12,222 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
   String? selectedClass;
   String? selectedSubject;
 
-  final List<String> classes = [
-    'Class 10A',
-    'Class 10B',
-    'Class 11A',
-    'Class 11B',
-  ];
-
-  final List<String> subjects = [
-    'Mathematics',
-    'Computer Science',
-    'Physics',
-    'English',
-  ];
+  final List<String> classes = ['Class 10A', 'Class 10B', 'Class 11A', 'Class 11B'];
+  final List<String> subjects = ['Mathematics', 'Computer Science', 'Physics', 'English'];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffF6F8FB),
+    bool isReady = selectedClass != null && selectedSubject != null;
+    const primaryColor = Color.fromARGB(255, 35, 4, 170);
 
-      /// APP BAR
-      appBar: AppBar(
-        backgroundColor: const Color(0xff1F5EFF),
-        elevation: 0,
-        title: const Text(
-          'Start Attendance Session',
-          style: TextStyle(fontSize: 16),
-        ),
-        centerTitle: true,
-        leading: const Icon(Icons.arrow_back),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.settings),
-          )
-        ],
+    return PopScope(
+    canPop: false, // Yeh back button ko fully disable kar deta hai
+    onPopInvokedWithResult: (didPop, result) {
+      // Agar back button dabaya jaye toh yahan kuch na likhen
+      // Isse screen pop nahi hogi aur na hi koi dialog aayega
+      if (didPop) return;
+    },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+         appBar: AppBar(
+  backgroundColor: primaryColor,
+  foregroundColor: Colors.white,
+  elevation: 0,
+  // 1. AutomaticallyImplyLeading ko false rakhein taake Flutter khud se arrow na banaye
+  automaticallyImplyLeading: false, 
+  
+  // 2. Leading widget logic: Agar piche dashboard hai toh arrow dikhao, warna null (fully hide)
+  leading: (ModalRoute.of(context)?.canPop ?? false) 
+      ? IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ) 
+      : null,
+
+  title: Row(
+    children: [
+      // 3. Agar piche koi screen nahi hai (Root screen), toh logo se pehle thoda margin den
+      if (!(ModalRoute.of(context)?.canPop ?? false)) 
+        const SizedBox(width: 8),
+
+      const CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.white24,
+        backgroundImage: AssetImage('assets/logo.png'),
       ),
-
-      /// BODY
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            const Text(
-              'Start New Session',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Select class and subject to begin attendance',
-              style: TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
-
-            /// SELECT CLASS
-            const Text('Select Class'),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.blue),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  hint: const Text('Class 10A'),
-                  value: selectedClass,
-                  isExpanded: true,
-                  items: classes
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.class_, color: Colors.blue),
-                              const SizedBox(width: 10),
-                              Text(e),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() => selectedClass = value);
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// SELECT SUBJECT
-            const Text('Select Subject'),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  hint: const Text('Choose subject'),
-                  value: selectedSubject,
-                  isExpanded: true,
-                  items: subjects
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() => selectedSubject = value);
-                  },
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
-            /// START BUTTON
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade400,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+      
+      const SizedBox(width: 12),
+      
+      const Expanded(
+        child: Text(
+          "Start Attendance Session",
+          style: TextStyle(
+            color: Colors.white, 
+            fontSize: 18, 
+            fontWeight: FontWeight.w900
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ],
+  ),
+),body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(
+                  child: Text(
+                    "Start New Session",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
                   ),
                 ),
-                onPressed: () {},
-                child: const Text(
-                  'Start Session',
-                  style: TextStyle(fontSize: 16),
+                const SizedBox(height: 8),
+                const Center(
+                  child: Text(
+                    "Select class and subject to begin attendance",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 40),
+      
+                _buildLabel("Select Class", primaryColor),
+                _buildCustomDropdown(
+                  hint: "Choose class...",
+                  icon: Icons.groups,
+                  value: selectedClass,
+                  items: classes,
+                  color: primaryColor,
+                  onChanged: (val) => setState(() => selectedClass = val),
+                ),
+      
+                const SizedBox(height: 25),
+      
+                _buildLabel("Select Subject", primaryColor),
+                _buildCustomDropdown(
+                  hint: "Choose subject...",
+                  icon: Icons.book,
+                  value: selectedSubject,
+                  items: subjects,
+                  color: primaryColor,
+                  onChanged: (val) => setState(() => selectedSubject = val),
+                ),
+      
+                const SizedBox(height: 100),
+      
+                Opacity(
+                  opacity: isReady ? 1.0 : 0.5,
+                  child: ElevatedButton(
+                    onPressed: isReady ? () {
+                     Navigator.pushReplacement( 
+      context,
+      MaterialPageRoute(builder: (context) => const LiveSessionScreen()),
+        );     } : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF81C784),
+                      disabledBackgroundColor: const Color(0xFF81C784).withOpacity(0.5),
+                      minimumSize: const Size(double.infinity, 55),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      "Start Session",
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-
-      /// BOTTOM BAR (STATIC LOOK)
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle), label: 'Start Session'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.insert_chart), label: 'Reports'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: 'Profile'),
-        ],
       ),
     );
   }
-}
+
+  Widget _buildLabel(String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+    );
+  }Widget _buildCustomDropdown({
+  required String hint,
+  required IconData icon,
+  required String? value,
+  required List<String> items,
+  required Color color,
+  required ValueChanged<String?> onChanged,
+}) {
+  bool hasData = value != null;
+
+  return Container(
+    // Shadow remove kar di gayi hai taake field clean dikhe
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [], 
+    ),
+    child: DropdownButtonFormField<String>(
+      value: value,
+      hint: Text(hint),
+      isExpanded: true,
+      icon: const SizedBox.shrink(),
+      selectedItemBuilder: (BuildContext context) {
+        return items.map((String item) {
+          return Text(
+            item,
+            style: const TextStyle(color: Colors.black87, fontSize: 16),
+          );
+        }).toList();
+      },
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: color),
+        suffixIcon: SizedBox(
+          width: 70,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (hasData)
+                const Icon(Icons.check_circle, color: Colors.teal, size: 20),
+              const Icon(Icons.arrow_drop_down, color: Colors.grey),
+              const SizedBox(width: 8),
+            ],
+          ),
+        ),
+        filled: true,
+        // Fill color ab fixed hai, selection se pehle aur baad same rahega
+        fillColor: color.withOpacity(0.08), 
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            // Border ko mazeed light kar diya gaya hai constant look ke liye
+            color: color.withOpacity(0.2), 
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: color, width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      items: items.map((String item) {
+        bool isSelected = (value == item);
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Row(
+            children: [
+              Icon(
+                isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: isSelected ? color : Colors.grey,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Text(item),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    ),
+  );
+}}

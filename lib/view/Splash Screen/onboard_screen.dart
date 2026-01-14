@@ -21,7 +21,9 @@ class _OnboardScreenState extends State<OnboardScreen>
   @override
   void initState() {
     super.initState();
-
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _controller.forward();
+    });
     _controller =
         AnimationController(vsync: this, duration: const Duration(seconds: 2));
 
@@ -56,9 +58,10 @@ class _OnboardScreenState extends State<OnboardScreen>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            const AnimatedBackground(),
+            const Positioned.fill(child: AnimatedBackground()),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -117,7 +120,10 @@ class _OnboardScreenState extends State<OnboardScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           // Navigate to next screen
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => RoleSelectionScreen()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => RoleSelectionScreen()));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.cyan,

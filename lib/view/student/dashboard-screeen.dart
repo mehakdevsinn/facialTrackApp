@@ -1,4 +1,4 @@
-import 'package:facialtrackapp/utilis/color_pallet.dart';
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/widgets/dashboard-widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';

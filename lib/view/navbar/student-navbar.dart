@@ -1,4 +1,4 @@
-import 'package:facialtrackapp/utilis/color_pallet.dart';
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/student/attendence-history-screen.dart';
 import 'package:facialtrackapp/view/student/dashboard-screeen.dart';
 import 'package:facialtrackapp/view/student/my-subjects-screen.dart';

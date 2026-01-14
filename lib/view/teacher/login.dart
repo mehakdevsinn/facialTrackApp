@@ -1,4 +1,4 @@
-import 'package:facialtrackapp/utilis/color_pallet.dart';
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';

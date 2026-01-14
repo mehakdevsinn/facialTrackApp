@@ -41,7 +41,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       backgroundColor: const Color.fromARGB(255, 244, 243, 243),
 
       appBar: AppBar(
-        backgroundColor: ColorPallet.deepBlue,
+        backgroundColor: ColorPallet.primaryBlue,
         elevation: 0,
         leading: const Icon(Icons.arrow_back, color: Colors.white),
         title: const Text(
@@ -169,7 +169,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: selected
-            ? ColorPallet.deepBlue
+            ? ColorPallet.primaryBlue
             : const Color.fromARGB(255, 185, 183, 183),
         borderRadius: BorderRadius.circular(20),
         // border: Border.all(color: Colors.green),
@@ -298,7 +298,7 @@ class AttendanceCard extends StatelessWidget {
               child: Text(
                 "View Details",
                 style: TextStyle(
-                  color: Colors.blue.shade600,
+                  color: ColorPallet.primaryBlue,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),

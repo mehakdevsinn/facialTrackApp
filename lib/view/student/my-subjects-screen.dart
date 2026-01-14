@@ -13,7 +13,7 @@ class MySubjectsScreen extends StatelessWidget {
         children: [
           Container(
             height: 108,
-            color: ColorPallet.deepBlue,
+            color: ColorPallet.primaryBlue,
 
             child: Padding(
               padding: const EdgeInsets.only(top: 22, left: 18, right: 18),

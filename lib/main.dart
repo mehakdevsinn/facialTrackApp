@@ -1,4 +1,4 @@
-import 'package:facialtrackapp/view/navbar/student-navbar.dart';
+import 'package:facialtrackapp/view/navbar/student-root_screen.dart';
 import 'package:facialtrackapp/view/student/attendence-history-screen.dart';
 import 'package:facialtrackapp/view/student/dashboard-screeen.dart';
 import 'package:facialtrackapp/view/student/login.dart';

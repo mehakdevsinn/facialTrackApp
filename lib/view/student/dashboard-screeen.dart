@@ -31,7 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Container(
                       height: 400,
                       decoration: BoxDecoration(
-                        color: ColorPallet.deepBlue,
+                        color: ColorPallet.primaryBlue,
                         borderRadius: BorderRadius.circular(400),
                       ),
                     ),

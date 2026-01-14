@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ColorPallet {
-  static const Color primaryBlue = Color(0xFF2563EB);
+  static const Color primaryBlue = Color.fromARGB(255, 35, 4, 170);
   static const Color deepBlue = Color(0xFF1E40AF);
   static const Color softGreen = Color(0xFF10B981);
   static const Color accentOrange = Color(0xFFF97316);

@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/navbar/student-navbar.dart';
+import 'package:facialtrackapp/view/navbar/student-root_screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -129,7 +129,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   height: 55,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorPallet.deepBlue,
+                      backgroundColor: ColorPallet.primaryBlue,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -139,7 +139,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const MainNavigationScreen(),
+                          builder: (context) => const StudentRootScreen(),
                         ),
                       );
                     },

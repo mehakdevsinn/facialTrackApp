@@ -58,26 +58,29 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         children: [
           Container(
             color: ColorPallet.white,
-            padding: EdgeInsets.only(top: 13, bottom: 13),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 11),
-              child: Row(
-                children: List.generate(subjects.length, (index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedChipIndex = index;
-                        });
-                      },
-                      child: _filterChip(
-                        subjects[index],
-                        selected: selectedChipIndex == index,
+            padding: const EdgeInsets.only(top: 13, bottom: 13),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 11),
+                child: Row(
+                  children: List.generate(subjects.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedChipIndex = index;
+                          });
+                        },
+                        child: _filterChip(
+                          subjects[index],
+                          selected: selectedChipIndex == index,
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
           ),

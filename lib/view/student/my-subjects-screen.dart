@@ -313,10 +313,15 @@ class SubjectCard extends StatelessWidget {
 
                 Row(
                   children: [
-                    _infoDot(Colors.green, "$presentDays days", "Present"),
+                    _infoDot(
+                      Colors.green,
+                      "$presentDays days",
+                      "Present",
+                      context,
+                    ),
                     const SizedBox(width: 16),
-                    _infoDot(Colors.red, "$absentDays days", "Absent"),
 
+                    _infoDot(Colors.red, "$absentDays days", "Absent", context),
                     Spacer(),
                     const Icon(Icons.chevron_right, color: Colors.grey),
                   ],
@@ -329,15 +334,32 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _infoDot(Color color, String value, String label) {
-    return Row(
-      children: [
-        Icon(Icons.circle, size: 8, color: color),
-        const SizedBox(width: 4),
-        Text(value, style: const TextStyle(fontSize: 11)),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-      ],
-    );
+  Widget _infoDot(Color color, String value, String label, context) {
+    Size size = MediaQuery.of(context).size;
+    return size.width <= 350
+        ? Column(
+            children: [
+              Icon(Icons.circle, size: 8, color: color),
+              const SizedBox(width: 4),
+              Text(value, style: const TextStyle(fontSize: 11)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Icon(Icons.circle, size: 8, color: color),
+              const SizedBox(width: 4),
+              Text(value, style: const TextStyle(fontSize: 11)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          );
   }
 }

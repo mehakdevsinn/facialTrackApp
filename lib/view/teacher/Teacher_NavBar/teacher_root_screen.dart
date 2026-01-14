@@ -7,14 +7,14 @@
 // import 'package:facialtrackapp/view/Teacher/Start Screen/start_screen.dart';
 // import 'package:flutter/material.dart';
 
-// class RootScreen extends StatefulWidget {
-//   const RootScreen({super.key});
+// class TeacherRootScreen extends StatefulWidget {
+//   const TeacherRootScreen({super.key});
 
 //   @override
-//   State<RootScreen> createState() => _RootScreenState();
+//   State<TeacherRootScreen> createState() => _TeacherRootScreenState();
 // }
 
-// class _RootScreenState extends State<RootScreen> {
+// class _TeacherRootScreenState extends State<TeacherRootScreen> {
 //   int selectedPos = 0;
 //   late CircularBottomNavigationController _navigationController;
 
@@ -132,14 +132,14 @@ import 'package:facialtrackapp/view/Teacher/Profile/teacher_profile_screen.dart'
 import 'package:facialtrackapp/view/Teacher/Report/report_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start Screen/start_screen.dart';
 
-class RootScreen extends StatefulWidget {
-  const RootScreen({super.key});
+class TeacherRootScreen extends StatefulWidget {
+  const TeacherRootScreen({super.key});
 
   @override
-  State<RootScreen> createState() => _RootScreenState();
+  State<TeacherRootScreen> createState() => _TeacherRootScreenState();
 }
 
-class _RootScreenState extends State<RootScreen>
+class _TeacherRootScreenState extends State<TeacherRootScreen>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _animationController;

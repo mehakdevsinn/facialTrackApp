@@ -1,5 +1,7 @@
-import 'package:facialtrackapp/view/Teacher/Dashborad/teacher_dashboard_screen.dart';
-import 'package:facialtrackapp/view/Teacher/Root%20Screen/root_screen.dart';
+
+import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
+import 'package:facialtrackapp/view/student/login.dart';
+import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';
 import 'package:flutter/material.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -71,7 +73,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 },
                 child: InkWell(
                   onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>RootScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>TeacherLoginScreen()));
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 100),
@@ -133,48 +135,54 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 onTapCancel: () {
                   setState(() => _isStudentPressed = false);
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
-                  transform: _isStudentPressed
-                      ? Matrix4.translationValues(0, 5, 0)
-                      : Matrix4.identity(),
-                  width: double.infinity,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.green, width: 2),
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.school, color: Colors.green, size: 40),
-                      SizedBox(height: 10),
-                      Text(
-                        'Student',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                child: InkWell(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>StudentLoginScreen()));
+                  
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    transform: _isStudentPressed
+                        ? Matrix4.translationValues(0, 5, 0)
+                        : Matrix4.identity(),
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.green, width: 2),
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'View your attendance and subjects',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.school, color: Colors.green, size: 40),
+                        SizedBox(height: 10),
+                        Text(
+                          'Student',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                        SizedBox(height: 5),
+                        Text(
+                          'View your attendance and subjects',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

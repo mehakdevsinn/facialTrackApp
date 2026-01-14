@@ -1,5 +1,5 @@
 import 'dart:async'; // Timer ke liye zaroori hai
-import 'package:facialtrackapp/view/Teacher/Root%20Screen/root_screen.dart';
+import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
 
 class LiveSessionScreen extends StatefulWidget {
@@ -88,7 +88,7 @@ String _formatDuration(Duration duration) {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => const RootScreen(), 
+        builder: (context) => const TeacherRootScreen(), 
       ),
       (route) => false, // Iska matlab hai purana koi rasta (back) nahi bachega
     );

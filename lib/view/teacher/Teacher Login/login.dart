@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -134,7 +135,9 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                       ),
                       elevation: 3,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>TeacherRootScreen()));
+                    },
                     child: const Text(
                       "Login",
                       style: TextStyle(

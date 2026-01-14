@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:facialtrackapp/constant/app_color.dart';
 import 'package:flutter/material.dart';
 
 // class backGroundWidget extends StatelessWidget {

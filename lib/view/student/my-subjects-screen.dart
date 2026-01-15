@@ -6,170 +6,172 @@ class MySubjectsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 244, 243, 243),
-
-      body: Stack(
-        children: [
-          Container(
-            height: 108,
-            color: ColorPallet.primaryBlue,
-
-            child: Padding(
-              padding: const EdgeInsets.only(top: 22, left: 18, right: 18),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "My Subjects",
-                    style: TextStyle(color: ColorPallet.white, fontSize: 20),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 244, 243, 243),
+      
+        body: Stack(
+          children: [
+            Container(
+              height: 108,
+              color: ColorPallet.primaryBlue,
+      
+              child: Padding(
+                padding: const EdgeInsets.only(top: 22, left: 18, right: 18),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "My Subjects",
+                      style: TextStyle(color: ColorPallet.white, fontSize: 20),
+                    ),
+      
+                    Icon(Icons.search, size: 30, color: ColorPallet.white),
+                  ],
+                ),
+              ),
+            ),
+      
+            Positioned(
+              top: 70,
+              left: 16,
+              right: 16,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 22, right: 22),
+                child: Container(
+                  width: double.infinity,
+      
+                  padding: EdgeInsets.only(
+                    left: 14,
+                    right: 14,
+                    top: 14,
+                    bottom: 15,
                   ),
-
-                  Icon(Icons.search, size: 30, color: ColorPallet.white),
+                  decoration: BoxDecoration(
+                    color: ColorPallet.white,
+      
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
+      
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 2,
+                        offset: const Offset(4, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.blue.withOpacity(0.15),
+                            child: Icon(Icons.menu_book, color: Colors.blue),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "5 Subjects",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 40,
+                        child: VerticalDivider(thickness: 1, color: Colors.grey),
+                      ),
+      
+                      Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.blue.withOpacity(0.15),
+                            child: Icon(Icons.menu_book, color: Colors.blue),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "5 Subjects",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 40,
+                        child: VerticalDivider(thickness: 1, color: Colors.grey),
+                      ),
+      
+                      Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.blue.withOpacity(0.15),
+                            child: Icon(Icons.menu_book, color: Colors.blue),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "5 Subjects",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+      
+            Padding(
+              padding: const EdgeInsets.only(top: 180),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: const [
+                  SubjectCard(
+                    subject: "Computer Science",
+                    teacher: "Prof. Ahmed Khan",
+                    code: "CS101",
+                    attendance: 92,
+                    presentDays: 23,
+                    absentDays: 2,
+                    color: Colors.blue,
+                  ),
+                  SubjectCard(
+                    subject: "Physics",
+                    teacher: "Mr. Hassan",
+                    code: "PHY101",
+                    attendance: 65,
+                    presentDays: 13,
+                    absentDays: 7,
+                    color: Colors.green,
+                  ),
+                  SubjectCard(
+                    subject: "Chemistry",
+                    teacher: "Dr. Usman",
+                    code: "CHEM101",
+                    attendance: 78,
+                    presentDays: 14,
+                    absentDays: 4,
+                    color: Colors.orange,
+                  ),
                 ],
               ),
             ),
-          ),
-
-          Positioned(
-            top: 70,
-            left: 16,
-            right: 16,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 22, right: 22),
-              child: Container(
-                width: double.infinity,
-
-                padding: EdgeInsets.only(
-                  left: 14,
-                  right: 14,
-                  top: 14,
-                  bottom: 15,
-                ),
-                decoration: BoxDecoration(
-                  color: ColorPallet.white,
-
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
-
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 2,
-                      offset: const Offset(4, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.blue.withOpacity(0.15),
-                          child: Icon(Icons.menu_book, color: Colors.blue),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "5 Subjects",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 40,
-                      child: VerticalDivider(thickness: 1, color: Colors.grey),
-                    ),
-
-                    Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.blue.withOpacity(0.15),
-                          child: Icon(Icons.menu_book, color: Colors.blue),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "5 Subjects",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 40,
-                      child: VerticalDivider(thickness: 1, color: Colors.grey),
-                    ),
-
-                    Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.blue.withOpacity(0.15),
-                          child: Icon(Icons.menu_book, color: Colors.blue),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "5 Subjects",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.only(top: 180),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                SubjectCard(
-                  subject: "Computer Science",
-                  teacher: "Prof. Ahmed Khan",
-                  code: "CS101",
-                  attendance: 92,
-                  presentDays: 23,
-                  absentDays: 2,
-                  color: Colors.blue,
-                ),
-                SubjectCard(
-                  subject: "Physics",
-                  teacher: "Mr. Hassan",
-                  code: "PHY101",
-                  attendance: 65,
-                  presentDays: 13,
-                  absentDays: 7,
-                  color: Colors.green,
-                ),
-                SubjectCard(
-                  subject: "Chemistry",
-                  teacher: "Dr. Usman",
-                  code: "CHEM101",
-                  attendance: 78,
-                  presentDays: 14,
-                  absentDays: 4,
-                  color: Colors.orange,
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

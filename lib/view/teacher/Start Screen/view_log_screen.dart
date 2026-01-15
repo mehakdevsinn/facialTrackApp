@@ -1,0 +1,370 @@
+import 'package:facialtrackapp/widgets/export_pdf.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class AttendanceLogsScreen extends StatefulWidget {
+  const AttendanceLogsScreen({super.key});
+
+  @override
+  State<AttendanceLogsScreen> createState() => _AttendanceLogsScreenState();
+}
+
+class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
+  // Sample data
+  late String selectedDate;
+  String displayDate = DateFormat('MMMM d, y').format(DateTime.now());
+  void initState() {
+    super.initState();
+    // Screen load hote hi aaj ki date set ho jayegi
+    DateTime now = DateTime.now();
+    selectedDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+  }
+  final List<Map<String, dynamic>> students = [
+    {"name": "Ahmed Khan", "time": "09:02 AM - 10:30 AM", "status": "Present", "color": Colors.green},
+    {"name": "Sara Malik", "time": "09:02 AM - 10:30 AM", "status": "Present", "color": Colors.grey},
+    {"name": "Ali Raza", "time": "09:02 AM - 10:30 AM", "status": "Absent", "color": Colors.orange},
+    {"name": "Fatima S.", "time": "09:02 AM - 10:30 AM", "status": "off", "color": Colors.blueGrey},
+  ];
+  // String selectedDate = "2026-01-15";
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FB), // Light greyish background
+        appBar: AppBar(
+          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFF1A237E), // Dark blue
+          // leading: const Icon(Icons.arrow_back, color: Colors.white),
+          title: const Text("Today's Attendance Logs", 
+              style: TextStyle(color: Colors.white, fontSize: 18)),
+          actions: [
+IconButton(
+  icon: const Icon(Icons.calendar_month, color: Colors.white),
+  onPressed: () async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        // 1. Filter Container ke liye (YYYY-MM-DD) update hoga
+        selectedDate = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+        
+        // 2. Summary Section ke liye Month Name (December 10, 2025) update hoga
+        displayDate = DateFormat('MMMM d, y').format(pickedDate);
+      });
+    }
+  },
+),          IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
+          ],
+        ),
+        body: Column(
+          children: [
+            _buildSummarySection(),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                itemCount: students.length,
+                itemBuilder: (context, index) => _buildStudentCard(students[index]),
+              ),
+            ),
+            _buildBottomActions(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummarySection() {
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.face_retouching_natural, color: Colors.green, size: 20),
+                  SizedBox(width: 8),
+                  Text("Facial Track", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
+                ],
+              ),
+            Container(
+  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(10),
+    boxShadow: [
+      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2)),
+    ],
+  ),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF1A237E)),
+      const SizedBox(width: 8),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Filter", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+          // Ye Text ab variable se update hoga
+          Text(
+            selectedDate, 
+            style: const TextStyle(fontSize: 11, color: Color(0xFF1A237E), fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    ],
+  ),
+)
+            ],
+          ),
+          const SizedBox(height: 15),
+          const Text("Today's Session Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          const Row(
+            children: [
+              Text("Total Students: ", style: TextStyle(fontWeight: FontWeight.w500)),
+              Text("25", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              SizedBox(width: 15),
+              Text("Present: ", style: TextStyle(fontWeight: FontWeight.w500)),
+              Text("23", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+              SizedBox(width: 15),
+              Text("Absent: ", style: TextStyle(fontWeight: FontWeight.w500)),
+              Text("2", style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 10),
+           // Summary Text
+Text(
+  "$displayDate - Mathematics - Class 10A",
+  style: const TextStyle(color: Colors.grey, fontSize: 13),
+),
+        ],
+      ),
+    );
+  }
+Widget _buildStudentCard(Map<String, dynamic> data) {
+  bool isPresent = data['status'] == "Present";
+  bool isAbsent = data['status'] == "Absent";
+  bool isOff = data['status'] == "off";
+
+  return Opacity(
+    // Different Scene: Agar status 'off' hai toh card thoda transparent lagega
+    opacity: isOff ? 0.6 : 1.0,
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            // Profile Initial
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: isOff ? Colors.grey : data['color'],
+              child: Text(
+                data['name'].substring(0, 2).toUpperCase(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 15),
+            // Name & Time
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['name'],
+                    style: TextStyle(
+                      fontSize: 16, 
+                      fontWeight: FontWeight.bold,
+                      decoration: isOff ? TextDecoration.lineThrough : null, // Off par strike-through effect
+                    ),
+                  ),
+                  Text(
+                    data['time'],
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            // Status & Switch Section
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildStatusBadge(data['status']),
+                const SizedBox(height: 8),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: isPresent || isOff, // 'off' par bhi hum switch ko toggleable rakh sakte hain
+                    onChanged: (bool value) {
+                      setState(() {
+                        if (value) {
+                          data['status'] = "Present";
+                        } else {
+                          data['status'] = "Absent";
+                        }
+                      });
+                    },
+                    // Switch Colors for "Different Scene"
+                    activeTrackColor: isOff 
+                        ? Colors.blueGrey.shade200 // Off status ka different color
+                        : const Color(0xFF4CAF50), // Green for present
+                    inactiveTrackColor: const Color(0xFFFF7043), // Red/Orange for absent
+                    activeColor: Colors.white,
+                    inactiveThumbColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+// Status Badge Widget
+Widget _buildStatusBadge(String status) {
+  bool isPresent = status == "Present";
+  
+  // Dynamic colors based on switch state
+  Color mainColor = isPresent ? const Color(0xFF4CAF50) : const Color(0xFFFF7043);
+  Color bgColor = isPresent ? const Color(0xFFE8F5E9) : const Color(0xFFFBE9E7);
+  IconData icon = isPresent ? Icons.check_box : Icons.cancel;
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: mainColor, width: 1),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: mainColor),
+        const SizedBox(width: 4),
+        Text(
+          status,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: mainColor,
+          ),
+        ),
+      ],
+    ),
+  );
+}  Widget _buildStatusChip(String status) {
+    Color bgColor = status == "Present" ? Colors.green : (status == "Absent" ? Colors.orange : Colors.deepOrangeAccent);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(5)),
+      child: Text(status, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildBottomActions() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      color: Colors.white,
+      child: Column(
+        children: [
+          ElevatedButton(
+  onPressed: () {
+    // Dialog show karne ka function
+    _showSuccessDialog(context);
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFF3949AB), // Dark blue
+    minimumSize: const Size(double.infinity, 50),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+  ),
+  child: const Text("Save Changes", style: TextStyle(color: Colors.white, fontSize: 16)),
+),
+          const SizedBox(height: 8),
+          const Text("This will finalize attendance", style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+         OutlinedButton(
+  onPressed: () {
+    // Apni screen ke variables yahan pass karein
+    exportToPDF(displayDate, selectedDate, students); 
+  },
+  style: OutlinedButton.styleFrom(
+    side: const BorderSide(color: Colors.green),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+  ),
+  child: const Text("Export Logs", style: TextStyle(color: Colors.green)), //
+) ],
+      ),
+    );
+  }
+  void _showSuccessDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Dialog size content ke mutabiq
+            children: [
+              // Success Icon
+              const CircleAvatar(
+                radius: 30,
+                backgroundColor: Color(0xFFE8F5E9), // Light green
+                child: Icon(Icons.check_circle, color: Colors.green, size: 40),
+              ),
+              const SizedBox(height: 20),
+              // Success Message
+              const Text(
+                "Success!",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Attendance for $displayDate has been saved successfully.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+              // OK Button
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  minimumSize: const Size(100, 40),
+                ),
+                child: const Text("Done", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+}

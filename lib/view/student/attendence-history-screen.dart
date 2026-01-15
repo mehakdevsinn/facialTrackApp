@@ -37,129 +37,139 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 244, 243, 243),
-
-      appBar: AppBar(
-        backgroundColor: ColorPallet.primaryBlue,
-        elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
-        title: const Text(
-          "Attendance History",
-          style: TextStyle(color: Colors.white),
-        ),
-        actions: const [
-          Icon(Icons.filter_alt_outlined, color: Colors.white),
-          SizedBox(width: 16),
-        ],
-      ),
-
-      body: Column(
-        children: [
-          Container(
-            color: ColorPallet.white,
-            padding: const EdgeInsets.only(top: 13, bottom: 13),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 11),
-                child: Row(
-                  children: List.generate(subjects.length, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedChipIndex = index;
-                          });
-                        },
-                        child: _filterChip(
-                          subjects[index],
-                          selected: selectedChipIndex == index,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
+    return PopScope(
+      canPop: false, // Yeh back button ko fully disable kar deta hai
+      onPopInvokedWithResult: (didPop, result) {
+        // Agar back button dabaya jaye toh yahan kuch na likhen
+        // Isse screen pop nahi hogi aur na hi koi dialog aayega
+        if (didPop) return;
+      },
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: const Color.fromARGB(255, 244, 243, 243),
+        
+          appBar: AppBar(
+            backgroundColor: ColorPallet.primaryBlue,
+            elevation: 0,
+            // leading: const Icon(Icons.arrow_back, color: Colors.white),
+            title: const Text(
+              "Attendance History",
+              style: TextStyle(color: Colors.white),
             ),
+            actions: const [
+              Icon(Icons.filter_alt_outlined, color: Colors.white),
+              SizedBox(width: 16),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 3,
-                  offset: const Offset(2, 2),
-                ),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedMonth,
-
-                dropdownColor: const Color.fromARGB(255, 235, 235, 235),
-                icon: const Icon(Icons.keyboard_arrow_down),
-                isExpanded: true,
-                items: months.map((month) {
-                  return DropdownMenuItem(
-                    value: month,
+        
+          body: Column(
+            children: [
+              Container(
+                color: ColorPallet.white,
+                padding: const EdgeInsets.only(top: 13, bottom: 13),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
                     child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined, size: 18),
-                        const SizedBox(width: 8),
-                        Text(month),
-                      ],
+                      children: List.generate(subjects.length, (index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedChipIndex = index;
+                              });
+                            },
+                            child: _filterChip(
+                              subjects[index],
+                              selected: selectedChipIndex == index,
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedMonth = value!;
-                  });
-                },
+                  ),
+                ),
               ),
-            ),
+        
+              const SizedBox(height: 16),
+        
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 3,
+                      offset: const Offset(2, 2),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedMonth,
+        
+                    dropdownColor: const Color.fromARGB(255, 235, 235, 235),
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                    isExpanded: true,
+                    items: months.map((month) {
+                      return DropdownMenuItem(
+                        value: month,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Text(month),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMonth = value!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+        
+              const SizedBox(height: 16),
+        
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: const [
+                    AttendanceCard(
+                      date: "Dec 10, 2025",
+                      day: "Wednesday",
+                      entry: "09:02 AM",
+                      exit: "10:30 AM",
+                      subject: "Computer Science",
+                      present: true,
+                    ),
+                    AttendanceCard(
+                      date: "Dec 09, 2025",
+                      day: "Tuesday",
+                      entry: "08:55 AM",
+                      exit: "11:45 AM",
+                      subject: "Mathematics",
+                      present: true,
+                    ),
+                    AttendanceCard(
+                      date: "Dec 08, 2025",
+                      day: "Monday",
+                      present: false,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                AttendanceCard(
-                  date: "Dec 10, 2025",
-                  day: "Wednesday",
-                  entry: "09:02 AM",
-                  exit: "10:30 AM",
-                  subject: "Computer Science",
-                  present: true,
-                ),
-                AttendanceCard(
-                  date: "Dec 09, 2025",
-                  day: "Tuesday",
-                  entry: "08:55 AM",
-                  exit: "11:45 AM",
-                  subject: "Mathematics",
-                  present: true,
-                ),
-                AttendanceCard(
-                  date: "Dec 08, 2025",
-                  day: "Monday",
-                  present: false,
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

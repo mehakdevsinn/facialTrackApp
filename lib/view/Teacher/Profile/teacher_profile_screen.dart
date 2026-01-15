@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
 
 class TeacherProfileScreen extends StatelessWidget {
@@ -12,30 +13,30 @@ class TeacherProfileScreen extends StatelessWidget {
       // Isse screen pop nahi hogi aur na hi koi dialog aayega
       if (didPop) return;
     },
-      child: Scaffold(
-        // This ensures the light blue color is the base for the whole screen
-        // backgroundColor: Colors.blue.shade50, 
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              // Content below the profile card
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildOverviewCard(),
-                    const SizedBox(height: 20),
-                    _buildSubjectsCard(),
-                    const SizedBox(height: 30),
-                    _buildLogoutButton(),
-                    const SizedBox(height: 40), // Extra space at bottom
-                  ],
+      child: SafeArea(
+        child: Scaffold(
+            body: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                // Content below the profile card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildOverviewCard(),
+                      const SizedBox(height: 20),
+                      _buildSubjectsCard(),
+                      const SizedBox(height: 30),
+                      _buildLogoutButton(),
+                      const SizedBox(height: 40), // Extra space at bottom
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+                    ),
         ),
       ),
     );
@@ -114,8 +115,120 @@ class TeacherProfileScreen extends StatelessWidget {
         ),
       ],
     );
-  }
-
+  }void _showLogoutDialog(BuildContext context) {
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: '',
+    barrierColor: Colors.black.withOpacity(0.5), // Background dimming
+    transitionDuration: const Duration(milliseconds: 400),
+    pageBuilder: (context, anim1, anim2) => const SizedBox(),
+    transitionBuilder: (context, anim1, anim2, child) {
+      // Unique Curve: Bounce effect (BackOut)
+      final curvedValue = Curves.easeOutBack.transform(anim1.value) - 1.0;
+      return Transform(
+        transform: Matrix4.translationValues(0.0, curvedValue * -200, 0.0), // Top se slide hokar aayega
+        child: Opacity(
+          opacity: anim1.value,
+          child: AlertDialog(
+            backgroundColor: Colors.white.withOpacity(0.95), // Slight glass effect
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30), // More rounded for modern look
+              side: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
+            ),
+            content: Container(
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Unique Header: Orange Glow Icon
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF27121).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.power_settings_new_rounded, // Unique logout icon
+                      size: 50,
+                      color: Color(0xFFF27121),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Ready to Leave?",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Are you sure to the\nwant to logout?",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    children: [
+                      // No / Cancel Button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            "Not yet",
+                            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Yes / Logout Button (Styled)
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF27121).withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+                                (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF27121),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            child: const Text("Yes, Logout"),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
   // --- Keep your existing _buildOverviewCard, _buildSubjectsCard, etc. below ---
   
   Widget _buildOverviewCard() {
@@ -177,20 +290,26 @@ class TeacherProfileScreen extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
     );
   }
-
-  Widget _buildLogoutButton() {
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: const Icon(Icons.logout, color: Colors.white,),
-      label: const Text("Logout"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFFF7043),
-        foregroundColor: Colors.white,
-        minimumSize: const Size(200, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+Widget _buildLogoutButton() {
+  return Builder( // Use Builder to get the correct context if needed
+    builder: (context) => SizedBox(
+      width: 200, // Adjusted width to match Figma
+      child: ElevatedButton.icon(
+        onPressed: () => _showLogoutDialog(context),
+        icon: const Icon(Icons.logout, color: Colors.white),
+        label: const Text("Logout", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFF27121),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(

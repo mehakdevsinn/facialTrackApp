@@ -443,9 +443,11 @@
 //     },
 //   );
 // }
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/start_screen.dart';
+import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:flutter/material.dart';
@@ -468,7 +470,7 @@ class TeacherDashboardScreen extends StatelessWidget {
           appBar: AppBar(
             elevation: 0,
             automaticallyImplyLeading: false,
-            backgroundColor: const Color.fromARGB(255, 35, 4, 170),
+            backgroundColor: ColorPallet.primaryBlue,
             foregroundColor: Colors.white,
             title: const Text(
               'Facial Track',
@@ -631,6 +633,14 @@ class TeacherDashboardScreen extends StatelessWidget {
                             color: Colors.teal,
                             icon: Icons.menu_book,
                             title: 'Subjects',
+                            ontap: (){
+                                Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SubjectListScreen(),
+                                ),
+                              );
+                            },
                           ),
                           _AnimatedDashboardCard(
                             color: Colors.indigo,

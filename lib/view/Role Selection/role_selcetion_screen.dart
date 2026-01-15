@@ -1,6 +1,5 @@
-
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
-import 'package:facialtrackapp/view/student/login.dart';
+import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';
 import 'package:flutter/material.dart';
 
@@ -52,10 +51,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: 10),
               const Text(
                 'Choose your role to continue',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black45,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.black45),
               ),
               const SizedBox(height: 50),
 
@@ -72,8 +68,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   setState(() => _isTeacherPressed = false);
                 },
                 child: InkWell(
-                  onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>TeacherLoginScreen()));
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TeacherLoginScreen(),
+                      ),
+                    );
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 100),
@@ -111,10 +112,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         SizedBox(height: 5),
                         Text(
                           'Manage attendance and reports',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -136,9 +134,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   setState(() => _isStudentPressed = false);
                 },
                 child: InkWell(
-                  onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>StudentLoginScreen()));
-                  
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StudentLoginScreen(),
+                      ),
+                    );
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 100),
@@ -175,10 +177,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         SizedBox(height: 5),
                         Text(
                           'View your attendance and subjects',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -190,10 +189,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const Spacer(),
               const Text(
                 'You can change role later from settings',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black38,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.black38),
               ),
               const SizedBox(height: 20),
             ],

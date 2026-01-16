@@ -126,10 +126,10 @@
 //     ),
 //   ];
 // }
+import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:facialtrackapp/view/Teacher/Dashborad/teacher_dashboard_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Profile/teacher_profile_screen.dart';
-import 'package:facialtrackapp/view/Teacher/Report/report_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start Screen/start_screen.dart';
 
 class TeacherRootScreen extends StatefulWidget {
@@ -148,7 +148,7 @@ class _TeacherRootScreenState extends State<TeacherRootScreen>
   final List<Widget> _screens = [
     const TeacherDashboardScreen(),
     const StartSessionScreen(),
-    const ReportScreen(),
+     AttendanceReport(),
     const TeacherProfileScreen(),
   ];
 

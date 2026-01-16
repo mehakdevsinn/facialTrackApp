@@ -709,8 +709,8 @@ String _formatDuration(Duration duration) {
               const Text("Live Session Status",
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900)),
             ],
           ),
           actions: [

@@ -562,7 +562,7 @@ class TeacherDashboardScreen extends StatelessWidget {
                         'Monday, October 28, 2024',
                         style: TextStyle(color: Colors.grey),
                       ),
-                      // const SizedBox(height: 8),
+                      const SizedBox(height: 8),
             
                       // ---------------- GRID CARDS ----------------
                       GridView.count(

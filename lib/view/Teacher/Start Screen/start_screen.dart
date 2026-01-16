@@ -261,121 +261,123 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
       // Isse screen pop nahi hogi aur na hi koi dialog aayega
       if (didPop) return;
     },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-         appBar: AppBar(
-  backgroundColor: primaryColor,
-  foregroundColor: Colors.white,
-  elevation: 0,
-  // 1. AutomaticallyImplyLeading ko false rakhein taake Flutter khud se arrow na banaye
-  automaticallyImplyLeading: false, 
-  
-  // 2. Leading widget logic: Agar piche dashboard hai toh arrow dikhao, warna null (fully hide)
-  leading: (ModalRoute.of(context)?.canPop ?? false) 
-      ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ) 
-      : null,
-
-  title: Row(
-    children: [
-      // 3. Agar piche koi screen nahi hai (Root screen), toh logo se pehle thoda margin den
-      if (!(ModalRoute.of(context)?.canPop ?? false)) 
-        const SizedBox(width: 8),
-
-      const CircleAvatar(
-        radius: 18,
-        backgroundColor: Colors.white24,
-        backgroundImage: AssetImage('assets/logo.png'),
-      ),
-      
-      const SizedBox(width: 12),
-      
-      const Expanded(
-        child: Text(
-          "Start Attendance Session",
-          style: TextStyle(
-            color: Colors.white, 
-            fontSize: 18, 
-            fontWeight: FontWeight.w900
-          ),
-          overflow: TextOverflow.ellipsis,
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.white,
+           appBar: AppBar(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          // 1. AutomaticallyImplyLeading ko false rakhein taake Flutter khud se arrow na banaye
+          automaticallyImplyLeading: false, 
+          
+          // 2. Leading widget logic: Agar piche dashboard hai toh arrow dikhao, warna null (fully hide)
+          leading: (ModalRoute.of(context)?.canPop ?? false) 
+        ? IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ) 
+        : null,
+        
+          title: Row(
+            children: [
+        // 3. Agar piche koi screen nahi hai (Root screen), toh logo se pehle thoda margin den
+        if (!(ModalRoute.of(context)?.canPop ?? false)) 
+          const SizedBox(width: 8),
+        
+        const CircleAvatar(
+          radius: 18,
+          backgroundColor: Colors.white24,
+          backgroundImage: AssetImage('assets/logo.png'),
         ),
-      ),
-    ],
-  ),
-),body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Center(
-                  child: Text(
-                    "Start New Session",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Center(
-                  child: Text(
-                    "Select class and subject to begin attendance",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 40),
-      
-                _buildLabel("Select Class", primaryColor),
-                _buildCustomDropdown(
-                  hint: "Choose class...",
-                  icon: Icons.groups,
-                  value: selectedClass,
-                  items: classes,
-                  color: primaryColor,
-                  onChanged: (val) => setState(() => selectedClass = val),
-                ),
-      
-                const SizedBox(height: 25),
-      
-                _buildLabel("Select Subject", primaryColor),
-                _buildCustomDropdown(
-                  hint: "Choose subject...",
-                  icon: Icons.book,
-                  value: selectedSubject,
-                  items: subjects,
-                  color: primaryColor,
-                  onChanged: (val) => setState(() => selectedSubject = val),
-                ),
-      
-                const SizedBox(height: 100),
-      
-                Opacity(
-                  opacity: isReady ? 1.0 : 0.5,
-                  child: ElevatedButton(
-                   onPressed: isReady ? () {
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const LiveSessionScreen(autoStart: true), // Signal: START
-    ),
-  );
-} : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF81C784),
-                      disabledBackgroundColor: const Color(0xFF81C784).withOpacity(0.5),
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      "Start Session",
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        
+        const SizedBox(width: 12),
+        
+        const Expanded(
+          child: Text(
+            "Start Attendance Session",
+            style: TextStyle(
+              color: Colors.white, 
+              fontSize: 18, 
+              fontWeight: FontWeight.w900
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+            ],
+          ),
+        ),body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(
+                    child: Text(
+                      "Start New Session",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  const Center(
+                    child: Text(
+                      "Select class and subject to begin attendance",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+        
+                  _buildLabel("Select Class", primaryColor),
+                  _buildCustomDropdown(
+                    hint: "Choose class...",
+                    icon: Icons.groups,
+                    value: selectedClass,
+                    items: classes,
+                    color: primaryColor,
+                    onChanged: (val) => setState(() => selectedClass = val),
+                  ),
+        
+                  const SizedBox(height: 25),
+        
+                  _buildLabel("Select Subject", primaryColor),
+                  _buildCustomDropdown(
+                    hint: "Choose subject...",
+                    icon: Icons.book,
+                    value: selectedSubject,
+                    items: subjects,
+                    color: primaryColor,
+                    onChanged: (val) => setState(() => selectedSubject = val),
+                  ),
+        
+                  const SizedBox(height: 100),
+        
+                  Opacity(
+                    opacity: isReady ? 1.0 : 0.5,
+                    child: ElevatedButton(
+                     onPressed: isReady ? () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+        builder: (context) => const LiveSessionScreen(autoStart: true), // Signal: START
+            ),
+          );
+        } : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF81C784),
+                        disabledBackgroundColor: const Color(0xFF81C784).withOpacity(0.5),
+                        minimumSize: const Size(double.infinity, 55),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text(
+                        "Start Session",
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

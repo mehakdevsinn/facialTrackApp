@@ -61,7 +61,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        title: const Text("Edit Attendance Logs"),
+        title: const Text("Edit Attendance Logs",style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),),
         backgroundColor: const Color(0xFF1A237E),
         foregroundColor: Colors.white,
         elevation: 0,

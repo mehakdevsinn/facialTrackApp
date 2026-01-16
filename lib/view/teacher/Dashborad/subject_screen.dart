@@ -50,120 +50,122 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
         ? allSubjects
         : allSubjects.where((s) => s['grade'] == selectedFilter).toList();
 
-    return Scaffold(
-      backgroundColor: ColorPallet.primaryBlue,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-  leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 23),
-          onPressed: () => Navigator.pop(context),
-        ),        
-        title: const Text("Subjects", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        centerTitle: true,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: ColorPallet.primaryBlue,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 23),
+            onPressed: () => Navigator.pop(context),
+          ),        
+          title: const Text("Subjects", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900,fontSize: 18)),
+          centerTitle: true,
+        ),
+        body: Column(
+          children: [
+            // 1. Search Bar
+          // --- Search Bar Section Fix ---
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 10),
+        child: Container(
+      height: 50, // Fixed height alignment ke liye behtar hai
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
-      body: Column(
+      child: TextField(
+        textAlignVertical: TextAlignVertical.center, // Text aur icon ko center karne ke liye
+        style: TextStyle(color: ColorPallet.deepBlue, fontSize: 16),
+        decoration: InputDecoration(
+          hintText: 'Search subjects...',
+          hintStyle: TextStyle(color: ColorPallet.primaryBlue.withOpacity(0.5)),
+          prefixIcon: Icon(Icons.search, color: ColorPallet.primaryBlue, size: 22),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10), // Inner padding alignment fix
+        ),
+      ),
+        ),
+      ),
+            // 2. Filter Tabs
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              child: Row(
+                children: [
+                  _buildFilterButton("All"),
+                  const SizedBox(width: 10),
+                  _buildFilterButton("Grade 11"),
+                  const Spacer(),
+                  // Add Button
+                 // Filter & Add Button Row mein Add button ka code:
+      GestureDetector(
+        onTap: () async {
+      // Naye screen par jana aur wahan se data wapis lena
+      final newSubject = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AddSubjectScreen()),
+      );
+      
+      if (newSubject != null) {
+        setState(() {
+          allSubjects.add(newSubject);
+        });
+      }
+        },
+        child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(color: const Color(0xFF42A5F5), borderRadius: BorderRadius.circular(12)),
+      child: const Row(
         children: [
-          // 1. Search Bar
-        // --- Search Bar Section Fix ---
-Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 10),
-  child: Container(
-    height: 50, // Fixed height alignment ke liye behtar hai
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        )
-      ],
-    ),
-    child: TextField(
-      textAlignVertical: TextAlignVertical.center, // Text aur icon ko center karne ke liye
-      style: TextStyle(color: ColorPallet.deepBlue, fontSize: 16),
-      decoration: InputDecoration(
-        hintText: 'Search subjects...',
-        hintStyle: TextStyle(color: ColorPallet.primaryBlue.withOpacity(0.5)),
-        prefixIcon: Icon(Icons.search, color: ColorPallet.primaryBlue, size: 22),
-        border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10), // Inner padding alignment fix
+          Icon(Icons.add, color: Colors.white, size: 18),
+          Text(" Add", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ],
       ),
-    ),
-  ),
-),
-          // 2. Filter Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-            child: Row(
-              children: [
-                _buildFilterButton("All"),
-                const SizedBox(width: 10),
-                _buildFilterButton("Grade 11"),
-                const Spacer(),
-                // Add Button
-               // Filter & Add Button Row mein Add button ka code:
-GestureDetector(
-  onTap: () async {
-    // Naye screen par jana aur wahan se data wapis lena
-    final newSubject = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddSubjectScreen()),
-    );
-
-    if (newSubject != null) {
-      setState(() {
-        allSubjects.add(newSubject);
-      });
-    }
-  },
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-    decoration: BoxDecoration(color: const Color(0xFF42A5F5), borderRadius: BorderRadius.circular(12)),
-    child: const Row(
-      children: [
-        Icon(Icons.add, color: Colors.white, size: 18),
-        Text(" Add", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ],
-    ),
-  ),
-),  ],
+        ),
+      ),  ],
+              ),
             ),
-          ),
-
-          const SizedBox(height: 15),
-
-          // 3. White Container for Cards
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.only(top: 25),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8F9FD),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(35),
-                  topRight: Radius.circular(35),
+      
+            const SizedBox(height: 15),
+      
+            // 3. White Container for Cards
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.only(top: 25),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8F9FD),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(35),
+                    topRight: Radius.circular(35),
+                  ),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: displayedSubjects.length,
+                  itemBuilder: (context, index) {
+                    final subject = displayedSubjects[index];
+                    return _buildSubjectCard(
+                      title: subject['title'],
+                      assigned: subject['assigned'],
+                      syllabus: subject['syllabus'],
+                      avg: subject['avg'],
+                      icon: subject['icon'],
+                      percentCircle: subject['percentCircle'],
+                    );
+                  },
                 ),
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: displayedSubjects.length,
-                itemBuilder: (context, index) {
-                  final subject = displayedSubjects[index];
-                  return _buildSubjectCard(
-                    title: subject['title'],
-                    assigned: subject['assigned'],
-                    syllabus: subject['syllabus'],
-                    avg: subject['avg'],
-                    icon: subject['icon'],
-                    percentCircle: subject['percentCircle'],
-                  );
-                },
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

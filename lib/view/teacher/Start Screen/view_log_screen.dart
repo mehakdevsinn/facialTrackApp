@@ -61,7 +61,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           // leading: const Icon(Icons.arrow_back, color: Colors.white),
           title: const Text(
             "Today's Attendance Logs",
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            style: TextStyle(color: Colors.white, fontSize: 18,fontWeight: FontWeight.w900),
           ),
           actions: [
             IconButton(

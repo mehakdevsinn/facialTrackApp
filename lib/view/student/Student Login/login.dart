@@ -12,7 +12,26 @@ class StudentLoginScreen extends StatefulWidget {
 }
 
 class _StudentLoginScreenState extends State<StudentLoginScreen> {
+  final FocusNode studentIdFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
   bool _obscureText = true;
+  String studentId = "";
+  String password = "";
+
+  bool get isButtonEnabled => studentId.isNotEmpty && password.isNotEmpty;
+  @override
+  void initState() {
+    super.initState();
+    studentIdFocus.addListener(() => setState(() {}));
+    passwordFocus.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    studentIdFocus.dispose();
+    passwordFocus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +94,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   label: "Student ID",
                   hint: "Enter your Student ID",
                   icon: Icons.person_outline,
-                  color: ColorPallet.accentOrange,
+                  activeColor: ColorPallet.primaryBlue,
+                  inactiveColor: Colors.grey,
+                  focusNode: studentIdFocus,
+                  onChange: (value) {
+                    setState(() {
+                      studentId = value;
+                    });
+                  },
                 ),
               ),
 
@@ -84,6 +110,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
+                  activeColor: ColorPallet.primaryBlue,
+                  inactiveColor: Colors.grey,
+                  focusNode: passwordFocus,
+                  onChange: (value) {
+                    setState(() {
+                      password = value;
+                    });
+                  },
                   label: "Password",
                   hint: "Enter your password",
                   icon: Icons.lock_outline,
@@ -99,7 +133,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       setState(() => _obscureText = !_obscureText);
                     },
                   ),
-                  color: ColorPallet.accentOrange,
                 ),
               ),
 
@@ -129,20 +162,24 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   height: 55,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorPallet.primaryBlue,
+                      backgroundColor: isButtonEnabled
+                          ? ColorPallet.primaryBlue
+                          : Colors.grey.shade400,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 3,
                     ),
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const StudentRootScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: isButtonEnabled
+                        ? () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const StudentRootScreen(),
+                              ),
+                            );
+                          }
+                        : SizedBox.shrink,
                     child: const Text(
                       "Login",
                       style: TextStyle(

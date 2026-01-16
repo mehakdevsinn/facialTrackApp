@@ -1,5 +1,97 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/student/Attendence%20History/attendence-detail-screen.dart';
 import 'package:flutter/material.dart';
+
+final List<Map<String, dynamic>> attendanceList = [
+  {
+    "date": "Dec 10, 2025",
+    "day": "Wednesday",
+    "entry": "09:02 AM",
+    "exit": "10:30 AM",
+    "subject": "Computer Science",
+    "present": true,
+  },
+  {
+    "date": "Dec 09, 2025",
+    "day": "Tuesday",
+    "entry": "08:55 AM",
+    "exit": "11:45 AM",
+    "subject": "Mathematics",
+    "present": true,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Chemistry",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Mathematics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Chemistry",
+    "present": false,
+  },
+];
 
 class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
@@ -33,7 +125,18 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     "All Subjects",
     "Computer Science",
     "Mathematics",
+    "Physics",
+    "Chemistry",
   ];
+
+  List<Map<String, dynamic>> get filteredAttendance {
+    if (subjects[selectedChipIndex] == "All Subjects") {
+      return attendanceList;
+    }
+    return attendanceList
+        .where((item) => item["subject"] == subjects[selectedChipIndex])
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +152,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           style: TextStyle(color: Colors.white),
         ),
         actions: const [
-          Icon(Icons.filter_alt_outlined, color: Colors.white),
-          SizedBox(width: 16),
+          // Icon(Icons.filter_alt_outlined, color: Colors.white),
+          // SizedBox(width: 16),
         ],
       ),
 
@@ -132,33 +235,53 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
           const SizedBox(height: 16),
 
           Expanded(
-            child: ListView(
+            child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: const [
-                AttendanceCard(
-                  date: "Dec 10, 2025",
-                  day: "Wednesday",
-                  entry: "09:02 AM",
-                  exit: "10:30 AM",
-                  subject: "Computer Science",
-                  present: true,
-                ),
-                AttendanceCard(
-                  date: "Dec 09, 2025",
-                  day: "Tuesday",
-                  entry: "08:55 AM",
-                  exit: "11:45 AM",
-                  subject: "Mathematics",
-                  present: true,
-                ),
-                AttendanceCard(
-                  date: "Dec 08, 2025",
-                  day: "Monday",
-                  present: false,
-                ),
-              ],
+              itemCount: filteredAttendance.length,
+              itemBuilder: (context, index) {
+                final item = filteredAttendance[index];
+
+                return AttendanceCard(
+                  date: item["date"],
+                  day: item["day"],
+                  entry: item["entry"],
+                  exit: item["exit"],
+                  subject: item["subject"],
+                  present: item["present"],
+                );
+              },
             ),
           ),
+
+          // Expanded(
+          //   child: ListView(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+          //     children: const [
+          //       AttendanceCard(
+          //         date: "Dec 10, 2025",
+          //         day: "Wednesday",
+          //         entry: "09:02 AM",
+          //         exit: "10:30 AM",
+          //         subject: "Computer Science",
+          //         present: true,
+          //       ),
+          //       AttendanceCard(
+          //         date: "Dec 09, 2025",
+          //         day: "Tuesday",
+          //         entry: "08:55 AM",
+          //         exit: "11:45 AM",
+          //         subject: "Mathematics",
+          //         present: true,
+          //       ),
+          //       AttendanceCard(
+          //         date: "Dec 08, 2025",
+          //         day: "Monday",
+          //         subject: "Physics",
+          //         present: false,
+          //       ),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -285,8 +408,8 @@ class AttendanceCard extends StatelessWidget {
               const SizedBox(height: 6),
               _infoRow(Icons.logout, "Exit: $exit"),
               const SizedBox(height: 6),
-              _infoRow(Icons.book, subject ?? ""),
             ],
+            _infoRow(Icons.book, subject ?? ""),
 
             const SizedBox(height: 5),
 
@@ -295,12 +418,29 @@ class AttendanceCard extends StatelessWidget {
 
             Align(
               alignment: Alignment.centerRight,
-              child: Text(
-                "View Details",
-                style: TextStyle(
-                  color: ColorPallet.primaryBlue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AttendanceDetailScreen(
+                        date: date,
+                        day: day,
+                        entry: entry,
+                        exit: exit,
+                        subject: subject ?? "",
+                        present: present,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  "View Details",
+                  style: TextStyle(
+                    color: ColorPallet.primaryBlue,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),

@@ -12,8 +12,27 @@ class TeacherLoginScreen extends StatefulWidget {
 }
 
 class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
-  bool _obscureText = true;
+  final FocusNode teacherIdFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
+  @override
+  void initState() {
+    super.initState();
+    teacherIdFocus.addListener(() => setState(() {}));
+    passwordFocus.addListener(() => setState(() {}));
+  }
 
+  @override
+  void dispose() {
+    teacherIdFocus.dispose();
+    passwordFocus.dispose();
+    super.dispose();
+  }
+
+  bool _obscureText = true;
+  String teacherId = "";
+  String password = "";
+
+  bool get isButtonEnabled => teacherId.isNotEmpty && password.isNotEmpty;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,10 +91,17 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
+                  activeColor: ColorPallet.primaryBlue,
+                  inactiveColor: Colors.grey,
+                  focusNode: teacherIdFocus,
+                  onChange: (value) {
+                    setState(() {
+                      teacherId = value;
+                    });
+                  },
                   label: "Teacher ID",
                   hint: "Enter your Teacher ID",
                   icon: Icons.person_outline,
-                  color: ColorPallet.accentOrange,
                 ),
               ),
 
@@ -84,6 +110,14 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
+                  activeColor: ColorPallet.primaryBlue,
+                  inactiveColor: Colors.grey,
+                  focusNode: passwordFocus,
+                  onChange: (value) {
+                    setState(() {
+                      password = value;
+                    });
+                  },
                   label: "Password",
                   hint: "Enter your password",
                   icon: Icons.lock_outline,
@@ -99,7 +133,6 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                       setState(() => _obscureText = !_obscureText);
                     },
                   ),
-                  color: ColorPallet.accentOrange,
                 ),
               ),
 
@@ -129,15 +162,24 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                   height: 55,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorPallet.deepBlue,
+                      backgroundColor: isButtonEnabled
+                          ? ColorPallet.deepBlue
+                          : Colors.grey.shade400,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 3,
                     ),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>TeacherRootScreen()));
-                    },
+                    onPressed: isButtonEnabled
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TeacherRootScreen(),
+                              ),
+                            );
+                          }
+                        : SizedBox.shrink,
                     child: const Text(
                       "Login",
                       style: TextStyle(

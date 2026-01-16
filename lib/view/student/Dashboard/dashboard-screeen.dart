@@ -49,22 +49,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                  const Positioned(
-                    top: 20,
-                    right: 20,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.notifications_none,
-                          color: ColorPallet.white,
-                        ),
-                        SizedBox(width: 16),
 
-                        CircleAvatar(radius: 17),
-                      ],
-                    ),
-                  ),
+                  // const Positioned(
+                  //   top: 20,
+                  //   right: 20,
+                  //   child: Row(
+                  //     children: [
+                  //       Icon(
+                  //         Icons.notifications_none,
+                  //         color: ColorPallet.white,
+                  //       ),
+                  //       SizedBox(width: 16),
 
+                  //       CircleAvatar(radius: 17),
+                  //     ],
+                  //   ),
+                  // ),
                   Positioned(
                     top: 90,
                     left: 20,

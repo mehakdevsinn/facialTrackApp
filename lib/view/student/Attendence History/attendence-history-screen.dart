@@ -1,5 +1,97 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/student/Attendence%20History/attendence-detail-screen.dart';
 import 'package:flutter/material.dart';
+
+final List<Map<String, dynamic>> attendanceList = [
+  {
+    "date": "Dec 10, 2025",
+    "day": "Wednesday",
+    "entry": "09:02 AM",
+    "exit": "10:30 AM",
+    "subject": "Computer Science",
+    "present": true,
+  },
+  {
+    "date": "Dec 09, 2025",
+    "day": "Tuesday",
+    "entry": "08:55 AM",
+    "exit": "11:45 AM",
+    "subject": "Mathematics",
+    "present": true,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Chemistry",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Physics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Mathematics",
+    "present": false,
+  },
+  {
+    "date": "Dec 08, 2025",
+    "day": "Monday",
+    "entry": null,
+    "exit": null,
+    "subject": "Chemistry",
+    "present": false,
+  },
+];
 
 class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
@@ -33,143 +125,164 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     "All Subjects",
     "Computer Science",
     "Mathematics",
+    "Physics",
+    "Chemistry",
   ];
+
+  List<Map<String, dynamic>> get filteredAttendance {
+    if (subjects[selectedChipIndex] == "All Subjects") {
+      return attendanceList;
+    }
+    return attendanceList
+        .where((item) => item["subject"] == subjects[selectedChipIndex])
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false, // Yeh back button ko fully disable kar deta hai
-      onPopInvokedWithResult: (didPop, result) {
-        // Agar back button dabaya jaye toh yahan kuch na likhen
-        // Isse screen pop nahi hogi aur na hi koi dialog aayega
-        if (didPop) return;
-      },
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: const Color.fromARGB(255, 244, 243, 243),
-        
-          appBar: AppBar(
-            backgroundColor: ColorPallet.primaryBlue,
-            elevation: 0,
-            // leading: const Icon(Icons.arrow_back, color: Colors.white),
-            title: const Text(
-              "Attendance History",
-              style: TextStyle(color: Colors.white),
-            ),
-            actions: const [
-              Icon(Icons.filter_alt_outlined, color: Colors.white),
-              SizedBox(width: 16),
-            ],
-          ),
-        
-          body: Column(
-            children: [
-              Container(
-                color: ColorPallet.white,
-                padding: const EdgeInsets.only(top: 13, bottom: 13),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    child: Row(
-                      children: List.generate(subjects.length, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedChipIndex = index;
-                              });
-                            },
-                            child: _filterChip(
-                              subjects[index],
-                              selected: selectedChipIndex == index,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                ),
-              ),
-        
-              const SizedBox(height: 16),
-        
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 3,
-                      offset: const Offset(2, 2),
-                    ),
-                  ],
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: selectedMonth,
-        
-                    dropdownColor: const Color.fromARGB(255, 235, 235, 235),
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    isExpanded: true,
-                    items: months.map((month) {
-                      return DropdownMenuItem(
-                        value: month,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today_outlined, size: 18),
-                            const SizedBox(width: 8),
-                            Text(month),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedMonth = value!;
-                      });
-                    },
-                  ),
-                ),
-              ),
-        
-              const SizedBox(height: 16),
-        
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: const [
-                    AttendanceCard(
-                      date: "Dec 10, 2025",
-                      day: "Wednesday",
-                      entry: "09:02 AM",
-                      exit: "10:30 AM",
-                      subject: "Computer Science",
-                      present: true,
-                    ),
-                    AttendanceCard(
-                      date: "Dec 09, 2025",
-                      day: "Tuesday",
-                      entry: "08:55 AM",
-                      exit: "11:45 AM",
-                      subject: "Mathematics",
-                      present: true,
-                    ),
-                    AttendanceCard(
-                      date: "Dec 08, 2025",
-                      day: "Monday",
-                      present: false,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 244, 243, 243),
+
+      appBar: AppBar(
+        backgroundColor: ColorPallet.primaryBlue,
+        elevation: 0,
+        leading: const Icon(Icons.arrow_back, color: Colors.white),
+        title: const Text(
+          "Attendance History",
+          style: TextStyle(color: Colors.white),
         ),
+        actions: const [
+          // Icon(Icons.filter_alt_outlined, color: Colors.white),
+          // SizedBox(width: 16),
+        ],
+      ),
+
+      body: Column(
+        children: [
+          Container(
+            color: ColorPallet.white,
+            padding: const EdgeInsets.only(top: 13, bottom: 13),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 11),
+                child: Row(
+                  children: List.generate(subjects.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedChipIndex = index;
+                          });
+                        },
+                        child: _filterChip(
+                          subjects[index],
+                          selected: selectedChipIndex == index,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 3,
+                  offset: const Offset(2, 2),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedMonth,
+
+                dropdownColor: const Color.fromARGB(255, 235, 235, 235),
+                icon: const Icon(Icons.keyboard_arrow_down),
+                isExpanded: true,
+                items: months.map((month) {
+                  return DropdownMenuItem(
+                    value: month,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined, size: 18),
+                        const SizedBox(width: 8),
+                        Text(month),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedMonth = value!;
+                  });
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: filteredAttendance.length,
+              itemBuilder: (context, index) {
+                final item = filteredAttendance[index];
+
+                return AttendanceCard(
+                  date: item["date"],
+                  day: item["day"],
+                  entry: item["entry"],
+                  exit: item["exit"],
+                  subject: item["subject"],
+                  present: item["present"],
+                );
+              },
+            ),
+          ),
+
+          // Expanded(
+          //   child: ListView(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+          //     children: const [
+          //       AttendanceCard(
+          //         date: "Dec 10, 2025",
+          //         day: "Wednesday",
+          //         entry: "09:02 AM",
+          //         exit: "10:30 AM",
+          //         subject: "Computer Science",
+          //         present: true,
+          //       ),
+          //       AttendanceCard(
+          //         date: "Dec 09, 2025",
+          //         day: "Tuesday",
+          //         entry: "08:55 AM",
+          //         exit: "11:45 AM",
+          //         subject: "Mathematics",
+          //         present: true,
+          //       ),
+          //       AttendanceCard(
+          //         date: "Dec 08, 2025",
+          //         day: "Monday",
+          //         subject: "Physics",
+          //         present: false,
+          //       ),
+          //     ],
+          //   ),
+          // ),
+        ],
       ),
     );
   }
@@ -295,8 +408,8 @@ class AttendanceCard extends StatelessWidget {
               const SizedBox(height: 6),
               _infoRow(Icons.logout, "Exit: $exit"),
               const SizedBox(height: 6),
-              _infoRow(Icons.book, subject ?? ""),
             ],
+            _infoRow(Icons.book, subject ?? ""),
 
             const SizedBox(height: 5),
 
@@ -305,12 +418,29 @@ class AttendanceCard extends StatelessWidget {
 
             Align(
               alignment: Alignment.centerRight,
-              child: Text(
-                "View Details",
-                style: TextStyle(
-                  color: ColorPallet.primaryBlue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AttendanceDetailScreen(
+                        date: date,
+                        day: day,
+                        entry: entry,
+                        exit: exit,
+                        subject: subject ?? "",
+                        present: present,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  "View Details",
+                  style: TextStyle(
+                    color: ColorPallet.primaryBlue,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -330,3 +460,5 @@ class AttendanceCard extends StatelessWidget {
     );
   }
 }
+
+

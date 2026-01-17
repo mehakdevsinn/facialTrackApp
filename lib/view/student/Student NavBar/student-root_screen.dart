@@ -1,7 +1,8 @@
 // import 'package:facialtrackapp/constants/color_pallet.dart';
-// import 'package:facialtrackapp/view/student/attendence-history-screen.dart';
-// import 'package:facialtrackapp/view/student/dashboard-screeen.dart';
-// import 'package:facialtrackapp/view/student/my-subjects-screen.dart';
+// import 'package:facialtrackapp/view/student/Attendence%20History/attendence-history-screen.dart';
+// import 'package:facialtrackapp/view/student/Dashboard/dashboard-screeen.dart';
+// import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
+// import 'package:facialtrackapp/view/student/Subjects/subjects-screen.dart';
 // import 'package:flutter/material.dart';
 
 // import 'package:facialtrackapp/utilis/color_pallet.dart';
@@ -72,21 +73,21 @@
 
 // import 'package:flutter/material.dart';
 
-// class MainNavigationScreen extends StatefulWidget {
-//   const MainNavigationScreen({super.key});
+// class StudentRootScreen extends StatefulWidget {
+//   const StudentRootScreen({super.key});
 
 //   @override
-//   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+//   State<StudentRootScreen> createState() => _StudentRootScreenState();
 // }
 
-// class _MainNavigationScreenState extends State<MainNavigationScreen> {
+// class _StudentRootScreenState extends State<StudentRootScreen> {
 //   int _currentIndex = 0;
 
 //   final List<Widget> _screens = const [
 //     DashboardScreen(),
 //     AttendanceHistoryScreen(),
 //     MySubjectsScreen(),
-//     // ProfileScreen(),
+//     StudentProfileScreen(),
 //   ];
 
 //   @override

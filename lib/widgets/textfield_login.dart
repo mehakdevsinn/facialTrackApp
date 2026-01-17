@@ -7,10 +7,16 @@ Widget buildTextField({
   required IconData icon,
   bool obscureText = false,
   Widget? suffixIcon,
-  required Color color,
+  // required Color color,
+  required final onChange,
+  required FocusNode focusNode,
+  required Color activeColor,
+  required Color inactiveColor,
 }) {
   return TextField(
+    onChanged: onChange,
     obscureText: obscureText,
+    style: TextStyle(color: focusNode.hasFocus ? activeColor : inactiveColor),
     decoration: InputDecoration(
       filled: true,
       fillColor: ColorPallet.lightGray,
@@ -19,23 +25,23 @@ Widget buildTextField({
       prefixIcon: Icon(icon, color: ColorPallet.grey),
       suffixIcon: suffixIcon,
       suffixIconColor: Colors.grey,
-      labelStyle: const TextStyle(
-        color: ColorPallet.accentOrange,
+      labelStyle: TextStyle(
+        color: focusNode.hasFocus ? activeColor : inactiveColor,
         fontWeight: FontWeight.w500,
       ),
       hintStyle: const TextStyle(color: Colors.grey),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: color, width: 1.5),
+        borderSide: BorderSide(color: inactiveColor, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: color.withOpacity(0.6), width: 1.2),
+        borderSide: BorderSide(color: inactiveColor, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: color, width: 2),
+        borderSide: BorderSide(color: activeColor, width: 2),
       ),
     ),
   );

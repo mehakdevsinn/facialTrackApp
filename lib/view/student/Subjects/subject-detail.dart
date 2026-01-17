@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/student/Attendence%20History/attendence-detail-screen.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
@@ -37,10 +38,10 @@ class SubjectDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.info_outline, color: ColorPallet.white),
-          ),
+          // Padding(
+          //   padding: EdgeInsets.only(right: 12),
+          //   child: Icon(Icons.info_outline, color: ColorPallet.white),
+          // ),
         ],
       ),
 
@@ -116,6 +117,12 @@ class SubjectDetailScreen extends StatelessWidget {
                   const SizedBox(height: 28),
 
                   _sessionTile(
+                    day: "Monday",
+                    exit: "4:00pm",
+                    entry: "10:30am",
+                    present: true,
+                    context: context,
+
                     date: "2025-10-25",
                     status: "Present",
                     statusColor: Colors.green,
@@ -123,6 +130,12 @@ class SubjectDetailScreen extends StatelessWidget {
                   ),
 
                   _sessionTile(
+                    day: "Tuesday",
+                    exit: "4:00pm",
+                    entry: "10:30am",
+                    present: false,
+                    context: context,
+
                     date: "2025-10-23",
                     status: "Absent",
                     statusColor: Colors.red,
@@ -130,6 +143,11 @@ class SubjectDetailScreen extends StatelessWidget {
                   ),
 
                   _sessionTile(
+                    day: "Wednesday",
+                    exit: "4:00pm",
+                    entry: "10:30am",
+                    present: true,
+                    context: context,
                     date: "2025-10-21",
                     status: "Late",
                     statusColor: Colors.orange,
@@ -148,64 +166,89 @@ class SubjectDetailScreen extends StatelessWidget {
   Widget _sessionTile({
     required String date,
     required String status,
+
+    required String day,
+    required String exit,
+    required String entry,
+    required bool present,
+
     required Color statusColor,
     required String time,
     bool isLast = false,
+
+    required final context,
   }) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    date,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AttendanceDetailScreen(
+              date: date,
+              day: day,
+              entry: entry,
+              exit: exit,
+              subject: subject ?? "",
+              present: present,
+            ),
+          ),
+        );
+      },
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        time,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
+                        const SizedBox(width: 8),
+                        Text(
+                          time,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
-        if (!isLast) const Divider(height: 24),
-      ],
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
+          ),
+          if (!isLast) const Divider(height: 24),
+        ],
+      ),
     );
   }
 

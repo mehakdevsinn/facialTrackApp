@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Report/view_full_report_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
@@ -179,7 +178,7 @@ void _generateAndDownloadReport(BuildContext context) async {
           textColor: Colors.white,
           onPressed: () async {
             // YE LINE FILE KO EXCEL YA OFFICE MEIN KHOLY GI
-            await OpenFile.open(path); 
+            // await OpenFile.open(path); 
           },
         ),
       ),

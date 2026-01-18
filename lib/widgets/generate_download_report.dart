@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file_plus/open_file_plus.dart';
 
 // ... class ke andar ...
 
@@ -47,12 +46,12 @@ String selectedSubject = "Computer Science";
           textColor: Colors.white,
           onPressed: () async {
             // YE LINE FILE OPEN KAREGI
-            final result = await OpenFile.open(path);
-            if (result.type != ResultType.done) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Could not open file: ${result.message}")),
-              );
-            }
+            // final result = await OpenFile.open(path);
+            // if (result.type != ResultType.done) {
+            //   ScaffoldMessenger.of(context).showSnackBar(
+            //     SnackBar(content: Text("Could not open file: ${result.message}")),
+            //   );
+            // }
           },
         ),
       ),

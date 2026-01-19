@@ -22,7 +22,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       },
       child: SafeArea(
         child: Scaffold(
-            body: SingleChildScrollView(
+          body: SingleChildScrollView(
             child: Column(
               children: [
                 _buildHeader(context),
@@ -43,7 +43,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                 ),
               ],
             ),
-                    ),
+          ),
         ),
       ),
     );
@@ -281,53 +281,97 @@ void _showLogoutDialog(BuildContext context) {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      // Yes / Logout Button (Styled)
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFF27121).withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
-                                (route) => false,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF27121),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
+                       const Icon(
+                        Icons.power_settings_new_rounded, // Unique logout icon
+                        size: 50,
+                        color: Color(0xFFF27121),
+                      ),
+                    ]    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Ready to Leave?",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Are you sure to the\nwant to logout?",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        // No / Cancel Button
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              "Not yet",
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            child: const Text("Yes, Logout"),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 10),
+                        // Yes / Logout Button (Styled)
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFF27121,
+                                  ).withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RoleSelectionScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF27121),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              child: const Text("Yes, Logout"),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
   // --- Keep your existing _buildOverviewCard, _buildSubjectsCard, etc. below ---
   Widget _buildOverviewCard() {
     return Container(
@@ -336,11 +380,19 @@ void _showLogoutDialog(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Overview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "Overview",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 20),
           _rowInfo(Icons.group, "Subjects assigned", "4", Colors.green),
           const Divider(height: 30),
-          _rowInfo(Icons.access_time, "Total classes handled", "312", Colors.green),
+          _rowInfo(
+            Icons.access_time,
+            "Total classes handled",
+            "312",
+            Colors.green,
+          ),
         ],
       ),
     );
@@ -353,11 +405,24 @@ void _showLogoutDialog(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Subjects Assigned", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "Subjects Assigned",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 15),
-          _subjectTile(Icons.book, "Computer Science", "BSCS - Semester 5", Colors.blue),
+          _subjectTile(
+            Icons.book,
+            "Computer Science",
+            "BSCS - Semester 5",
+            Colors.blue,
+          ),
           const Divider(),
-          _subjectTile(Icons.menu_book, "Data Structures", "BSCS - Semester 5", Colors.green),
+          _subjectTile(
+            Icons.menu_book,
+            "Data Structures",
+            "BSCS - Semester 5",
+            Colors.green,
+          ),
         ],
       ),
     );
@@ -370,17 +435,32 @@ void _showLogoutDialog(BuildContext context) {
         const SizedBox(width: 15),
         Text(title, style: const TextStyle(color: Colors.grey, fontSize: 16)),
         const Spacer(),
-        Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _subjectTile(IconData icon, String title, String subtitle, Color iconColor) {
+  Widget _subjectTile(
+    IconData icon,
+    String title,
+    String subtitle,
+    Color iconColor,
+  ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Icon(icon, color: iconColor),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -406,15 +486,20 @@ Widget _buildLogoutButton() {
           ),
         ),
       ),
-    ),
-  );
-}
+    ));
+  }
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(20),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 5),
+        ),
+      ],
     );
   }
 }

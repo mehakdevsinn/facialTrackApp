@@ -21,78 +21,80 @@ class AttendanceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F3F3),
-      appBar: AppBar(
-        backgroundColor: ColorPallet.primaryBlue,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ColorPallet.white),
-          onPressed: () => Navigator.pop(context),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F3F3),
+        appBar: AppBar(
+          backgroundColor: ColorPallet.primaryBlue,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: ColorPallet.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            "Attendance Detail",
+            style: TextStyle(color: Colors.white),
+          ),
         ),
-        title: const Text(
-          "Attendance Detail",
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              date,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 8),
-
-            Container(
-              padding: const EdgeInsets.all(20),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: present ? Colors.green : Colors.red,
-                  width: 2,
-                ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                date,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              child: Column(
-                children: [
-                  Icon(
-                    present ? Icons.check_circle : Icons.cancel,
-                    size: 40,
+
+              const SizedBox(height: 8),
+
+              Container(
+                padding: const EdgeInsets.all(20),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
                     color: present ? Colors.green : Colors.red,
+                    width: 2,
                   ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    present ? "Present" : "Absent",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      present ? Icons.check_circle : Icons.cancel,
+                      size: 40,
                       color: present ? Colors.green : Colors.red,
                     ),
-                  ),
 
-                  const SizedBox(height: 4),
-                  Text(
-                    present ? "Status Verified" : "Status Not Verified",
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+
+                    Text(
+                      present ? "Present" : "Absent",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: present ? Colors.green : Colors.red,
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+                    Text(
+                      present ? "Status Verified" : "Status Not Verified",
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            if (present) _timeLogsCard(),
+              if (present) _timeLogsCard(),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            _sessionInfoCard(),
-          ],
+              _sessionInfoCard(),
+            ],
+          ),
         ),
       ),
     );

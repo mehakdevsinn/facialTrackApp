@@ -113,7 +113,7 @@
 //                       style: TextStyle(color: Colors.grey),
 //                     ),
 //                     // const SizedBox(height: 8),
-          
+
 //                     // ---------------- GRID CARDS ----------------
 //                     GridView.count(
 //                       crossAxisCount: 2,
@@ -171,7 +171,7 @@
 //                         ),
 //                       ],
 //                     ),
-          
+
 //                     const SizedBox(height: 16),
 //                     // ---------------- LOGOUT CARD ----------------
 //                     AnimatedLogoutCard(),
@@ -446,15 +446,22 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
-import 'package:facialtrackapp/view/Teacher/Start%20Screen/start_screen.dart';
 import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
+import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
+import 'package:facialtrackapp/view/teacher/Start%20Screen/start_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:flutter/material.dart';
 
-class TeacherDashboardScreen extends StatelessWidget {
+class TeacherDashboardScreen extends StatefulWidget {
+  
   const TeacherDashboardScreen({super.key});
 
+  @override
+  State<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
+}
+
+class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -514,7 +521,10 @@ class TeacherDashboardScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.white,
+                      ),
                     ],
                   ),
                 ),
@@ -531,7 +541,10 @@ class TeacherDashboardScreen extends StatelessWidget {
                     value: 2,
                     child: ListTile(
                       leading: Icon(Icons.logout, color: Colors.red),
-                      title: Text('Logout', style: TextStyle(color: Colors.red)),
+                      title: Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
+                      ),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -541,7 +554,8 @@ class TeacherDashboardScreen extends StatelessWidget {
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),// padding: const EdgeInsets.all(16),
+              physics:
+                  const ClampingScrollPhysics(), // padding: const EdgeInsets.all(16),
               child: MediaQuery.removePadding(
                 context: context,
                 removeBottom: true,
@@ -555,7 +569,10 @@ class TeacherDashboardScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'Welcome, Mr. Anderson',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       const Text(
@@ -563,7 +580,7 @@ class TeacherDashboardScreen extends StatelessWidget {
                         style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 8),
-            
+
                       // ---------------- GRID CARDS ----------------
                       GridView.count(
                         crossAxisCount: 2,
@@ -573,6 +590,7 @@ class TeacherDashboardScreen extends StatelessWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
+                          // TeacherDashboardScreen ke andar
                           _AnimatedDashboardCard(
                             color: Colors.green,
                             icon: Icons.play_arrow,
@@ -581,7 +599,9 @@ class TeacherDashboardScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => StartSessionScreen(),
+                                  // Yahan showBackButton true bhejain
+                                  builder: (context) =>
+                                      StartSessionScreen(showBackButton: true),
                                 ),
                               );
                             },
@@ -590,26 +610,30 @@ class TeacherDashboardScreen extends StatelessWidget {
                             color: Colors.orange,
                             icon: Icons.stop,
                             title: 'End Attendance',
-                           // Dashboard Screen
-        ontap: () {
-          if (SessionManager.isLive) {
-            // Agar session chal raha hai, seedha Live screen par le jao
-            Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LiveSessionScreen(
-            autoStart: false, // Dobara start nahi karna, sirf view karna hai
-            isResume: true,   // Naya parameter taake purana time uthaye
-          ),
-        ),
-            );
-          } else {
-            // Agar koi session nahi chal raha toh error ya message dikhaein
-            ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No active session to end!")),
-            );
-          }
-        }
+                            // Dashboard Screen
+                            ontap: () {
+                              if (SessionManager.isLive) {
+                                // Agar session chal raha hai, seedha Live screen par le jao
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LiveSessionScreen(
+                                      autoStart:
+                                          false, // Dobara start nahi karna, sirf view karna hai
+                                      isResume:
+                                          true, // Naya parameter taake purana time uthaye
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                // Agar koi session nahi chal raha toh error ya message dikhaein
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("No active session to end!"),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                           _AnimatedDashboardCard(
                             color: Colors.blue,
@@ -619,7 +643,8 @@ class TeacherDashboardScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const AttendanceLogsScreen(),
+                                  builder: (context) =>
+                                      const AttendanceLogsScreen(),
                                 ),
                               );
                             },
@@ -628,16 +653,27 @@ class TeacherDashboardScreen extends StatelessWidget {
                             color: Colors.purple,
                             icon: Icons.bar_chart,
                             title: 'Monthly Report',
+                              ontap: () {
+                                Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  // Yahan showBackButton true bhejain
+                                  builder: (context) =>
+                                      AttendanceReport(showBackButton: true),
+                                ),
+                              );
+                            },
                           ),
                           _AnimatedDashboardCard(
                             color: Colors.teal,
                             icon: Icons.menu_book,
                             title: 'Subjects',
-                            ontap: (){
-                                Navigator.push(
+                            ontap: () {
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SubjectListScreen(),
+                                  builder: (context) =>
+                                      const SubjectListScreen(),
                                 ),
                               );
                             },
@@ -647,17 +683,19 @@ class TeacherDashboardScreen extends StatelessWidget {
                             icon: Icons.person,
                             title: 'Profile',
                             ontap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => const TeacherProfileScreen(),
-                              //   ),
-                              // );
+                                Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  // Yahan showBackButton true bhejain
+                                  builder: (context) =>
+                                      TeacherProfileScreen(showBackButton: true),
+                                ),
+                              );
                             },
                           ),
                         ],
                       ),
-            
+
                       const SizedBox(height: 16),
                       // ---------------- LOGOUT CARD ----------------
                       AnimatedLogoutCard(),

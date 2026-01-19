@@ -1,18 +1,25 @@
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
 
-class TeacherProfileScreen extends StatelessWidget {
-  const TeacherProfileScreen({super.key});
+class TeacherProfileScreen extends StatefulWidget {
+     final bool showBackButton;
+
+  const TeacherProfileScreen({super.key, this.showBackButton = false});
+
+  @override
+  State<TeacherProfileScreen> createState() => _TeacherProfileScreenState();
+}
+
+class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-    canPop: false, // Yeh back button ko fully disable kar deta hai
-    onPopInvokedWithResult: (didPop, result) {
-      // Agar back button dabaya jaye toh yahan kuch na likhen
-      // Isse screen pop nahi hogi aur na hi koi dialog aayega
-      if (didPop) return;
-    },
+    return  PopScope(
+    
+      canPop: widget.showBackButton,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+      },
       child: SafeArea(
         child: Scaffold(
             body: SingleChildScrollView(
@@ -42,80 +49,172 @@ class TeacherProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        // 1. Dark Blue Background (Top Section)
-        Container(
-          height: 220, // Reduced height to fix the "distance"
-          width: double.infinity,
-          color: const Color.fromARGB(255, 35, 4, 170),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 12,left: 15),
-                    child: Text("Teacher Profile", 
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  ),
-                  IconButton(icon: const Icon(Icons.settings, color: Colors.white), onPressed: () {}),
-                ],
-              ),
-            ),
-          ),
-        ),
+  // Widget _buildHeader(BuildContext context) {
+  //   return Stack(
+  //     alignment: Alignment.topCenter,
+  //     children: [
+  //       // 1. Dark Blue Background (Top Section)
+  //       Container(
+  //         height: 220, // Reduced height to fix the "distance"
+  //         width: double.infinity,
+  //         color: const Color.fromARGB(255, 35, 4, 170),
+  //         child: SafeArea(
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10),
+  //             child: Row(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //               children: [
+  //                 const Padding(
+  //                   padding: EdgeInsets.only(top: 12,left: 15),
+  //                   child: Text("Teacher Profile", 
+  //                     style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+  //                 ),
+  //                 IconButton(icon: const Icon(Icons.settings, color: Colors.white), onPressed: () {}),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
 
-        // 2. The White Card with Profile Details
-        // We use Padding to push it down so it overlaps the blue
-        Container(
-          margin: const EdgeInsets.only(top: 160), // Adjust this to control the overlap
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+  //       // 2. The White Card with Profile Details
+  //       // We use Padding to push it down so it overlaps the blue
+  //       Container(
+  //         margin: const EdgeInsets.only(top: 160), // Adjust this to control the overlap
+  //         width: double.infinity,
+  //         decoration: const BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.only(
               
-              topLeft: Radius.circular(40),
-              topRight: Radius.circular(40),
-            ),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 70), // Space for the floating image
-              const Text("Dr. Anya Sharma", 
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              Text("ID: TCH-2025-014", 
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+  //             topLeft: Radius.circular(40),
+  //             topRight: Radius.circular(40),
+  //           ),
+  //         ),
+  //         child: Column(
+  //           children: [
+  //             const SizedBox(height: 70), // Space for the floating image
+  //             const Text("Dr. Anya Sharma", 
+  //               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+  //             Text("ID: TCH-2025-014", 
+  //               style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+  //             const SizedBox(height: 20),
+  //           ],
+  //         ),
+  //       ),
 
-        // 3. Profile Image (Floating)
-        Positioned(
-          top: 100, // Positioned exactly between blue and white sections
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 4),
-              boxShadow: [
-                BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2)
-              ]
-            ),
-            child: const CircleAvatar(
-              radius: 60,
-              backgroundColor: Color(0xFFE0E0FF), // Placeholder light purple
-              backgroundImage: AssetImage('assets/profile.png'), 
+  //       // 3. Profile Image (Floating)
+  //       Positioned(
+  //         top: 100, // Positioned exactly between blue and white sections
+  //         child: Container(
+  //           decoration: BoxDecoration(
+  //             shape: BoxShape.circle,
+  //             border: Border.all(color: Colors.white, width: 4),
+  //             boxShadow: [
+  //               BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2)
+  //             ]
+  //           ),
+  //           child: const CircleAvatar(
+  //             radius: 60,
+  //             backgroundColor: Color(0xFFE0E0FF), // Placeholder light purple
+  //             backgroundImage: AssetImage('assets/profile.png'), 
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+  Widget _buildHeader(BuildContext context) {
+  return Stack(
+    alignment: Alignment.topCenter,
+    children: [
+      // 1. Dark Blue Background (Top Section)
+      Container(
+        height: 220,
+        width: double.infinity,
+        color: const Color.fromARGB(255, 35, 4, 170),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // AGAR showBackButton true hai toh icon dikhao, warna empty space
+                widget.showBackButton 
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      )
+                    : const SizedBox(width: 20), // Left margin for title when no back button
+
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      "Teacher Profile",
+                      style: const TextStyle(
+                        color: Colors.white, 
+                        fontSize: 18, 
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                ),
+                
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.white), 
+                  onPressed: () {}
+                ),
+              ],
             ),
           ),
         ),
-      ],
-    );
-  }void _showLogoutDialog(BuildContext context) {
+      ),
+
+      // 2. White Card Section
+      Container(
+        margin: const EdgeInsets.only(top: 160),
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(40),
+            topRight: Radius.circular(40),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 70),
+            const Text("Dr. Anya Sharma", 
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text("ID: TCH-2025-014", 
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+
+      // 3. Floating Profile Image
+      Positioned(
+        top: 100,
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 4),
+            boxShadow: const [
+              BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2)
+            ]
+          ),
+          child: const CircleAvatar(
+            radius: 60,
+            backgroundColor: Color(0xFFE0E0FF),
+            backgroundImage: AssetImage('assets/profile.png'), 
+          ),
+        ),
+      ),
+    ],
+  );
+}
+void _showLogoutDialog(BuildContext context) {
   showGeneralDialog(
     context: context,
     barrierDismissible: true,
@@ -230,7 +329,6 @@ class TeacherProfileScreen extends StatelessWidget {
   );
 }
   // --- Keep your existing _buildOverviewCard, _buildSubjectsCard, etc. below ---
-  
   Widget _buildOverviewCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -290,6 +388,7 @@ class TeacherProfileScreen extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
     );
   }
+
 Widget _buildLogoutButton() {
   return Builder( // Use Builder to get the correct context if needed
     builder: (context) => SizedBox(

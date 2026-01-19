@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/student/Subjects/subject-detail.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
@@ -149,7 +150,7 @@ LinearGradient attendanceGradient(double percent) {
   }
 }
 
-Widget subjectsSection() {
+Widget subjectsSection(context) {
   return Padding(
     padding: const EdgeInsets.only(left: 17, right: 17),
     child: Column(
@@ -164,39 +165,101 @@ Widget subjectsSection() {
           ),
         ),
         const SizedBox(height: 12),
+        subjectTile(
+          context,
+          title: "Computer Science",
+          percent: "92%",
+          color: Colors.green,
+          icon: Icons.computer,
+          teacher: "Mr. Smith",
+          attendance: 92,
+          presentDays: 46,
+          absentDays: 4,
+        ),
 
-        subjectTile("Computer Science", "92%", Colors.green, Icons.computer),
-        subjectTile("Mathematics", "89%", Colors.green, Icons.calculate),
-        subjectTile("Physics", "74%", Colors.orange, Icons.science),
+        subjectTile(
+          context,
+          title: "Mathematics",
+          percent: "89%",
+          color: Colors.green,
+          icon: Icons.calculate,
+          teacher: "Mrs. Brown",
+          attendance: 89,
+          presentDays: 40,
+          absentDays: 5,
+        ),
+
+        subjectTile(
+          context,
+          title: "Physics",
+          percent: "74%",
+          color: Colors.orange,
+          icon: Icons.science,
+          teacher: "Dr. John",
+          attendance: 74,
+          presentDays: 37,
+          absentDays: 13,
+        ),
       ],
     ),
   );
 }
 
-Widget subjectTile(String title, String percent, Color color, IconData icon) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(14),
-    decoration: _cardDecoration(),
-    child: Row(
-      children: [
-        CircleAvatar(
-          backgroundColor: color.withOpacity(0.15),
-          child: Icon(icon, color: color),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+Widget subjectTile(
+  BuildContext context, {
+  required String title,
+  required String percent,
+  required Color color,
+  required IconData icon,
+  required String teacher,
+  required int attendance,
+  required int presentDays,
+  required int absentDays,
+}) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SubjectDetailScreen(
+            subject: title,
+            teacher: teacher,
+            attendance: attendance,
+            presentDays: presentDays,
+            absentDays: absentDays,
+            color: color,
           ),
         ),
-        Text(
-          percent,
-          style: TextStyle(color: color, fontWeight: FontWeight.bold),
-        ),
-        const Icon(Icons.arrow_forward_ios, size: 18, color: ColorPallet.grey),
-      ],
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withOpacity(0.15),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Text(
+            percent,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 18,
+            color: ColorPallet.grey,
+          ),
+        ],
+      ),
     ),
   );
 }

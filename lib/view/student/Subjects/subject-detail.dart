@@ -23,141 +23,146 @@ class SubjectDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F3F3),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F3F3),
 
-      appBar: AppBar(
-        backgroundColor: ColorPallet.primaryBlue,
-        elevation: 0,
-        title: Text(
-          "$subject Detail",
-          style: const TextStyle(fontSize: 18, color: ColorPallet.white),
+        appBar: AppBar(
+          backgroundColor: ColorPallet.primaryBlue,
+          elevation: 0,
+          title: Text(
+            "$subject Detail",
+            style: const TextStyle(fontSize: 18, color: ColorPallet.white),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: ColorPallet.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          actions: const [
+            // Padding(
+            //   padding: EdgeInsets.only(right: 12),
+            //   child: Icon(Icons.info_outline, color: ColorPallet.white),
+            // ),
+          ],
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ColorPallet.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: const [
-          // Padding(
-          //   padding: EdgeInsets.only(right: 12),
-          //   child: Icon(Icons.info_outline, color: ColorPallet.white),
-          // ),
-        ],
-      ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(14),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
 
-              decoration: _cardDecoration(),
-              child: Row(
-                children: [
-                  CircularPercentIndicator(
-                    radius: 45,
-                    lineWidth: 7,
-                    percent: attendance / 100,
+                decoration: _cardDecoration(),
+                child: Row(
+                  children: [
+                    CircularPercentIndicator(
+                      radius: 45,
+                      lineWidth: 7,
+                      percent: attendance / 100,
 
-                    center: Text(
-                      "$attendance%",
-                      style: const TextStyle(
+                      center: Text(
+                        "$attendance%",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      progressColor: color,
+                      backgroundColor: color.withOpacity(0.2),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Teacher: $teacher",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "This is your calculated attendance rate based on all recorded sessions for $subject.",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: _cardDecoration(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 7),
+                    const Text(
+                      "Recent Sessions",
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    progressColor: color,
-                    backgroundColor: color.withOpacity(0.2),
-                  ),
 
-                  const SizedBox(width: 16),
+                    const SizedBox(height: 28),
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Teacher: $teacher",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "This is your calculated attendance rate based on all recorded sessions for $subject.",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
+                    _sessionTile(
+                      day: "Monday",
+                      exit: "4:00pm",
+                      entry: "10:30am",
+                      present: true,
+                      context: context,
+
+                      date: "2025-10-25",
+                      status: "Present",
+                      statusColor: Colors.green,
+                      time: "09:20 - 10:30",
                     ),
-                  ),
-                ],
+
+                    _sessionTile(
+                      day: "Tuesday",
+                      exit: "4:00pm",
+                      entry: "10:30am",
+                      present: false,
+                      context: context,
+
+                      date: "2025-10-23",
+                      status: "Absent",
+                      statusColor: Colors.red,
+                      time: "---- - 10:28",
+                    ),
+
+                    _sessionTile(
+                      day: "Wednesday",
+                      exit: "4:00pm",
+                      entry: "10:30am",
+                      present: true,
+                      context: context,
+                      date: "2025-10-21",
+                      status: "Late",
+                      statusColor: Colors.orange,
+                      time: "09:15 - 10:30",
+                      isLast: true,
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 22),
-
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: _cardDecoration(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 7),
-                  const Text(
-                    "Recent Sessions",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  _sessionTile(
-                    day: "Monday",
-                    exit: "4:00pm",
-                    entry: "10:30am",
-                    present: true,
-                    context: context,
-
-                    date: "2025-10-25",
-                    status: "Present",
-                    statusColor: Colors.green,
-                    time: "09:20 - 10:30",
-                  ),
-
-                  _sessionTile(
-                    day: "Tuesday",
-                    exit: "4:00pm",
-                    entry: "10:30am",
-                    present: false,
-                    context: context,
-
-                    date: "2025-10-23",
-                    status: "Absent",
-                    statusColor: Colors.red,
-                    time: "---- - 10:28",
-                  ),
-
-                  _sessionTile(
-                    day: "Wednesday",
-                    exit: "4:00pm",
-                    entry: "10:30am",
-                    present: true,
-                    context: context,
-                    date: "2025-10-21",
-                    status: "Late",
-                    statusColor: Colors.orange,
-                    time: "09:15 - 10:30",
-                    isLast: true,
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

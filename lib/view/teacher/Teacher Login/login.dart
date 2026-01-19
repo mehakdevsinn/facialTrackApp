@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/Teacher/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
@@ -141,7 +142,14 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
                     child: const Text(
                       "Forgot Password?",
                       style: TextStyle(
@@ -221,5 +229,3 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
     );
   }
 }
-
-

@@ -9,31 +9,31 @@ class MySubjectsScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 244, 243, 243),
-      
+
         body: Stack(
           children: [
             Container(
               height: 108,
               color: ColorPallet.primaryBlue,
-      
+
               child: Padding(
                 padding: const EdgeInsets.only(top: 22, left: 18, right: 18),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      
+
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       "My Subjects",
                       style: TextStyle(color: ColorPallet.white, fontSize: 20),
                     ),
-      
+
                     Icon(Icons.search, size: 30, color: ColorPallet.white),
                   ],
                 ),
               ),
             ),
-      
+
             Positioned(
               top: 70,
               left: 16,
@@ -42,7 +42,7 @@ class MySubjectsScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 22, right: 22),
                 child: Container(
                   width: double.infinity,
-      
+
                   padding: EdgeInsets.only(
                     left: 14,
                     right: 14,
@@ -51,9 +51,9 @@ class MySubjectsScreen extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: ColorPallet.white,
-      
+
                     borderRadius: BorderRadius.all(Radius.circular(16)),
-      
+
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
@@ -85,9 +85,12 @@ class MySubjectsScreen extends StatelessWidget {
                       ),
                       SizedBox(
                         height: 40,
-                        child: VerticalDivider(thickness: 1, color: Colors.grey),
+                        child: VerticalDivider(
+                          thickness: 1,
+                          color: Colors.grey,
+                        ),
                       ),
-      
+
                       Column(
                         children: [
                           CircleAvatar(
@@ -108,9 +111,12 @@ class MySubjectsScreen extends StatelessWidget {
                       ),
                       SizedBox(
                         height: 40,
-                        child: VerticalDivider(thickness: 1, color: Colors.grey),
+                        child: VerticalDivider(
+                          thickness: 1,
+                          color: Colors.grey,
+                        ),
                       ),
-      
+
                       Column(
                         children: [
                           CircleAvatar(
@@ -134,7 +140,7 @@ class MySubjectsScreen extends StatelessWidget {
                 ),
               ),
             ),
-      
+
             Padding(
               padding: const EdgeInsets.only(top: 180),
               child: ListView(

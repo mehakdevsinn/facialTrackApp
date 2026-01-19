@@ -76,26 +76,26 @@
 //   ),
 //                 ),
 
-//                 const SizedBox(height: 20),
+// const SizedBox(height: 20),
 
-//                 /// 📄 Personal Info Card
-//                 _infoCard(),
+// /// 📄 Personal Info Card
+// _infoCard(),
 
-//                 const SizedBox(height: 16),
+// const SizedBox(height: 16),
 
-//                 /// 📊 Attendance Overview
-//                 _attendanceCard(),
+// /// 📊 Attendance Overview
+// _attendanceCard(),
 
-//                 const SizedBox(height: 16),
+// const SizedBox(height: 16),
 
-//                 _thisMonthCard(),
+// _thisMonthCard(),
 
-//                 const SizedBox(height: 24),
+// const SizedBox(height: 24),
 
-//                 /// 📥 Buttons
-//                 _bottomButtons(context),
+// /// 📥 Buttons
+// _bottomButtons(context),
 
-//                 const SizedBox(height: 20),
+// const SizedBox(height: 20),
 //               ],
 //             ),
 //           ),
@@ -133,15 +133,15 @@
 //     );
 //   }
 
-//   Widget _infoRow(IconData icon, String text) {
-//     return Row(
-//       children: [
-//         Icon(icon, color: ColorPallet.primaryBlue),
-//         const SizedBox(width: 12),
-//         Text(text, style: TextStyle(fontSize: 14)),
-//       ],
-//     );
-//   }
+// Widget _infoRow(IconData icon, String text) {
+//   return Row(
+//     children: [
+//       Icon(icon, color: ColorPallet.primaryBlue),
+//       const SizedBox(width: 12),
+//       Text(text, style: TextStyle(fontSize: 14)),
+//     ],
+//   );
+// }
 
 //   Widget _attendanceCard() {
 //     return Container(
@@ -265,43 +265,61 @@
 //   }
 // }
 
+import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 
-class StudentProfileScreen extends StatelessWidget {
+class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
 
+  @override
+  State<StudentProfileScreen> createState() => _StudentProfileScreenState();
+}
+
+class _StudentProfileScreenState extends State<StudentProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false, // Yeh back button ko fully disable kar deta hai
       onPopInvokedWithResult: (didPop, result) {
-        // Agar back button dabaya jaye toh yahan kuch na likhen
-        // Isse screen pop nahi hogi aur na hi koi dialog aayega
         if (didPop) return;
       },
-      child: Scaffold(
-        // This ensures the light blue color is the base for the whole screen
-        // backgroundColor: Colors.blue.shade50,
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              // Content below the profile card
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildOverviewCard(),
-                    const SizedBox(height: 20),
-                    _buildSubjectsCard(),
-                    const SizedBox(height: 30),
-                    _buildLogoutButton(),
-                    const SizedBox(height: 40), // Extra space at bottom
-                  ],
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: const Color.fromARGB(255, 248, 248, 248),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                // Content below the profile card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+
+                      /// 📄 Personal Info Card
+                      _infoCard(),
+
+                      const SizedBox(height: 16),
+
+                      /// 📊 Attendance Overview
+                      _attendanceCard(),
+
+                      const SizedBox(height: 16),
+
+                      _thisMonthCard(),
+
+                      const SizedBox(height: 24),
+
+                      _buildLogoutButton(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -356,7 +374,7 @@ class StudentProfileScreen extends StatelessWidget {
           ), // Adjust this to control the overlap
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: const Color.fromARGB(255, 248, 248, 248),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(40),
               topRight: Radius.circular(40),
@@ -399,7 +417,6 @@ class StudentProfileScreen extends StatelessWidget {
           ),
         ),
 
-        // 3. Profile Image (Floating)
         Positioned(
           top: 100, // Positioned exactly between blue and white sections
           child: Container(
@@ -425,79 +442,23 @@ class StudentProfileScreen extends StatelessWidget {
     );
   }
 
-  // --- Keep your existing _buildOverviewCard, _buildSubjectsCard, etc. below ---
-
   Widget _buildOverviewCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Overview",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          _rowInfo(Icons.group, "Subjects assigned", "4", Colors.green),
-          const Divider(height: 30),
-          _rowInfo(
-            Icons.access_time,
-            "Total classes handled",
-            "312",
-            Colors.green,
-          ),
+          _infoRow(Icons.medical_information_outlined, "Personal Information"),
+
+          SizedBox(height: 20),
+          Divider(),
+          _infoRow(Icons.email, "ahmad.hassan@university.edu"),
+          const SizedBox(height: 8),
+          _infoRow(Icons.phone, "+92 300 1234567"),
+          const SizedBox(height: 8),
+          _infoRow(Icons.calendar_today, "Enrolled: September 2023"),
         ],
       ),
-    );
-  }
-
-  Widget _buildSubjectsCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Subjects Assigned",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 15),
-          _subjectTile(
-            Icons.book,
-            "Computer Science",
-            "BSCS - Semester 5",
-            Colors.blue,
-          ),
-          const Divider(),
-          _subjectTile(
-            Icons.menu_book,
-            "Data Structures",
-            "BSCS - Semester 5",
-            Colors.green,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _rowInfo(IconData icon, String title, String value, Color color) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.green.shade400),
-        const SizedBox(width: 15),
-        Text(title, style: const TextStyle(color: Colors.grey, fontSize: 16)),
-        const Spacer(),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 
@@ -523,20 +484,6 @@ class StudentProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton() {
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: const Icon(Icons.logout, color: Colors.white),
-      label: const Text("Logout"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFFF7043),
-        foregroundColor: Colors.white,
-        minimumSize: const Size(200, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      ),
-    );
-  }
-
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: Colors.white,
@@ -548,6 +495,302 @@ class StudentProfileScreen extends StatelessWidget {
           offset: const Offset(0, 5),
         ),
       ],
+    );
+  }
+
+  Widget _infoCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _infoRow(Icons.medical_information_outlined, "Personal Information"),
+
+          _infoRow(Icons.email, "ahmad.hassan@university.edu"),
+          const SizedBox(height: 8),
+          _infoRow(Icons.phone, "+92 300 1234567"),
+          const SizedBox(height: 8),
+          _infoRow(Icons.calendar_today, "Enrolled: September 2023"),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: ColorPallet.primaryBlue),
+        const SizedBox(width: 12),
+        Text(text, style: TextStyle(fontSize: 14)),
+      ],
+    );
+  }
+
+  Widget _attendanceCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircularPercentIndicator(
+            radius: 50,
+            lineWidth: 8,
+            percent: 0.87,
+            center: Text(
+              "87%",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            progressColor: Colors.green,
+            backgroundColor: Colors.green.withOpacity(0.2),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _statRow("Total Classes", "145", Icons.event),
+              const SizedBox(height: 6),
+              _statRow("Present", "126", Icons.check_circle),
+              const SizedBox(height: 6),
+              _statRow("Absent", "19", Icons.cancel),
+              const SizedBox(height: 6),
+              _statRow("Leave", "5", Icons.airplane_ticket),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statRow(String title, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 8),
+        Text("$title: $value", style: TextStyle(fontSize: 13)),
+      ],
+    );
+  }
+
+  Widget _thisMonthCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "This Month",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                "92%",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 12),
+              Text("Classes attended: 18/20", style: TextStyle(fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text("Best subject: ⭐ Mathematics", style: TextStyle(fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return Builder(
+      // Use Builder to get the correct context if needed
+      builder: (context) => SizedBox(
+        width: 200, // Adjusted width to match Figma
+        child: ElevatedButton.icon(
+          onPressed: () => _showLogoutDialog(context),
+          icon: const Icon(Icons.logout, color: Colors.white),
+          label: const Text(
+            "Logout",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF27121),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5), // Background dimming
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) => const SizedBox(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        // Unique Curve: Bounce effect (BackOut)
+        final curvedValue = Curves.easeOutBack.transform(anim1.value) - 1.0;
+        return Transform(
+          transform: Matrix4.translationValues(
+            0.0,
+            curvedValue * -200,
+            0.0,
+          ), // Top se slide hokar aayega
+          child: Opacity(
+            opacity: anim1.value,
+            child: AlertDialog(
+              backgroundColor: Colors.white.withOpacity(
+                0.95,
+              ), // Slight glass effect
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  30,
+                ), // More rounded for modern look
+                side: BorderSide(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              content: Container(
+                padding: const EdgeInsets.only(top: 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Unique Header: Orange Glow Icon
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF27121).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.power_settings_new_rounded, // Unique logout icon
+                        size: 50,
+                        color: Color(0xFFF27121),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Ready to Leave?",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Are you sure to the\nwant to logout?",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        // No / Cancel Button
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              "Not yet",
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Yes / Logout Button (Styled)
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFF27121,
+                                  ).withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RoleSelectionScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF27121),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              child: const Text("Yes, Logout"),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

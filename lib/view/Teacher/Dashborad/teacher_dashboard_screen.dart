@@ -113,7 +113,7 @@
 //                       style: TextStyle(color: Colors.grey),
 //                     ),
 //                     // const SizedBox(height: 8),
-          
+
 //                     // ---------------- GRID CARDS ----------------
 //                     GridView.count(
 //                       crossAxisCount: 2,
@@ -171,7 +171,7 @@
 //                         ),
 //                       ],
 //                     ),
-          
+
 //                     const SizedBox(height: 16),
 //                     // ---------------- LOGOUT CARD ----------------
 //                     AnimatedLogoutCard(),
@@ -514,7 +514,10 @@ class TeacherDashboardScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.white,
+                      ),
                     ],
                   ),
                 ),
@@ -531,7 +534,10 @@ class TeacherDashboardScreen extends StatelessWidget {
                     value: 2,
                     child: ListTile(
                       leading: Icon(Icons.logout, color: Colors.red),
-                      title: Text('Logout', style: TextStyle(color: Colors.red)),
+                      title: Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
+                      ),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -541,7 +547,8 @@ class TeacherDashboardScreen extends StatelessWidget {
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),// padding: const EdgeInsets.all(16),
+              physics:
+                  const ClampingScrollPhysics(), // padding: const EdgeInsets.all(16),
               child: MediaQuery.removePadding(
                 context: context,
                 removeBottom: true,
@@ -555,7 +562,10 @@ class TeacherDashboardScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'Welcome, Mr. Anderson',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       const Text(
@@ -563,7 +573,7 @@ class TeacherDashboardScreen extends StatelessWidget {
                         style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 8),
-            
+
                       // ---------------- GRID CARDS ----------------
                       GridView.count(
                         crossAxisCount: 2,
@@ -590,26 +600,30 @@ class TeacherDashboardScreen extends StatelessWidget {
                             color: Colors.orange,
                             icon: Icons.stop,
                             title: 'End Attendance',
-                           // Dashboard Screen
-        ontap: () {
-          if (SessionManager.isLive) {
-            // Agar session chal raha hai, seedha Live screen par le jao
-            Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LiveSessionScreen(
-            autoStart: false, // Dobara start nahi karna, sirf view karna hai
-            isResume: true,   // Naya parameter taake purana time uthaye
-          ),
-        ),
-            );
-          } else {
-            // Agar koi session nahi chal raha toh error ya message dikhaein
-            ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No active session to end!")),
-            );
-          }
-        }
+                            // Dashboard Screen
+                            ontap: () {
+                              if (SessionManager.isLive) {
+                                // Agar session chal raha hai, seedha Live screen par le jao
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LiveSessionScreen(
+                                      autoStart:
+                                          false, // Dobara start nahi karna, sirf view karna hai
+                                      isResume:
+                                          true, // Naya parameter taake purana time uthaye
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                // Agar koi session nahi chal raha toh error ya message dikhaein
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("No active session to end!"),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                           _AnimatedDashboardCard(
                             color: Colors.blue,
@@ -619,7 +633,8 @@ class TeacherDashboardScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const AttendanceLogsScreen(),
+                                  builder: (context) =>
+                                      const AttendanceLogsScreen(),
                                 ),
                               );
                             },
@@ -633,11 +648,12 @@ class TeacherDashboardScreen extends StatelessWidget {
                             color: Colors.teal,
                             icon: Icons.menu_book,
                             title: 'Subjects',
-                            ontap: (){
-                                Navigator.push(
+                            ontap: () {
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SubjectListScreen(),
+                                  builder: (context) =>
+                                      const SubjectListScreen(),
                                 ),
                               );
                             },
@@ -657,7 +673,7 @@ class TeacherDashboardScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-            
+
                       const SizedBox(height: 16),
                       // ---------------- LOGOUT CARD ----------------
                       AnimatedLogoutCard(),

@@ -42,7 +42,6 @@ dependencies:
   pdf: ^3.10.8      
   printing: ^5.11.1 
   path_provider: ^2.1.2  # Storage access ke liye
-  # open_file_plus: ^3.4.1+1
   permission_handler: ^11.3.1 # Permission lene ke liye 
 
 dev_dependencies:

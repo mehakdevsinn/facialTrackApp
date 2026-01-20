@@ -454,7 +454,6 @@ import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart'
 import 'package:flutter/material.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
-  
   const TeacherDashboardScreen({super.key});
 
   @override
@@ -491,9 +490,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
                 onSelected: (value) {
                   if (value == 1) {
-                    // View Profile action
+                     Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  // Yahan showBackButton true bhejain
+                                  builder: (context) => TeacherProfileScreen(
+                                    showBackButton: true,
+                                  ),
+                                ),
+                              );
                   } else if (value == 2) {
-                    // Logout action
+                    _showLogoutDialog(context);
                   }
                 },
                 child: Container(
@@ -514,7 +521,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        'Mr. Anderson',
+                        'Dr. Saima Kamran',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -568,7 +575,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     // padding: EdgeInsets.zero,
                     children: [
                       const Text(
-                        'Welcome, Mr. Anderson',
+                        'Welcome, Dr Saima Kamran',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -653,8 +660,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             color: Colors.purple,
                             icon: Icons.bar_chart,
                             title: 'Monthly Report',
-                              ontap: () {
-                                Navigator.push(
+                            ontap: () {
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   // Yahan showBackButton true bhejain
@@ -683,12 +690,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             icon: Icons.person,
                             title: 'Profile',
                             ontap: () {
-                                Navigator.push(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   // Yahan showBackButton true bhejain
-                                  builder: (context) =>
-                                      TeacherProfileScreen(showBackButton: true),
+                                  builder: (context) => TeacherProfileScreen(
+                                    showBackButton: true,
+                                  ),
                                 ),
                               );
                             },

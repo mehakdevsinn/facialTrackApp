@@ -3,6 +3,7 @@ import 'package:facialtrackapp/view/teacher/Dashborad/add_subject_screen.dart';
 import 'package:flutter/material.dart';
 
 class SubjectListScreen extends StatefulWidget {
+  
   const SubjectListScreen({super.key});
 
   @override
@@ -11,7 +12,9 @@ class SubjectListScreen extends StatefulWidget {
 
 class _SubjectListScreenState extends State<SubjectListScreen> {
   // Variable to keep track of selected filter
+  final TextEditingController _searchController = TextEditingController();
   String selectedFilter = "All";
+  String searchQuery = "";
 
   // Data List (Easily manageable)
   final List<Map<String, dynamic>> allSubjects = [
@@ -46,9 +49,16 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
   @override
   Widget build(BuildContext context) {
     // Filtering logic
-    List<Map<String, dynamic>> displayedSubjects = selectedFilter == "All"
-        ? allSubjects
-        : allSubjects.where((s) => s['grade'] == selectedFilter).toList();
+   List<Map<String, dynamic>> displayedSubjects = allSubjects.where((subject) {
+    // Grade check: Agar "All" hai toh true, warna grade match honi chahiye
+    bool matchesGrade = selectedFilter == "All" || subject['grade'] == selectedFilter;
+
+    // Search check: Title ya Grade mein word match hona chahiye
+    bool matchesSearch = subject['title'].toLowerCase().contains(searchQuery) || 
+                         subject['assigned'].toLowerCase().contains(searchQuery);
+
+    return matchesGrade && matchesSearch;
+  }).toList();
 
     return SafeArea(
       child: Scaffold(
@@ -83,16 +93,32 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
         ],
       ),
       child: TextField(
-        textAlignVertical: TextAlignVertical.center, // Text aur icon ko center karne ke liye
-        style: TextStyle(color: ColorPallet.deepBlue, fontSize: 16),
-        decoration: InputDecoration(
-          hintText: 'Search subjects...',
-          hintStyle: TextStyle(color: ColorPallet.primaryBlue.withOpacity(0.5)),
-          prefixIcon: Icon(Icons.search, color: ColorPallet.primaryBlue, size: 22),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10), // Inner padding alignment fix
-        ),
-      ),
+  controller: _searchController, // Controller add kiya
+  onChanged: (value) {
+    setState(() {
+      searchQuery = value.toLowerCase(); // Search query update ki
+    });
+  },
+  textAlignVertical: TextAlignVertical.center,
+  style: TextStyle(color: ColorPallet.deepBlue, fontSize: 16),
+  decoration: InputDecoration(
+    hintText: 'Search subjects...',
+    hintStyle: TextStyle(color: ColorPallet.primaryBlue.withOpacity(0.5)),
+    prefixIcon: Icon(Icons.search, color: ColorPallet.primaryBlue, size: 22),
+    // Clear button agar user search khatam karna chahe
+    suffixIcon: searchQuery.isNotEmpty 
+        ? IconButton(
+            icon: const Icon(Icons.clear, size: 18),
+            onPressed: () {
+              _searchController.clear();
+              setState(() => searchQuery = "");
+            },
+          ) 
+        : null,
+    border: InputBorder.none,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+  ),
+),
         ),
       ),
             // 2. Filter Tabs
@@ -147,7 +173,23 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                     topRight: Radius.circular(35),
                   ),
                 ),
-                child: ListView.builder(
+                child: 
+                displayedSubjects.isEmpty 
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
+                const SizedBox(height: 10),
+                Text(
+                  "No subjects found for '$searchQuery'",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                ),
+              ],
+            ),
+          )
+        :
+                ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: displayedSubjects.length,
                   itemBuilder: (context, index) {

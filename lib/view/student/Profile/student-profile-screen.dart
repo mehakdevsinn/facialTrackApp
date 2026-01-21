@@ -267,8 +267,49 @@
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:facialtrackapp/widgets/dashboard-widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:printing/printing.dart';
+
+Future<void> _generateAndDownloadPDF() async {
+  final pdf = pw.Document();
+
+  pdf.addPage(
+    pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      // Yahan 'context' ko 'pwContext' likh dein taaki conflict na ho
+      build: (pw.Context pwContext) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              "Attendance Report",
+              style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Divider(),
+            pw.SizedBox(height: 20),
+            pw.Text("Overall Attendance: 87%"),
+            pw.Text("Total Classes: 145"),
+            pw.Text("Present: 126"),
+            pw.Text("Absent: 19"),
+            pw.SizedBox(height: 20),
+            pw.Text(
+              "Report Generated on: ${DateTime.now().toString().split('.')[0]}",
+            ),
+          ],
+        );
+      },
+    ),
+  );
+
+  await Printing.layoutPdf(
+    onLayout: (PdfPageFormat format) async => pdf.save(),
+    name: 'Attendance_Report.pdf',
+  );
+}
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -305,13 +346,316 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       const SizedBox(height: 16),
 
                       /// 📊 Attendance Overview
-                      _attendanceCard(),
-
+                      // _attendanceCard(),
                       const SizedBox(height: 16),
 
-                      _thisMonthCard(),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 10),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.bar_chart,
+                                  color: ColorPallet.primaryBlue,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Attendance Overview",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 20),
 
+                            // Circular Indicator
+                            // CircularPercentIndicator(
+                            //   radius: 80.0,
+                            //   lineWidth: 15.0,
+                            //   percent: 0.87,
+                            //   center: Column(
+                            //     mainAxisAlignment: MainAxisAlignment.center,
+                            //     children: [
+                            //       Text(
+                            //         "87%",
+                            //         style: TextStyle(
+                            //           fontSize: 28,
+                            //           fontWeight: FontWeight.bold,
+                            //         ),
+                            //       ),
+                            //       Text(
+                            //         "Overall\nAttendance",
+                            //         textAlign: TextAlign.center,
+                            //         style: TextStyle(
+                            //           color: Colors.grey,
+                            //           fontSize: 12,
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            //   circularStrokeCap: CircularStrokeCap.round,
+                            //   linearGradient: LinearGradient(
+                            //     colors: [Colors.blue, Colors.tealAccent],
+                            //   ),
+                            //   backgroundColor: Colors.grey.shade200,
+                            // ),
+                            // overallAttendanceCard(),
+                            CircularPercentIndicator(
+                              radius: 60,
+                              lineWidth: 12,
+                              percent: attendancePercent,
+                              center: Text(
+                                "${(attendancePercent * 100).toInt()}%",
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              linearGradient: attendanceGradient(
+                                attendancePercent,
+                              ),
+
+                              backgroundColor: Colors.grey.shade200,
+                              circularStrokeCap: CircularStrokeCap.round,
+                            ),
+
+                            SizedBox(height: 25),
+
+                            // Stats Grid
+                            Row(
+                              children: [
+                                _buildStatTile(
+                                  "Total Classes",
+                                  "145",
+                                  Icons.book,
+                                  Colors.blue.shade50,
+                                  Colors.blue,
+                                  Colors.blue.shade100,
+                                ),
+                                SizedBox(width: 12),
+                                _buildStatTile(
+                                  "Present",
+                                  "126",
+                                  Icons.check_circle,
+                                  Colors.green.shade50,
+                                  Colors.green,
+                                  Colors.green.shade100,
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            Row(
+                              children: [
+                                _buildStatTile(
+                                  "Absent",
+                                  "19",
+                                  Icons.cancel,
+                                  Colors.red.shade50,
+                                  Colors.red,
+                                  Colors.red.shade100,
+                                ),
+                                SizedBox(width: 12),
+                                _buildStatTile(
+                                  "Leave",
+                                  "5",
+                                  Icons.person_off,
+                                  Colors.orange.shade50,
+                                  Colors.orange,
+                                  Colors.orange.shade100,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 16),
+
+                      // Bottom Small Card
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 10),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_month,
+                                  color: ColorPallet.primaryBlue,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "This Month",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 15),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      "92%",
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_upward,
+                                      color: Colors.green,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                                _verticalDivider(),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    MediaQuery.of(context).size.width <= 400
+                                        ? Container(
+                                            width: 50,
+                                            child: Text(
+                                              "Classes attended:",
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            "Classes attended:",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                    Text(
+                                      "18/20",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+
+                                        fontSize:
+                                            MediaQuery.of(context).size.width <=
+                                                400
+                                            ? 11
+                                            : 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                _verticalDivider(),
+
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    MediaQuery.of(context).size.width <= 400
+                                        ? Container(
+                                            width: 50,
+                                            child: Text(
+                                              "Best subject:",
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            "Best subject:",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                    SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.emoji_events,
+                                          color: Colors.orange,
+                                          size: 16,
+                                        ),
+                                        Text(
+                                          " Mathematics",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+
+                                            fontSize:
+                                                MediaQuery.of(
+                                                      context,
+                                                    ).size.width <=
+                                                    400
+                                                ? 9
+                                                : 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // _thisMonthCard(),
                       const SizedBox(height: 24),
+
+                      // Button code update
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _generateAndDownloadPDF(),
+                          icon: Icon(
+                            Icons.download,
+                            size: 20,
+                            color: ColorPallet.primaryBlue,
+                          ),
+                          label: Text(
+                            "Download Report",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: ColorPallet.primaryBlue,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: ColorPallet.primaryBlue,
+                            side: BorderSide(
+                              color: ColorPallet.primaryBlue,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
 
                       _buildLogoutButton(),
                       const SizedBox(height: 100),
@@ -324,6 +668,60 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildStatTile(
+    String title,
+    String value,
+    IconData icon,
+    Color bgColor,
+    Color iconColor,
+    Color backgroundColors,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: backgroundColors,
+              radius: 18,
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MediaQuery.of(context).size.width <= 400
+                    ? Container(
+                        width: 50,
+                        child: Text(
+                          title,
+                          style: TextStyle(color: Colors.black54, fontSize: 12),
+                        ),
+                      )
+                    : Text(
+                        title,
+                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                      ),
+                Text(
+                  value,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _verticalDivider() {
+    return Container(height: 30, width: 1, color: Colors.grey.shade300);
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -509,14 +907,17 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 3,
-            offset: const Offset(2, 2),
+            // offset: const Offset(2, 2),
           ),
         ],
       ),
       child: Column(
         children: [
           _infoRow(Icons.medical_information_outlined, "Personal Information"),
+          SizedBox(height: 10),
 
+          Divider(),
+          SizedBox(height: 10),
           _infoRow(Icons.email, "ahmad.hassan@university.edu"),
           const SizedBox(height: 8),
           _infoRow(Icons.phone, "+92 300 1234567"),
@@ -635,9 +1036,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
   Widget _buildLogoutButton() {
     return Builder(
-      // Use Builder to get the correct context if needed
       builder: (context) => SizedBox(
-        width: 200, // Adjusted width to match Figma
+        width: double.infinity,
+        height: 50,
         child: ElevatedButton.icon(
           onPressed: () => _showLogoutDialog(context),
           icon: const Icon(Icons.logout, color: Colors.white),
@@ -650,7 +1051,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(50),
             ),
           ),
         ),

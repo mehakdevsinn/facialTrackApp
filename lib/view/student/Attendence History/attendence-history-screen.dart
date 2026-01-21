@@ -147,7 +147,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         appBar: AppBar(
           backgroundColor: ColorPallet.primaryBlue,
           elevation: 0,
-          leading: const Icon(Icons.arrow_back, color: Colors.white),
+          // leading: const Icon(Icons.arrow_back, color: Colors.white),
           title: const Text(
             "Attendance History",
             style: TextStyle(color: Colors.white),

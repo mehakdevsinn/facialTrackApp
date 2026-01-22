@@ -887,99 +887,194 @@ String _formatDuration(Duration duration) {
     );
   }
 
-  Widget _buildStudentsGrid() {
-    return Container(
-      // Grey background container
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.grey[200], // Light grey shade jo image mein hai
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
-              mainAxisSpacing: 15,
-              crossAxisSpacing: 15,
-            ),
-            itemCount: 15, // Aap isse dynamic kar sakte hain
-            itemBuilder: (context, index) {
-              // Kuch icons par orange glow/border hai image mein
-              bool hasAlert =
-                  index == 3 || index == 7 || index == 10 || index == 11;
+  // Widget _buildStudentsGrid() {
+  //   return Container(
+  //     // Grey background container
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+  //     decoration: BoxDecoration(
+  //       color: Colors.grey[200], // Light grey shade jo image mein hai
+  //       borderRadius: BorderRadius.circular(20),
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         GridView.builder(
+  //           shrinkWrap: true,
+  //           physics: const NeverScrollableScrollPhysics(),
+  //           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //             crossAxisCount: 5,
+  //             mainAxisSpacing: 15,
+  //             crossAxisSpacing: 15,
+  //           ),
+  //           itemCount: 15, // Aap isse dynamic kar sakte hain
+  //           itemBuilder: (context, index) {
+  //             // Kuch icons par orange glow/border hai image mein
+  //             bool hasAlert =
+  //                 index == 3 || index == 7 || index == 10 || index == 11;
 
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: hasAlert
-                          ? [
-                              BoxShadow(
-                                color: Colors.orange.withOpacity(0.4),
-                                blurRadius: 8,
-                                spreadRadius: 6,
-                              )
-                            ]
-                          : null,
-                    ),
-                    child: CircleAvatar(
-                      radius: 25,
-                      backgroundColor:
-                          const Color(0xFF34A853), // Green color matching image
-                      child: Text(index % 2 == 0 ? "AK" : "SM",
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold)),
+  //             return Stack(
+  //               alignment: Alignment.center,
+  //               children: [
+  //                 Container(
+  //                   decoration: BoxDecoration(
+  //                     shape: BoxShape.circle,
+  //                     boxShadow: hasAlert
+  //                         ? [
+  //                             BoxShadow(
+  //                               color: Colors.orange.withOpacity(0.4),
+  //                               blurRadius: 8,
+  //                               spreadRadius: 6,
+  //                             )
+  //                           ]
+  //                         : null,
+  //                   ),
+  //                   child: CircleAvatar(
+  //                     radius: 25,
+  //                     backgroundColor:
+  //                         const Color(0xFF34A853), // Green color matching image
+  //                     child: Text(index % 2 == 0 ? "AK" : "SM",
+  //                         style: const TextStyle(
+  //                             color: Colors.white,
+  //                             fontSize: 12,
+  //                             fontWeight: FontWeight.bold)),
+  //                   ),
+  //                 ),
+  //                 // Green check mark icon
+  //                 const Positioned(
+  //                   bottom: 0,
+  //                   right: 0,
+  //                   child: CircleAvatar(
+  //                     radius: 9,
+  //                     backgroundColor: Colors.white,
+  //                     child: Icon(Icons.check_circle,
+  //                         color: Color(0xFF34A853), size: 16),
+  //                   ),
+  //                 )
+  //               ],
+  //             );
+  //           },
+  //         ),
+  //         const SizedBox(height: 20),
+  //         // Bottom indicator: 23/25 students detected
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(8),
+  //               decoration: BoxDecoration(
+  //                 shape: BoxShape.circle,
+  //                 border: Border.all(color: const Color(0xFF34A853), width: 2),
+  //               ),
+  //               child: const Text("23",
+  //                   style:
+  //                       TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+  //             ),
+  //             const SizedBox(width: 8),
+  //             const Text(
+  //               "/25 students detected",
+  //               style: TextStyle(
+  //                   color: Colors.black87, fontWeight: FontWeight.w500),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  Widget _buildStudentsGrid() {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Column(
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            mainAxisSpacing: 18, // Spacing thodi barha di hai
+            crossAxisSpacing: 15,
+          ),
+          itemCount: 15,
+          itemBuilder: (context, index) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        // Visible Grey Shadow:
+                        color: Colors.green.withOpacity(0.15), 
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 3), // Shadow thoda niche tak visible hoga
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 25,
+                    backgroundColor: const Color(0xFF34A853),
+                    child: Text(
+                      index % 2 == 0 ? "AK" : "SM",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  // Green check mark icon
-                  const Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: CircleAvatar(
-                      radius: 9,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.check_circle,
-                          color: Color(0xFF34A853), size: 16),
-                    ),
-                  )
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          // Bottom indicator: 23/25 students detected
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF34A853), width: 2),
                 ),
-                child: const Text("23",
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: CircleAvatar(
+                    radius: 9,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF34A853),
+                      size: 16,
+                    ),
+                  ),
+                )
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 25),
+        // Bottom indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF34A853), width: 2),
               ),
-              const SizedBox(width: 8),
-              const Text(
-                "/25 students detected",
-                style: TextStyle(
-                    color: Colors.black87, fontWeight: FontWeight.w500),
+              child: const Text(
+                "23",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              "/25 students detected",
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildSessionTimeline() {
     const greenColor = Color(0xFF34A853);

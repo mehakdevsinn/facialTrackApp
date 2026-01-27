@@ -16,25 +16,26 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen>
   late TextEditingController entryController;
   late TextEditingController exitController;
   late TextEditingController durationController;
-
+late TextEditingController leaveReasonController; // New Controller
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  bool isAbsent = false;
 
   @override
   void initState() {
     super.initState();
-    entryController = TextEditingController(
-      text: widget.studentData['entryTime'] ?? "09:00 AM",
-    );
-    exitController = TextEditingController(
-      text: widget.studentData['exitTime'] ?? "10:30 AM",
-    );
-    durationController = TextEditingController(
-      text: widget.studentData['time'],
-    );
 
-    // Animation Setup
+    // 1. Logic check for Absent status
+    isAbsent = widget.studentData['status']?.toLowerCase() == 'absent';
+
+    // 2. Initialize Controllers
+    entryController = TextEditingController(text: widget.studentData['entryTime'] ?? "09:00 AM");
+    exitController = TextEditingController(text: widget.studentData['exitTime'] ?? "10:30 AM");
+    durationController = TextEditingController(text: widget.studentData['time']);
+    leaveReasonController = TextEditingController(text: widget.studentData['leaveReason'] ?? "");
+
+    // 3. FIX: Initialize Animation Setup (This part was likely missing/skipped)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -47,11 +48,15 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen>
 
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
-    _controller.forward(); // Start animation
+    _controller.forward(); // Start the animation
   }
-
   @override
   void dispose() {
+    // Always dispose controllers to prevent memory leaks
+    entryController.dispose();
+    exitController.dispose();
+    durationController.dispose();
+    leaveReasonController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -61,7 +66,10 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        title: const Text("Edit Attendance Logs",style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),),
+        title: const Text(
+          "Edit Attendance Logs",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
         backgroundColor: const Color(0xFF1A237E),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -117,6 +125,15 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen>
                   Icons.logout,
                   1,
                 ),
+                if (isAbsent) ...[
+                  const SizedBox(height: 15),
+                  _buildAnimatedField(
+                    "Leave Reason (Optional)",
+                    leaveReasonController,
+                    Icons.note_alt_outlined,
+                    3,
+                  ),
+                ],
                 const SizedBox(height: 15),
                 _buildAnimatedField(
                   "Total Duration",
@@ -127,33 +144,44 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen>
 
                 const Spacer(),
 
-               Hero(
-  tag: 'save_btn',
-  child: ElevatedButton(
-    onPressed: () {
-      // Data wapis bheja ja raha hai
-      Navigator.pop(context, {
-        "entryTime": entryController.text,
-        "exitTime": exitController.text,
-        "time": durationController.text,
-      });
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF1A237E), // Dark blue
-      foregroundColor: Colors.white,
-      minimumSize: const Size(double.infinity, 55), // Isse button FULL ho jayega
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
-    child: const Text("SAVE CHANGES", style: TextStyle(fontWeight: FontWeight.bold)),
-  ),
-),  ],
+                Hero(
+                  tag: 'save_btn',
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Data wapis bheja ja raha hai
+                      Navigator.pop(context, {
+                        "entryTime": entryController.text,
+                        "exitTime": exitController.text,
+                        "time": durationController.text,
+                          "leaveReason": leaveReasonController.text, // Added this
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A237E), // Dark blue
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(
+                        double.infinity,
+                        55,
+                      ), // Isse button FULL ho jayega
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "SAVE CHANGES",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
-Widget _buildAnimatedField(
+
+  Widget _buildAnimatedField(
     String label,
     TextEditingController controller,
     IconData icon,
@@ -187,7 +215,7 @@ Widget _buildAnimatedField(
           child: TextField(
             controller: controller,
             // Isse text icon ke sath center mein rahega
-            textAlignVertical: TextAlignVertical.center, 
+            textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: const Color(0xFF1A237E), size: 22),
               hintText: "Enter $label",
@@ -199,9 +227,15 @@ Widget _buildAnimatedField(
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF1A237E), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1A237E),
+                  width: 1.5,
+                ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 15,
+              ),
             ),
           ),
         ),

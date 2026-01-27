@@ -76,13 +76,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
                         _buildModernField(_gradeController, "Grade (e.g., Grade 11-A)", Icons.school_outlined),
                         
                         _buildAnimatedLabel("Academic Progress"),
-                        Row(
-                          children: [
-                            Expanded(child: _buildModernField(_syllabusController, "Syllabus %", Icons.pie_chart_outline, isNum: true)),
-                            const SizedBox(width: 15),
-                            Expanded(child: _buildModernField(_attendanceController, "Attendance %", Icons.percent, isNum: true)),
-                          ],
-                        ),
+                        // Expanded(child: _buildModernField(_syllabusController, "Syllabus %", Icons.pie_chart_outline, isNum: true)),
+                        const SizedBox(width: 15),
+                        _buildModernField(_attendanceController, "Attendance %", Icons.percent, isNum: true),
                         
                         const SizedBox(height: 50),
                         

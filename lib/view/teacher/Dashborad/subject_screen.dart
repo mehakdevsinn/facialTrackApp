@@ -20,29 +20,31 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
   final List<Map<String, dynamic>> allSubjects = [
     {
       "title": "Computer Science - CS101",
-      "assigned": "Grade 10-B",
-      "syllabus": 0.75,
-      "avg": "88%",
+      "assigned": "Semester 2",
       "icon": Icons.laptop_mac_rounded,
-      "grade": "Grade 10"
+            "percentCircle": 83,
+      "avg": "92%",
+
+      "grade": "Semester 2"
+      
     },
     {
       "title": "Mathematics - MA102",
-      "assigned": "Grade 10-A",
+      "assigned": "Semester 4",
       "syllabus": 0.60,
       "avg": "92%",
       "icon": Icons.calculate_rounded,
       "percentCircle": 83,
-      "grade": "Grade 10"
+      "grade": "Semester 4"
     },
     {
       "title": "Physics - PH103",
-      "assigned": "Grade 11-B",
+      "assigned": "Semester 6",
       "syllabus": 0.50,
       "avg": "80%",
       "icon": Icons.science_rounded,
       "percentCircle": 92,
-      "grade": "Grade 11"
+      "grade": "Semester 6"
     },
   ];
 
@@ -53,7 +55,6 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
     // Grade check: Agar "All" hai toh true, warna grade match honi chahiye
     bool matchesGrade = selectedFilter == "All" || subject['grade'] == selectedFilter;
 
-    // Search check: Title ya Grade mein word match hona chahiye
     bool matchesSearch = subject['title'].toLowerCase().contains(searchQuery) || 
                          subject['assigned'].toLowerCase().contains(searchQuery);
 
@@ -128,7 +129,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                 children: [
                   _buildFilterButton("All"),
                   const SizedBox(width: 10),
-                  _buildFilterButton("Grade 11"),
+                  _buildFilterButton("Semester 2"),
                   const Spacer(),
                   // Add Button
                  // Filter & Add Button Row mein Add button ka code:
@@ -197,7 +198,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                     return _buildSubjectCard(
                       title: subject['title'],
                       assigned: subject['assigned'],
-                      syllabus: subject['syllabus'],
+                      // syllabus: subject['syllabus'],
                       avg: subject['avg'],
                       icon: subject['icon'],
                       percentCircle: subject['percentCircle'],
@@ -243,7 +244,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
   Widget _buildSubjectCard({
     required String title,
     required String assigned,
-    required double syllabus,
+    // required double syllabus,
     required String avg,
     required IconData icon,
     int? percentCircle,
@@ -280,25 +281,25 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                 Text("Assigned: $assigned", style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 10),
                 // Syllabus Progress
-                Row(
-                  children: [
-                    const Text("Syllabus", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: LinearProgressIndicator(
-                          value: syllabus,
-                          backgroundColor: Colors.grey.shade100,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF42A5F5)),
-                          minHeight: 5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text("${(syllabus * 100).toInt()}%", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     const Text("Syllabus", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                //     const SizedBox(width: 8),
+                //     Expanded(
+                //       child: ClipRRect(
+                //         borderRadius: BorderRadius.circular(5),
+                //         child: LinearProgressIndicator(
+                //           value: syllabus,
+                //           backgroundColor: Colors.grey.shade100,
+                //           valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF42A5F5)),
+                //           minHeight: 5,
+                //         ),
+                //       ),
+                //     ),
+                //     const SizedBox(width: 8),
+                //     Text("${(syllabus * 100).toInt()}%", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                //   ],
+                // ),
               ],
             ),
           ),

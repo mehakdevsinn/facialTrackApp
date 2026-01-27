@@ -13,6 +13,8 @@ class AttendanceLogsScreen extends StatefulWidget {
 class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
   // Sample data
   late String selectedDate;
+  String selectedSubject = "Computer Science";
+
   String displayDate = DateFormat('MMMM d, y').format(DateTime.now());
   void initState() {
     super.initState();
@@ -21,6 +23,21 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
     selectedDate =
         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
   }
+
+  final List<String> subjects = [
+    "Computer Science",
+    "Mathematics",
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "English Literature",
+    "History",
+    "Geography",
+    "Economics",
+    "Business Studies",
+    "Art & Design",
+    "Physical Education",
+  ];
 
   final List<Map<String, dynamic>> students = [
     {
@@ -41,12 +58,12 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
       "status": "Absent",
       "color": Colors.orange,
     },
-    {
-      "name": "Fatima S.",
-      "time": "09:02 AM - 10:30 AM",
-      "status": "off",
-      "color": Colors.blueGrey,
-    },
+    // {
+    //   "name": "Fatima S.",
+    //   "time": "09:02 AM - 10:30 AM",
+    //   "status": "off",
+    //   "color": Colors.blueGrey,
+    // },
   ];
   // String selectedDate = "2026-01-15";
 
@@ -61,7 +78,11 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           // leading: const Icon(Icons.arrow_back, color: Colors.white),
           title: const Text(
             "Today's Attendance Logs",
-            style: TextStyle(color: Colors.white, fontSize: 18,fontWeight: FontWeight.w900),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           actions: [
             IconButton(
@@ -86,11 +107,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                 }
               },
             ),
-            SizedBox(width: 8,),
-            // IconButton(
-            //   icon: const Icon(Icons.more_vert, color: Colors.white),
-            //   onPressed: () {},
-            // ),
+            SizedBox(width: 8),
           ],
         ),
         body: Column(
@@ -119,83 +136,105 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(
-                    Icons.face_retouching_natural,
-                    color: Colors.green,
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    "Facial Track",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_outlined,
-                      size: 16,
-                      color: Color(0xFF1A237E),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Filter",
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        // Ye Text ab variable se update hoga
-                        Text(
-                          selectedDate,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF1A237E),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
           const Text(
             "Today's Session Summary",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
+          SizedBox(height: 10),
+
+          Row(
+            children: [
+              // Text(
+              //   "Select Subject",
+              //   style: TextStyle(fontWeight: FontWeight.bold),
+              // ),
+              // SizedBox(width: 15),
+              Expanded(
+                child: _buildFunctionalDropdown(
+                  "Subject",
+                  selectedSubject,
+                  subjects,
+                  Icons.auto_stories,
+                  (val) => setState(() => selectedSubject = val!),
+                ),
+              ),
+            ],
+          ),
+
+          //  SizedBox(height: 15,),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     const Row(
+          //       children: [
+          //         Icon(
+          //           Icons.face_retouching_natural,
+          //           color: Colors.green,
+          //           size: 20,
+          //         ),
+          //         SizedBox(width: 8),
+          //         Text(
+          //           "Facial Track",
+          //           style: TextStyle(
+          //             fontWeight: FontWeight.bold,
+          //             color: Color(0xFF1A237E),
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(
+          //     horizontal: 10,
+          //     vertical: 6,
+          //   ),
+          //   decoration: BoxDecoration(
+          //     color: Colors.white,
+          //     borderRadius: BorderRadius.circular(10),
+          //     boxShadow: [
+          //       BoxShadow(
+          //         color: Colors.black.withOpacity(0.1),
+          //         blurRadius: 4,
+          //         offset: const Offset(0, 2),
+          //       ),
+          //     ],
+          //   ),
+          //   child: Row(
+          //     mainAxisSize: MainAxisSize.min,
+          //     children: [
+          //       const Icon(
+          //         Icons.calendar_today_outlined,
+          //         size: 16,
+          //         color: Color(0xFF1A237E),
+          //       ),
+          //       const SizedBox(width: 8),
+          //       Column(
+          //         crossAxisAlignment: CrossAxisAlignment.start,
+          //         children: [
+          //           const Text(
+          //             "Filter",
+          //             style: TextStyle(
+          //               fontSize: 10,
+          //               color: Colors.grey,
+          //               fontWeight: FontWeight.bold,
+          //             ),
+          //           ),
+          //           // Ye Text ab variable se update hoga
+          //           Text(
+          //             selectedDate,
+          //             style: const TextStyle(
+          //               fontSize: 11,
+          //               color: Color(0xFF1A237E),
+          //               fontWeight: FontWeight.bold,
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          //   ],
+          // ),
+          // const SizedBox(height: 15),
           const SizedBox(height: 10),
           const Row(
             children: [
@@ -537,6 +576,76 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFunctionalDropdown(
+    String label,
+    String currentValue,
+    List<String> items,
+    IconData icon,
+    Function(String?) onChanged,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        // crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Select Subject",
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.blueGrey,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Spacer(),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: currentValue,
+                isExpanded: true,
+                icon: const Icon(
+                  Icons.unfold_more,
+                  size: 14,
+                  color: Colors.grey,
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                items: items.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Row(
+                      children: [
+                        Icon(icon, size: 14, color: const Color(0xFF1A4B8F)),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(value, overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

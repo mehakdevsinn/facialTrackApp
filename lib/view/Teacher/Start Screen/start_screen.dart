@@ -276,7 +276,7 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
       },
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.grey[100],
           // StartSessionScreen ke build method mein
           appBar: AppBar(
             backgroundColor: primaryColor,

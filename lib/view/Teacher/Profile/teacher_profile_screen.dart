@@ -21,6 +21,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       },
       child: SafeArea(
         child: Scaffold(
+                    backgroundColor: Colors.grey[100],
+
           body: SingleChildScrollView(
             child: Column(
               children: [
@@ -184,8 +186,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
         Container(
           margin: const EdgeInsets.only(top: 160),
           width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration:  BoxDecoration(
+            color: Colors.grey[100],
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(40),
               topRight: Radius.circular(40),
@@ -541,8 +543,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     return Builder(
       // Use Builder to get the correct context if needed
       builder: (context) => SizedBox(
-        width: 200, // Adjusted width to match Figma
-        child: ElevatedButton.icon(
+  width: double.infinity,
+        height: 50,        child: ElevatedButton.icon(
           onPressed: () => _showLogoutDialog(context),
           icon: const Icon(Icons.logout, color: Colors.white),
           label: const Text(

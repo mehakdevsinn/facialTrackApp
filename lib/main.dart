@@ -3,7 +3,9 @@ import 'package:facialtrackapp/view/Splash%20Screen/splash_screen.dart';
 import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Dashborad/teacher_dashboard_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
+import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
+import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -17,6 +19,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TeacherProfileScreen(),
+      home: TeacherRootScreen(),
  ); }
 }

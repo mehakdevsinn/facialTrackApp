@@ -38,7 +38,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.white,
+        // backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
+
         body: SingleChildScrollView(
           child: Column(
             children: [

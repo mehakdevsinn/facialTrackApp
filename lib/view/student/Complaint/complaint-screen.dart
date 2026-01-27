@@ -247,13 +247,16 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                   child: ElevatedButton.icon(
                     onPressed: isButtonEnabled
                         ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ComplaintSubmittedScreen(),
-                              ),
-                            );
+                            // Dialog(child: ComplaintSubmittedScreen());
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) =>
+                            //         ComplaintSubmittedScreen(),
+                            //   ),
+                            // );
+
+                            showComplaintSubmittedDialog(context);
                           }
                         : SizedBox.shrink,
                     icon: Icon(Icons.send_outlined, size: 18),

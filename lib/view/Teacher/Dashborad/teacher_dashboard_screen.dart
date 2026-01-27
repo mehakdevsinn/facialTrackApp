@@ -490,15 +490,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
                 onSelected: (value) {
                   if (value == 1) {
-                     Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  // Yahan showBackButton true bhejain
-                                  builder: (context) => TeacherProfileScreen(
-                                    showBackButton: true,
-                                  ),
-                                ),
-                              );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        // Yahan showBackButton true bhejain
+                        builder: (context) =>
+                            TeacherProfileScreen(showBackButton: true),
+                      ),
+                    );
                   } else if (value == 2) {
                     _showLogoutDialog(context);
                   }

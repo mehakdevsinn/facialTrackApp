@@ -13,6 +13,7 @@ class _ChangePasswordScreenStudentProfileState
     extends State<ChangePasswordScreenStudentProfile> {
   final _formKey = GlobalKey<FormState>();
 
+  // Controllers to get text values
   final TextEditingController _oldPassController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
@@ -33,9 +34,7 @@ class _ChangePasswordScreenStudentProfileState
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: Colors.white,
-        backgroundColor: Colors.grey[100],
-
+        backgroundColor: Colors.white,
         appBar: AppBar(
           automaticallyImplyLeading:
               false, // Default back button ko khatam kiya
@@ -43,18 +42,18 @@ class _ChangePasswordScreenStudentProfileState
           foregroundColor: Colors.white,
           elevation: 0,
           titleSpacing: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
 
           title: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-
               const Text(
                 "Change Password",
+
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -65,7 +64,7 @@ class _ChangePasswordScreenStudentProfileState
           ),
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -137,7 +136,7 @@ class _ChangePasswordScreenStudentProfileState
                 // Submit Button
                 Center(
                   child: SizedBox(
-                    width: 150,
+                    width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
@@ -147,17 +146,17 @@ class _ChangePasswordScreenStudentProfileState
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF27121),
+                        backgroundColor: ColorPallet.primaryBlue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
                         elevation: 5,
-                        shadowColor: const Color(0xFFF27121).withOpacity(0.4),
+                        shadowColor: ColorPallet.primaryBlue.withOpacity(0.4),
                       ),
                       child: const Text(
                         "Update Password",
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 16,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -178,11 +177,15 @@ class _ChangePasswordScreenStudentProfileState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            const CircleAvatar(
+              radius: 30,
+              backgroundColor: Color(0xFFE8F5E9), // Light green
+              child: Icon(Icons.check_circle, color: Colors.green, size: 40),
+            ),
+
             const SizedBox(height: 20),
             const Text(
               "Success!",
@@ -195,12 +198,13 @@ class _ChangePasswordScreenStudentProfileState
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back to profile
-              },
+              onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF27121),
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                minimumSize: const Size(100, 40),
               ),
               child: const Text("Done", style: TextStyle(color: Colors.white)),
             ),
@@ -221,6 +225,7 @@ class _ChangePasswordScreenStudentProfileState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Label waisa hi rahega jaisa pehle tha
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
@@ -229,45 +234,57 @@ class _ChangePasswordScreenStudentProfileState
           ),
         ),
         TextFormField(
+          cursorColor: ColorPallet.primaryBlue,
           controller: controller,
           obscureText: isObscure,
           validator: validator,
-          autovalidateMode:
-              AutovalidateMode.onUserInteraction, // Real-time checking
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
             hintText: hint,
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 18,
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+
+            // Left side par lock icon add kiya image ke mutabiq
+            prefixIcon: Icon(
+              Icons.lock_outline,
+              color: Colors.grey.shade400,
+              size: 20,
             ),
+
+            filled: true,
+            fillColor: Colors.white, // Background white
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+
+            // Border style change kiya (Square look ke liye radius 10-12 rakhein)
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.2),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: Color(0xFFF27121), width: 2),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: ColorPallet.primaryBlue,
+                width: 2,
+              ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Colors.red, width: 1),
             ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
-            ),
+
             suffixIcon: IconButton(
               icon: Icon(
                 isObscure
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
-                color: Colors.grey,
+                color: Colors.grey.shade400,
+                size: 20,
               ),
               onPressed: toggleVisibility,
             ),

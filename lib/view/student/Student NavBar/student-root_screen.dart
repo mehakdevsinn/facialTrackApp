@@ -245,7 +245,9 @@ class _StudentRootScreenState extends State<StudentRootScreen>
     );
 
     _screens.addAll([
-      DashboardScreen(onTabChange: (index) => _onItemTapped(index)),
+      DashboardScreen(
+        // onTabChange: (index) => _onItemTapped(index)
+      ),
       AttendanceHistoryScreen(),
       MySubjectsScreen(),
       StudentProfileScreen(),

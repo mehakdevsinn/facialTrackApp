@@ -47,7 +47,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             children: [
               Container(
                 width: double.infinity,
-                height: 280,
+                height: 285,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -72,7 +72,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       },
 
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 20, top: 20),
+                        padding: const EdgeInsets.only(left: 20, top: 15),
                         child: Row(
                           children: [
                             Icon(Icons.arrow_back, color: ColorPallet.white),
@@ -105,6 +105,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       "Student Attendance Portal",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
+
+                    SizedBox(height: 11),
                   ],
                 ),
               ),

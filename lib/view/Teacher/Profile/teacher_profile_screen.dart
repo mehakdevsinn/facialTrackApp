@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/teacher/Password%20Changed/change_password_inside_teacher_profile.dart';
 import 'package:flutter/material.dart';
@@ -274,13 +275,13 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF27121).withOpacity(0.1),
+                        color: ColorPallet.primaryBlue.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.power_settings_new_rounded, // Unique logout icon
                         size: 50,
-                        color: Color(0xFFF27121),
+                        color: ColorPallet.primaryBlue,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -356,9 +357,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFFF27121,
-                                  ).withOpacity(0.3),
+                                  color: ColorPallet.primaryBlue.withOpacity(0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -377,7 +376,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF27121),
+                                backgroundColor: ColorPallet.primaryBlue,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
@@ -528,7 +527,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             ),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>ChangePasswordScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>TeacherSideChangePasswordScreen()));
               print("Navigate to Change Password Screen");
             },
           ),
@@ -550,7 +549,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF27121),
+            backgroundColor: ColorPallet.primaryBlue,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(

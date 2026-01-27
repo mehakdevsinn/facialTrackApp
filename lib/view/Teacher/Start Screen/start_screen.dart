@@ -232,6 +232,7 @@
 //   );
 // }}
 
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -392,10 +393,7 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF81C784),
-                        disabledBackgroundColor: const Color(
-                          0xFF81C784,
-                        ).withOpacity(0.5),
+                        backgroundColor: ColorPallet.primaryBlue,
                         minimumSize: const Size(double.infinity, 55),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

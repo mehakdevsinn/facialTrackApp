@@ -503,7 +503,7 @@ onPressed: () async {
               _showSuccessDialog(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1A237E), // Dark blue
+              backgroundColor: ColorPallet.primaryBlue, // Dark blue
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),

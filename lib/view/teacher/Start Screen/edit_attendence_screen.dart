@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:flutter/material.dart';
 
 class EditAttendanceScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ late TextEditingController leaveReasonController; // New Controller
           "Edit Attendance Logs",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor:  ColorPallet.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -96,7 +97,7 @@ late TextEditingController leaveReasonController; // New Controller
                   child: Row(
                     children: [
                       const CircleAvatar(
-                        backgroundColor: Color(0xFF1A237E),
+                        backgroundColor: ColorPallet.primaryBlue,
                         child: Icon(Icons.person, color: Colors.white),
                       ),
                       const SizedBox(width: 15),
@@ -166,7 +167,7 @@ onPressed: () {
     "status": finalStatus, // Naya status yahan se bhej rahe hain
   });
 }, style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A237E), // Dark blue
+                      backgroundColor: ColorPallet.primaryBlue, // Dark blue
                       foregroundColor: Colors.white,
                       minimumSize: const Size(
                         double.infinity,
@@ -205,7 +206,7 @@ onPressed: () {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A237E),
+            color: ColorPallet.primaryBlue,
           ),
         ),
         const SizedBox(height: 8),
@@ -226,7 +227,7 @@ onPressed: () {
             // Isse text icon ke sath center mein rahega
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: const Color(0xFF1A237E), size: 22),
+              prefixIcon: Icon(icon, color: ColorPallet.primaryBlue, size: 22),
               hintText: "Enter $label",
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
               // Proper Border design
@@ -237,7 +238,7 @@ onPressed: () {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF1A237E),
+                  color: ColorPallet.primaryBlue,
                   width: 1.5,
                 ),
               ),

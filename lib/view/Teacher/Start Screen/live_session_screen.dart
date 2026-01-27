@@ -578,6 +578,7 @@
 //   }
 // }
 import 'dart:async'; // Timer ke liye zaroori hai
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
@@ -784,7 +785,7 @@ String _formatDuration(Duration duration) {
                     ? _stopSession
                     : null, // Click karne par stop ho jaye
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: orangeTheme,
+                  backgroundColor: ColorPallet.primaryBlue,
                   disabledBackgroundColor: Colors.grey, // Stop hone ke baad grey
                   minimumSize: const Size(double.infinity, 54),
                   shape: const StadiumBorder(),

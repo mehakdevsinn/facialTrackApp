@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:math';
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/utils/widgets/background_widget.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
@@ -67,6 +68,7 @@ class _OnboardScreenState extends State<OnboardScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SlideTransition(
                       position: _imageAnimation,
@@ -94,6 +96,8 @@ class _OnboardScreenState extends State<OnboardScreen>
                     SlideTransition(
                       position: _textAnimation,
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: const [
                           Text(
                             'Facial Track',
@@ -106,9 +110,11 @@ class _OnboardScreenState extends State<OnboardScreen>
                           SizedBox(height: 10),
                           Text(
                             'AI-powered smart attendance system that automatically detects faces and records attendance in real-time.',
+                           textAlign: TextAlign.center, // Isse paragraph center ho jayega
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.white70,
+                              
                             ),
                           ),
                         ],
@@ -126,7 +132,7 @@ class _OnboardScreenState extends State<OnboardScreen>
                                   builder: (_) => RoleSelectionScreen()));
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.cyan,
+                          backgroundColor: ColorPallet.primaryBlue,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 50, vertical: 20),
                           shape: RoundedRectangleBorder(

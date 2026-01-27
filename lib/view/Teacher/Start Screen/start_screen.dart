@@ -393,8 +393,10 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorPallet.primaryBlue,
-                        minimumSize: const Size(double.infinity, 55),
+ backgroundColor: const Color(0xFF81C784),
+                        disabledBackgroundColor: const Color(
+                          0xFF81C784,
+                        ).withOpacity(0.5),                        minimumSize: const Size(double.infinity, 55),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

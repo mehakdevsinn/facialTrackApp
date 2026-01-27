@@ -132,9 +132,9 @@ class _OnboardScreenState extends State<OnboardScreen>
                                   builder: (_) => RoleSelectionScreen()));
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorPallet.primaryBlue,
+                          backgroundColor: Colors.cyan,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 20),
+                              horizontal: 50, vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),

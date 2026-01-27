@@ -785,7 +785,7 @@ String _formatDuration(Duration duration) {
                     ? _stopSession
                     : null, // Click karne par stop ho jaye
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorPallet.primaryBlue,
+                  backgroundColor: ColorPallet.orange,
                   disabledBackgroundColor: Colors.grey, // Stop hone ke baad grey
                   minimumSize: const Size(double.infinity, 54),
                   shape: const StadiumBorder(),

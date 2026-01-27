@@ -126,6 +126,7 @@
 //     ),
 //   ];
 // }
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:facialtrackapp/view/Teacher/Dashborad/teacher_dashboard_screen.dart';
@@ -229,7 +230,7 @@ class _TeacherRootScreenState extends State<TeacherRootScreen>
                     Icon(
                       _icons[index],
                       color: isSelected
-                          ? const Color.fromARGB(255, 73, 33, 252)
+                          ? ColorPallet.primaryBlue
                           : Colors.grey,
                       size: isSelected ? 28 : 24,
                     ),
@@ -239,7 +240,7 @@ class _TeacherRootScreenState extends State<TeacherRootScreen>
                       child: Text(
                         isSelected ? _labels[index] : "",
                         style: TextStyle(
-                          color: const Color.fromARGB(255, 73, 33, 252),
+                          color: ColorPallet.primaryBlue,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

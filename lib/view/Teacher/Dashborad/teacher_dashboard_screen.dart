@@ -459,10 +459,10 @@ void _showLogoutDialog(BuildContext context) {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const CircleAvatar(
+                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xffFDECEA),
-                  child: Icon(Icons.logout, color: Colors.red, size: 30),
+                    backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
+                  child: Icon(Icons.logout, color: ColorPallet.primaryBlue, size: 30),
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -498,7 +498,7 @@ void _showLogoutDialog(BuildContext context) {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                          backgroundColor: ColorPallet.primaryBlue,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),

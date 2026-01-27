@@ -43,28 +43,9 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RoleSelectionScreen(),
-                    ),
-                  );
-                },
-
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20, top: 20),
-                  child: Row(
-                    children: [
-                      Icon(Icons.arrow_back, color: ColorPallet.white),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
+             Container(
                 width: double.infinity,
-                height: 280,
+                height: 285,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -78,6 +59,25 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RoleSelectionScreen(),
+                          ),
+                        );
+                      },
+
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 20, top: 15),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_back, color: ColorPallet.white),
+                          ],
+                        ),
+                      ),
+                    ),
                     SizedBox(
                       height: 150,
                       width: 150,
@@ -103,11 +103,12 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                       "Teacher Portal",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
+
+                    SizedBox(height: 11),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 40),
+ const SizedBox(height: 40),
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),

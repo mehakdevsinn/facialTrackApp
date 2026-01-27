@@ -496,7 +496,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      // trailing: const Icon(Icons.chevron_right, color: Colors.grey),
     );
   }
 

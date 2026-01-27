@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/edit_attendence_screen.dart';
 import 'package:facialtrackapp/widgets/export_pdf.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +75,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
         backgroundColor: const Color(0xFFF5F7FB), // Light greyish background
         appBar: AppBar(
           foregroundColor: Colors.white,
-          backgroundColor: const Color(0xFF1A237E), // Dark blue
+          backgroundColor: ColorPallet.primaryBlue, // Dark blue
           // leading: const Icon(Icons.arrow_back, color: Colors.white),
           title: const Text(
             "Today's Attendance Logs",
@@ -616,18 +617,24 @@ onPressed: () async {
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+   decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      // Adding a thin blue border and a matching shadow
+      border: Border.all(
+        color: const Color(0xFF1A4B8F).withOpacity(0.2), 
+        width: 1.5,
       ),
-      child: Row(
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF1A4B8F).withOpacity(0.08),
+          blurRadius: 15,
+          spreadRadius: 2,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+       child: Row(
         // crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -638,7 +645,7 @@ onPressed: () async {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Spacer(),
+          SizedBox(width: 80,),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(

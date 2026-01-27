@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final Function(int) onTabChange;
+  // final Function(int) onTabChange;
 
-  const DashboardScreen({super.key, required this.onTabChange});
+  const DashboardScreen({
+    super.key,
+    // required this.onTabChange
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -73,15 +76,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
+                            // onSelected: (value) {
+                            //   if (value == 1) {
+                            //     // View Profile action
+                            //   } else if (value == 2) {
+                            //     // Logout action
+                            //   }
+                            // },
                             onSelected: (value) {
                               if (value == 1) {
-                                widget.onTabChange(
-                                  3,
-                                ); // Navigate to Profile Tab
-                              } else if (value == 2) {
-                                _showLogoutDialog(
+                                Navigator.push(
                                   context,
-                                ); // Triggers your custom Alert Box
+                                  MaterialPageRoute(
+                                    // Yahan showBackButton true bhejain
+                                    builder: (context) => StudentProfileScreen(
+                                      showBackButton: true,
+                                    ),
+                                  ),
+                                );
+                              } else if (value == 2) {
+                                _showLogoutDialog(context);
                               }
                             },
                             child: Container(
@@ -124,11 +138,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   leading: Icon(Icons.person_outline),
                                   title: Text('View Profile'),
                                   contentPadding: EdgeInsets.zero,
+                                  // onTap: () {
+                                  //   Navigator.push(
+                                  //     context,
+                                  //     MaterialPageRoute(
+                                  //       builder: (context) =>
+                                  //           StudentProfileScreen(),
+                                  //     ),
+                                  //   );
+                                  //   // widget.onTabChange(3);
+                                  //   // Navigator.pop(context);
+                                  // },
                                 ),
                               ),
                               const PopupMenuItem(
                                 value: 2,
                                 child: ListTile(
+                                  // onTap: () {
+                                  //   Navigator.push(
+                                  //     context,
+                                  //     MaterialPageRoute(
+                                  //       builder: (context) =>
+                                  //           RoleSelectionScreen(),
+                                  //     ),
+                                  //   );
+                                  // },
                                   leading: Icon(
                                     Icons.logout,
                                     color: Colors.red,
@@ -172,6 +206,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(
+        milliseconds: 300,
+      ), // Animation ki speed
+      pageBuilder: (context, anim1, anim2) {
+        return const SizedBox.shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        // Scale and Opacity Animation
+        return Transform.scale(
+          scale: anim1.value, // 0 se 1 tak scale hoga
+          child: Opacity(
+            opacity: anim1.value,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 20,
+                horizontal: 24,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
+                    child: Icon(
+                      Icons.logout,
+                      color: ColorPallet.primaryBlue,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "Logout",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: ColorPallet.black,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Are you sure you want to logout?",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.grey),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            "No",
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorPallet.primaryBlue,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () {
+                            // Sab kuch clear karke RoleSelectionScreen par jump
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const RoleSelectionScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          },
+                          child: const Text(
+                            "Yes",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

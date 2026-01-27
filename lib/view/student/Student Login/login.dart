@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
@@ -46,7 +47,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             children: [
               Container(
                 width: double.infinity,
-                height: 280,
+                height: 285,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -60,6 +61,25 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RoleSelectionScreen(),
+                          ),
+                        );
+                      },
+
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 20, top: 15),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_back, color: ColorPallet.white),
+                          ],
+                        ),
+                      ),
+                    ),
                     SizedBox(
                       height: 150,
                       width: 150,
@@ -85,6 +105,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       "Student Attendance Portal",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
+
+                    SizedBox(height: 11),
                   ],
                 ),
               ),

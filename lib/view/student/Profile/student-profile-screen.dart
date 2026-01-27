@@ -314,7 +314,9 @@ Future<void> _generateAndDownloadPDF() async {
 }
 
 class StudentProfileScreen extends StatefulWidget {
-  const StudentProfileScreen({super.key});
+  final bool showBackButton;
+
+  const StudentProfileScreen({super.key, this.showBackButton = false});
 
   @override
   State<StudentProfileScreen> createState() => _StudentProfileScreenState();
@@ -324,7 +326,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Yeh back button ko fully disable kar deta hai
+      canPop: widget.showBackButton,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
       },
@@ -750,8 +752,20 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
+                  widget.showBackButton
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        )
+                      : const SizedBox(width: 3),
                   const Padding(
                     padding: EdgeInsets.only(top: 12, left: 15),
                     child: Text(
@@ -1153,7 +1167,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF27121),
+            backgroundColor: ColorPallet.primaryBlue,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
@@ -1206,13 +1220,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF27121).withOpacity(0.1),
+                        color: ColorPallet.primaryBlue.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.power_settings_new_rounded, // Unique logout icon
                         size: 50,
-                        color: Color(0xFFF27121),
+                        color: ColorPallet.primaryBlue,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -1254,9 +1268,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFFF27121,
-                                  ).withOpacity(0.3),
+                                  color: ColorPallet.primaryBlue.withOpacity(
+                                    0.3,
+                                  ),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1275,7 +1289,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF27121),
+                                backgroundColor: ColorPallet.primaryBlue,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,

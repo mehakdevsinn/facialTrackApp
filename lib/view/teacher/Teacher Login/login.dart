@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
@@ -42,6 +43,25 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RoleSelectionScreen(),
+                    ),
+                  );
+                },
+
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, top: 20),
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_back, color: ColorPallet.white),
+                    ],
+                  ),
+                ),
+              ),
               Container(
                 width: double.infinity,
                 height: 280,

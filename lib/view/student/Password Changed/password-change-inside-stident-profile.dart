@@ -13,6 +13,7 @@ class _ChangePasswordScreenStudentProfileState
     extends State<ChangePasswordScreenStudentProfile> {
   final _formKey = GlobalKey<FormState>();
 
+  // Controllers to get text values
   final TextEditingController _oldPassController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
@@ -31,139 +32,140 @@ class _ChangePasswordScreenStudentProfileState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // backgroundColor: Colors.white,
-      backgroundColor: Colors.grey[100],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          automaticallyImplyLeading:
+              false, // Default back button ko khatam kiya
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          titleSpacing: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
 
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // Default back button ko khatam kiya
-        backgroundColor: ColorPallet.primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        titleSpacing: 0,
-
-        title: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-
-            const Text(
-              "Change Password",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          title: Row(
             children: [
               const Text(
-                "Create New Password",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Your new password must be different from previous used passwords.",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-              const SizedBox(height: 40),
+                "Change Password",
 
-              // Old Password
-              _buildAnimatedTextField(
-                label: "Old Password",
-                hint: "Enter your current password",
-                controller: _oldPassController,
-                isObscure: _obscureOld,
-                toggleVisibility: () =>
-                    setState(() => _obscureOld = !_obscureOld),
-                validator: (value) {
-                  if (value == null || value.isEmpty)
-                    return "Please enter old password";
-                  return null;
-                },
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              const SizedBox(height: 25),
+            ],
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Create New Password",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Your new password must be different from previous used passwords.",
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                ),
+                const SizedBox(height: 40),
 
-              // New Password
-              _buildAnimatedTextField(
-                label: "New Password",
-                hint: "Enter new password",
-                controller: _newPassController,
-                isObscure: _obscureNew,
-                toggleVisibility: () =>
-                    setState(() => _obscureNew = !_obscureNew),
-                validator: (value) {
-                  if (value == null || value.length < 6)
-                    return "Password must be at least 6 characters";
-                  return null;
-                },
-              ),
-              const SizedBox(height: 25),
+                // Old Password
+                _buildAnimatedTextField(
+                  label: "Old Password",
+                  hint: "Enter your current password",
+                  controller: _oldPassController,
+                  isObscure: _obscureOld,
+                  toggleVisibility: () =>
+                      setState(() => _obscureOld = !_obscureOld),
+                  validator: (value) {
+                    if (value == null || value.isEmpty)
+                      return "Please enter old password";
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 25),
 
-              // Confirm Password
-              _buildAnimatedTextField(
-                label: "Confirm Password",
-                hint: "Repeat new password",
-                controller: _confirmPassController,
-                isObscure: _obscureConfirm,
-                toggleVisibility: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
-                validator: (value) {
-                  if (value != _newPassController.text) {
-                    return "Passwords do not match!";
-                  }
-                  if (value == null || value.isEmpty)
-                    return "Please confirm your password";
-                  return null;
-                },
-              ),
+                // New Password
+                _buildAnimatedTextField(
+                  label: "New Password",
+                  hint: "Enter new password",
+                  controller: _newPassController,
+                  isObscure: _obscureNew,
+                  toggleVisibility: () =>
+                      setState(() => _obscureNew = !_obscureNew),
+                  validator: (value) {
+                    if (value == null || value.length < 6)
+                      return "Password must be at least 6 characters";
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 25),
 
-              const SizedBox(height: 50),
+                // Confirm Password
+                _buildAnimatedTextField(
+                  label: "Confirm Password",
+                  hint: "Repeat new password",
+                  controller: _confirmPassController,
+                  isObscure: _obscureConfirm,
+                  toggleVisibility: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
+                  validator: (value) {
+                    if (value != _newPassController.text) {
+                      return "Passwords do not match!";
+                    }
+                    if (value == null || value.isEmpty)
+                      return "Please confirm your password";
+                    return null;
+                  },
+                ),
 
-              // Submit Button
-              Center(
-                child: SizedBox(
-                  width: 150,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Agar validation pass ho gayi (matching successful)
-                        _showSuccessDialog(context);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF27121),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 50),
+
+                // Submit Button
+                Center(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          // Agar validation pass ho gayi (matching successful)
+                          _showSuccessDialog(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorPallet.primaryBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 5,
+                        shadowColor: ColorPallet.primaryBlue.withOpacity(0.4),
                       ),
-                      elevation: 5,
-                      shadowColor: const Color(0xFFF27121).withOpacity(0.4),
-                    ),
-                    child: const Text(
-                      "Update Password",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      child: const Text(
+                        "Update Password",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -175,11 +177,15 @@ class _ChangePasswordScreenStudentProfileState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            const CircleAvatar(
+              radius: 30,
+              backgroundColor: Color(0xFFE8F5E9), // Light green
+              child: Icon(Icons.check_circle, color: Colors.green, size: 40),
+            ),
+
             const SizedBox(height: 20),
             const Text(
               "Success!",
@@ -192,12 +198,13 @@ class _ChangePasswordScreenStudentProfileState
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back to profile
-              },
+              onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF27121),
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                minimumSize: const Size(100, 40),
               ),
               child: const Text("Done", style: TextStyle(color: Colors.white)),
             ),
@@ -218,6 +225,7 @@ class _ChangePasswordScreenStudentProfileState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Label waisa hi rahega jaisa pehle tha
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
@@ -226,45 +234,57 @@ class _ChangePasswordScreenStudentProfileState
           ),
         ),
         TextFormField(
+          cursorColor: ColorPallet.primaryBlue,
           controller: controller,
           obscureText: isObscure,
           validator: validator,
-          autovalidateMode:
-              AutovalidateMode.onUserInteraction, // Real-time checking
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
             hintText: hint,
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 18,
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+
+            // Left side par lock icon add kiya image ke mutabiq
+            prefixIcon: Icon(
+              Icons.lock_outline,
+              color: Colors.grey.shade400,
+              size: 20,
             ),
+
+            filled: true,
+            fillColor: Colors.white, // Background white
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+
+            // Border style change kiya (Square look ke liye radius 10-12 rakhein)
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.2),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: Color(0xFFF27121), width: 2),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: ColorPallet.primaryBlue,
+                width: 2,
+              ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Colors.red, width: 1),
             ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
-            ),
+
             suffixIcon: IconButton(
               icon: Icon(
                 isObscure
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
-                color: Colors.grey,
+                color: Colors.grey.shade400,
+                size: 20,
               ),
               onPressed: toggleVisibility,
             ),

@@ -269,6 +269,8 @@ class _StudentRootScreenState extends State<StudentRootScreen>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.grey[100],
+
         extendBody: true,
         body: _screens[_selectedIndex],
         bottomNavigationBar: Container(

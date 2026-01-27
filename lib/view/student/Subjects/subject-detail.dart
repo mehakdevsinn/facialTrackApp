@@ -25,7 +25,8 @@ class SubjectDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F3F3),
+        // backgroundColor: const Color(0xFFF4F3F3),
+        backgroundColor: Colors.grey[100],
 
         appBar: AppBar(
           backgroundColor: ColorPallet.primaryBlue,

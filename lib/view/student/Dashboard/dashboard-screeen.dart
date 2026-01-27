@@ -19,7 +19,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 244, 243, 243),
+        // backgroundColor: const Color.fromARGB(255, 244, 243, 243),
+        backgroundColor: Colors.grey[100],
 
         body: SingleChildScrollView(
           child: Column(

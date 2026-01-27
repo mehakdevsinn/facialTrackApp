@@ -267,6 +267,8 @@
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:facialtrackapp/view/student/Complaint/complaint-screen.dart';
+import 'package:facialtrackapp/view/student/Password%20Changed/password-change-inside-stident-profile.dart';
 import 'package:facialtrackapp/widgets/dashboard-widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
@@ -328,7 +330,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       },
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: const Color.fromARGB(255, 248, 248, 248),
+          // backgroundColor: const Color.fromARGB(255, 248, 248, 248),
+          backgroundColor: Colors.grey[100],
+
           body: SingleChildScrollView(
             child: Column(
               children: [
@@ -344,9 +348,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       _infoCard(),
 
                       const SizedBox(height: 16),
+                      _complaintCard(),
 
                       /// 📊 Attendance Overview
                       // _attendanceCard(),
+                      const SizedBox(height: 16),
+
+                      _settingCard(),
+
                       const SizedBox(height: 16),
 
                       Container(
@@ -928,12 +937,109 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     );
   }
 
+  Widget _complaintCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            // offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _infoRow(Icons.assignment_late_outlined, "Complaint"),
+          SizedBox(height: 10),
+
+          Divider(),
+          SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ComplaintScreen()),
+              );
+            },
+            child: _infoComplaint(
+              Icons.report_gmailerrorred_rounded,
+              "Raise a Complaint",
+            ),
+          ),
+          const SizedBox(height: 8),
+          // _infoRow(Icons.phone, "+92 300 1234567"),
+          // const SizedBox(height: 8),
+          // _infoRow(Icons.calendar_today, "Enrolled: September 2023"),
+        ],
+      ),
+    );
+  }
+
+  Widget _settingCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            // offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _infoRow(Icons.settings, "Account Setting"),
+          SizedBox(height: 10),
+
+          Divider(),
+          SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChangePasswordScreenStudentProfile(),
+                ),
+              );
+            },
+            child: _infoComplaint(Icons.password_outlined, "Password Change"),
+          ),
+          const SizedBox(height: 8),
+          // _infoRow(Icons.phone, "+92 300 1234567"),
+          // const SizedBox(height: 8),
+          // _infoRow(Icons.calendar_today, "Enrolled: September 2023"),
+        ],
+      ),
+    );
+  }
+
   Widget _infoRow(IconData icon, String text) {
     return Row(
       children: [
         Icon(icon, color: ColorPallet.primaryBlue),
         const SizedBox(width: 12),
         Text(text, style: TextStyle(fontSize: 14)),
+      ],
+    );
+  }
+
+  Widget _infoComplaint(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: ColorPallet.primaryBlue),
+        const SizedBox(width: 12),
+        Text(text, style: TextStyle(fontSize: 14)),
+        Spacer(),
+        Icon(Icons.arrow_forward_ios, color: ColorPallet.grey, size: 15),
       ],
     );
   }

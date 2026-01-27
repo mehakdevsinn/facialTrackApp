@@ -58,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     Positioned(
                       top: 20,
-                      right: 20,
+                      right: 5,
                       child: Row(
                         children: [
                           // Icon(

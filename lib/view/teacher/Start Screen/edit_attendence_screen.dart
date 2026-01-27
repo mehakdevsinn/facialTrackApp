@@ -147,16 +147,25 @@ late TextEditingController leaveReasonController; // New Controller
                 Hero(
                   tag: 'save_btn',
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Data wapis bheja ja raha hai
-                      Navigator.pop(context, {
-                        "entryTime": entryController.text,
-                        "exitTime": exitController.text,
-                        "time": durationController.text,
-                          "leaveReason": leaveReasonController.text, // Added this
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
+                   // EditAttendanceScreen ke andar Save button ka logic
+onPressed: () {
+  String finalStatus = widget.studentData['status'];
+
+  // Agar status absent tha aur user ne reason likh diya hai
+  if (isAbsent && leaveReasonController.text.trim().isNotEmpty) {
+    finalStatus = "Leave";
+  } else if (isAbsent && leaveReasonController.text.trim().isEmpty) {
+    finalStatus = "Absent";
+  }
+
+  Navigator.pop(context, {
+    "entryTime": entryController.text,
+    "exitTime": exitController.text,
+    "time": "${entryController.text} - ${exitController.text}",
+    "leaveReason": leaveReasonController.text,
+    "status": finalStatus, // Naya status yahan se bhej rahe hain
+  });
+}, style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1A237E), // Dark blue
                       foregroundColor: Colors.white,
                       minimumSize: const Size(

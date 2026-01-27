@@ -349,29 +349,50 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                           size: 18,
                           color: Colors.grey,
                         ),
-                        onPressed: () async {
-                          // <-- async lazmi lagayein
-                          // Edit screen par data bhejein aur wapis aane ka intezar karein
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  EditAttendanceScreen(studentData: data),
-                            ),
-                          );
+                        // onPressed: () async {
+                        //   // <-- async lazmi lagayein
+                        //   // Edit screen par data bhejein aur wapis aane ka intezar karein
+                        //   final result = await Navigator.push(
+                        //     context,
+                        //     MaterialPageRoute(
+                        //       builder: (context) =>
+                        //           EditAttendanceScreen(studentData: data),
+                        //     ),
+                        //   );
 
-                          // Jab Edit screen se 'Save' dabakar wapis aayein
-                          if (result != null) {
-                            setState(() {
-                              // Yeh line screen ko refresh karti hai
-                              data['entryTime'] = result['entryTime'];
-                              data['exitTime'] = result['exitTime'];
-                              // Time string ko bhi update karein jo card par dikh raha hai
-                              data['time'] =
-                                  "${result['entryTime']} - ${result['exitTime']}";
-                            });
-                          }
-                        },
+                        //   // Jab Edit screen se 'Save' dabakar wapis aayein
+                        //   if (result != null) {
+                        //     setState(() {
+                        //       // Yeh line screen ko refresh karti hai
+                        //       data['entryTime'] = result['entryTime'];
+                        //       data['exitTime'] = result['exitTime'];
+                        //       // Time string ko bhi update karein jo card par dikh raha hai
+                        //       data['time'] =
+                        //           "${result['entryTime']} - ${result['exitTime']}";
+                        //     });
+                        //   }
+                        // },
+                        // AttendanceLogsScreen ke andar IconButton (Edit) ka logic
+onPressed: () async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditAttendanceScreen(studentData: data),
+    ),
+  );
+
+  if (result != null) {
+    setState(() {
+      data['entryTime'] = result['entryTime'];
+      data['exitTime'] = result['exitTime'];
+      data['time'] = result['time'];
+      data['leaveReason'] = result['leaveReason'];
+      
+      // Status ko update karein (Absent se Leave ho jayega agar reason hai)
+      data['status'] = result['status']; 
+    });
+  }
+},
                       ),
                       _buildStatusBadge(data['status']),
                     ],
@@ -405,42 +426,49 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
 
   // Status Badge Widget
   Widget _buildStatusBadge(String status) {
-    bool isPresent = status == "Present";
+  // Colors and Icons logic
+  Color mainColor;
+  Color bgColor;
+  IconData icon;
 
-    // Dynamic colors based on switch state
-    Color mainColor = isPresent
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFFF7043);
-    Color bgColor = isPresent
-        ? const Color(0xFFE8F5E9)
-        : const Color(0xFFFBE9E7);
-    IconData icon = isPresent ? Icons.check_box : Icons.cancel;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: mainColor, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: mainColor),
-          const SizedBox(width: 4),
-          Text(
-            status,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: mainColor,
-            ),
-          ),
-        ],
-      ),
-    );
+  if (status == "Present") {
+    mainColor = const Color(0xFF4CAF50); // Green
+    bgColor = const Color(0xFFE8F5E9);
+    icon = Icons.check_box;
+  } else if (status == "Leave") {
+    mainColor = Colors.amber.shade800; // Dark Yellow/Amber for text
+    bgColor = const Color(0xFFFFFDE7); // Light Yellow for background
+    icon = Icons.event_note;
+  } else {
+    mainColor = const Color(0xFFFF7043); // Orange/Red for Absent
+    bgColor = const Color(0xFFFBE9E7);
+    icon = Icons.cancel;
   }
 
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: mainColor, width: 1),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: mainColor),
+        const SizedBox(width: 4),
+        Text(
+          status,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: mainColor,
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildStatusChip(String status) {
     Color bgColor = status == "Present"
         ? Colors.green

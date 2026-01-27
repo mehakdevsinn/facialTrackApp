@@ -157,6 +157,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
     }
 
     Navigator.pop(context, {
+      
       "title": _nameController.text,
       "assigned": _gradeController.text,
       "syllabus": (double.tryParse(_syllabusController.text) ?? 0) / 100,

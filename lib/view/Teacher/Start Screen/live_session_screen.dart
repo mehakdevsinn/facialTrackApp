@@ -844,7 +844,7 @@ String _formatDuration(Duration duration) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Class 10A - Mathematics",
+          const Text("Semester 2 - OOP",
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

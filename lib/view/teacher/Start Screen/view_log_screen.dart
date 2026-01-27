@@ -86,10 +86,11 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                 }
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onPressed: () {},
-            ),
+            SizedBox(width: 8,),
+            // IconButton(
+            //   icon: const Icon(Icons.more_vert, color: Colors.white),
+            //   onPressed: () {},
+            // ),
           ],
         ),
         body: Column(
@@ -232,7 +233,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           const SizedBox(height: 10),
           // Summary Text
           Text(
-            "$displayDate - Mathematics - Class 10A",
+            "$displayDate - Information Security - Semester 8",
             style: const TextStyle(color: Colors.grey, fontSize: 13),
           ),
         ],

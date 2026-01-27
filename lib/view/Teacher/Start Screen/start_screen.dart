@@ -246,25 +246,25 @@ class StartSessionScreen extends StatefulWidget {
 }
 
 class _StartSessionScreenState extends State<StartSessionScreen> {
-  String? selectedClass;
+  String? selectedSemester;
   String? selectedSubject;
 
   final List<String> classes = [
-    'Class 10A',
-    'Class 10B',
-    'Class 11A',
-    'Class 11B',
+    'Semester 2',
+    'Semester 4',
+    'Semester 6',
+    'Semester 8',
   ];
   final List<String> subjects = [
-    'Mathematics',
-    'Computer Science',
-    'Physics',
-    'English',
+    'OOP',
+    'Computer architecture',
+    'wireless network',
+    'Information Security',
   ];
 
   @override
   Widget build(BuildContext context) {
-    bool isReady = selectedClass != null && selectedSubject != null;
+    bool isReady = selectedSemester != null && selectedSubject != null;
     const primaryColor = Color.fromARGB(255, 35, 4, 170);
 
     return PopScope(
@@ -342,7 +342,7 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
                   const SizedBox(height: 8),
                   const Center(
                     child: Text(
-                      "Select class and subject to begin attendance",
+                      "Select semester and subject to begin attendance",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.grey,
@@ -352,14 +352,14 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  _buildLabel("Select Class", primaryColor),
+                  _buildLabel("Select Semester", primaryColor),
                   _buildCustomDropdown(
-                    hint: "Choose class...",
+                    hint: "Choose semester...",
                     icon: Icons.groups,
-                    value: selectedClass,
+                    value: selectedSemester,
                     items: classes,
                     color: primaryColor,
-                    onChanged: (val) => setState(() => selectedClass = val),
+                    onChanged: (val) => setState(() => selectedSemester = val),
                   ),
 
                   const SizedBox(height: 25),

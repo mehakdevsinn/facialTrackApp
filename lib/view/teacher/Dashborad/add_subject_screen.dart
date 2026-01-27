@@ -72,7 +72,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
                         _buildAnimatedLabel("Subject Identity"),
                         _buildModernField(_nameController, "Subject Name", Icons.edit_note_rounded),
                         
-                        _buildAnimatedLabel("Class Assignment"),
+                        _buildAnimatedLabel("Semester Assignment"),
                         _buildModernField(_gradeController, "Grade (e.g., Grade 11-A)", Icons.school_outlined),
                         
                         _buildAnimatedLabel("Academic Progress"),

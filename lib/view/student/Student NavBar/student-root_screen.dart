@@ -192,6 +192,7 @@
 //   }
 // }
 
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/student/Attendence%20History/attendence-history-screen.dart';
 import 'package:facialtrackapp/view/student/Dashboard/dashboard-screeen.dart';
 import 'package:facialtrackapp/view/student/Subjects/subjects-screen.dart';
@@ -315,7 +316,7 @@ class _StudentRootScreenState extends State<StudentRootScreen>
                       Icon(
                         _icons[index],
                         color: isSelected
-                            ? const Color.fromARGB(255, 73, 33, 252)
+                            ? ColorPallet.primaryBlue
                             : Colors.grey,
                         size: isSelected ? 28 : 24,
                       ),
@@ -325,7 +326,7 @@ class _StudentRootScreenState extends State<StudentRootScreen>
                         child: Text(
                           isSelected ? _labels[index] : "",
                           style: TextStyle(
-                            color: const Color.fromARGB(255, 73, 33, 252),
+                            color: ColorPallet.primaryBlue,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

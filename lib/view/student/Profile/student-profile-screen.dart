@@ -341,7 +341,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 _buildHeader(context),
                 // Content below the profile card
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
@@ -1167,7 +1167,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: ColorPallet.primaryBlue,
+            backgroundColor: ColorPallet.orange,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
@@ -1220,13 +1220,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: ColorPallet.primaryBlue.withOpacity(0.1),
+                        color: ColorPallet.orange.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.power_settings_new_rounded, // Unique logout icon
                         size: 50,
-                        color: ColorPallet.primaryBlue,
+                        color: ColorPallet.orange,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -1268,7 +1268,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: ColorPallet.primaryBlue.withOpacity(
+                                  color: ColorPallet.orange.withOpacity(
                                     0.3,
                                   ),
                                   blurRadius: 10,
@@ -1289,7 +1289,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorPallet.primaryBlue,
+                                backgroundColor: ColorPallet.orange,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,

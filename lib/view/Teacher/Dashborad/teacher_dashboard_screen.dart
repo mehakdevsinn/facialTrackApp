@@ -397,7 +397,7 @@ class _AnimatedLogoutCardState extends State<AnimatedLogoutCard> {
               ? (Matrix4.identity()..scale(0.97))
               : Matrix4.identity(),
           decoration: BoxDecoration(
-            color: _isPressed ? Colors.red.withOpacity(0.1) : Colors.white,
+            color: _isPressed ? ColorPallet.primaryBlue.withOpacity(0.1) : Colors.white,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
@@ -414,13 +414,13 @@ class _AnimatedLogoutCardState extends State<AnimatedLogoutCard> {
               CircleAvatar(
                 radius: 22,
                 backgroundColor: Color(0xffFDECEA),
-                child: Icon(Icons.logout, color: Colors.red),
+                child: Icon(Icons.logout, color: ColorPallet.primaryBlue),
               ),
               SizedBox(width: 12),
               Text(
                 'Logout',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: ColorPallet.primaryBlue,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),

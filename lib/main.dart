@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/view/Splash%20Screen/splash_screen.dart';
+import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

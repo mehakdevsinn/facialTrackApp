@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/view/Admin/Assignment/assignment_screen.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Splash%20Screen/splash_screen.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
@@ -16,5 +17,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: RoleSelectionScreen(),
- ); }
+    );
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/view/Admin/admin_root_screen.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';
@@ -46,10 +47,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    const Text('Facial Track', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                    const Text('Choose your role to continue', style: TextStyle(fontSize: 14, color: Colors.black45)),
+                    const Text(
+                      'Facial Track',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Choose your role to continue',
+                      style: TextStyle(fontSize: 14, color: Colors.black45),
+                    ),
                     const SizedBox(height: 40),
-                
+
                     // 1. Teacher Card
                     _buildRoleCard(
                       title: 'Teacher',
@@ -60,13 +70,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       onTap: () {
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => const TeacherLoginScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const TeacherLoginScreen(),
+                          ),
                           (route) => false,
                         );
                       },
-                      onPressState: (val) => setState(() => _isTeacherPressed = val),
+                      onPressState: (val) =>
+                          setState(() => _isTeacherPressed = val),
                     ),
-                
+
                     // 2. Student Card
                     _buildRoleCard(
                       title: 'Student',
@@ -77,13 +90,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       onTap: () {
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => const StudentLoginScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const StudentLoginScreen(),
+                          ),
                           (route) => false,
                         );
                       },
-                      onPressState: (val) => setState(() => _isStudentPressed = val),
+                      onPressState: (val) =>
+                          setState(() => _isStudentPressed = val),
                     ),
-                
+
                     // 3. ADMIN CARD (New Section)
                     _buildRoleCard(
                       title: 'Admin',
@@ -92,11 +108,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       color: Colors.deepPurple,
                       isPressed: _isAdminPressed,
                       onTap: () {
-                        // Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminLoginScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminRootScreen(),
+                          ),
+                        );
                       },
-                      onPressState: (val) => setState(() => _isAdminPressed = val),
+                      onPressState: (val) =>
+                          setState(() => _isAdminPressed = val),
                     ),
-                
+
                     const SizedBox(height: 30),
                     const Text(
                       'You can change role later from settings',
@@ -132,9 +154,12 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
-          transform: isPressed ? Matrix4.translationValues(0, 5, 0) : Matrix4.identity(),
+          transform: isPressed
+              ? Matrix4.translationValues(0, 5, 0)
+              : Matrix4.identity(),
           width: double.infinity,
-          height: 120, // Height thori kam ki taake 3 cards screen par poore aa jayein
+          height:
+              120, // Height thori kam ki taake 3 cards screen par poore aa jayein
           margin: const EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
             border: Border.all(color: color, width: 2),
@@ -155,7 +180,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: 8),
               Text(
                 title,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
               Text(
                 subtitle,

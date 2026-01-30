@@ -55,63 +55,68 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffF8FAFC),
-      body: Column(
-        children: [
-          AssignmentHeader(
-            currentStep: currentStep,
-            title: "Course Assignment",
-            onBack: () {
-              if (currentStep > 1) {
-                setState(() => currentStep--);
-              } else {
-                Navigator.pop(context);
-              }
-            },
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (currentStep == 1) _buildTeacherStep(),
-                  if (currentStep == 2) _buildSubjectStep(),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: currentStep == 1
-          ? AssignmentBottomButton(
-              label: "Confirm Teacher",
-              isEnabled: selectedTeacher != null,
-              onTap: () => setState(() => currentStep = 2),
-            )
-          : AssignmentBottomButton(
-              label: "Finalize Assignment",
-              isEnabled: assignedSubjects.isNotEmpty,
-              onTap: () {
-                final teacherData = teachers.firstWhere(
-                  (t) => t['name'] == selectedTeacher,
-                );
-                final result = {
-                  "teacherName": selectedTeacher,
-                  "teacherDesignation": teacherData['designation'],
-                  "initials": teacherData['initials'],
-                  "subjects": assignedSubjects,
-                };
-
-                // Save to central service
-                AssignmentDataService.updateAssignment(result);
-
-                Navigator.pop(context, result);
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xffF8FAFC),
+        body: Column(
+          children: [
+            AssignmentHeader(
+              currentStep: currentStep,
+              title: "Course Assignment",
+              onBack: () {
+                if (currentStep > 1) {
+                  setState(() => currentStep--);
+                } else {
+                  Navigator.pop(context);
+                }
               },
             ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 25,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (currentStep == 1) _buildTeacherStep(),
+                    if (currentStep == 2) _buildSubjectStep(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: currentStep == 1
+            ? AssignmentBottomButton(
+                label: "Confirm Teacher",
+                isEnabled: selectedTeacher != null,
+                onTap: () => setState(() => currentStep = 2),
+              )
+            : AssignmentBottomButton(
+                label: "Finalize Assignment",
+                isEnabled: assignedSubjects.isNotEmpty,
+                onTap: () {
+                  final teacherData = teachers.firstWhere(
+                    (t) => t['name'] == selectedTeacher,
+                  );
+                  final result = {
+                    "teacherName": selectedTeacher,
+                    "teacherDesignation": teacherData['designation'],
+                    "initials": teacherData['initials'],
+                    "subjects": assignedSubjects,
+                  };
+
+                  // Save to central service
+                  AssignmentDataService.updateAssignment(result);
+
+                  Navigator.pop(context, result);
+                },
+              ),
+      ),
     );
   }
 

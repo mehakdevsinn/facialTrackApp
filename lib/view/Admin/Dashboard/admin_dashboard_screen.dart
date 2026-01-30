@@ -11,211 +11,216 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffF6F8FB),
-      appBar: AppBar(
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        backgroundColor: ColorPallet.primaryBlue,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Facial Track',
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-        ),
-        actions: [
-          PopupMenuButton<int>(
-            offset: const Offset(0, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            onSelected: (value) {
-              if (value == 1) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminProfileScreen(),
-                  ),
-                );
-              } else if (value == 2) {
-                _showLogoutDialog(context);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(30),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xffF6F8FB),
+        appBar: AppBar(
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: Colors.white,
+          title: const Text(
+            'Facial Track',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+          ),
+          actions: [
+            PopupMenuButton<int>(
+              offset: const Offset(0, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
               ),
-              child: const Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      'AD',
-                      style: TextStyle(
-                        color: ColorPallet.primaryBlue,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+              onSelected: (value) {
+                if (value == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminProfileScreen(),
+                    ),
+                  );
+                } else if (value == 2) {
+                  _showLogoutDialog(context);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                margin: const EdgeInsets.only(right: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        'AD',
+                        style: TextStyle(
+                          color: ColorPallet.primaryBlue,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Admin Panel',
-                    style: TextStyle(
+                    SizedBox(width: 8),
+                    Text(
+                      'Admin Panel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.keyboard_arrow_down,
                       color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 13,
+                      size: 18,
                     ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ],
+                  ],
+                ),
               ),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 1,
+                  child: ListTile(
+                    leading: Icon(Icons.person_outline),
+                    title: Text('View Profile'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 2,
+                  child: ListTile(
+                    leading: Icon(Icons.logout, color: Colors.red),
+                    title: Text('Logout', style: TextStyle(color: Colors.red)),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 1,
-                child: ListTile(
-                  leading: Icon(Icons.person_outline),
-                  title: Text('View Profile'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 2,
-                child: ListTile(
-                  leading: Icon(Icons.logout, color: Colors.red),
-                  title: Text('Logout', style: TextStyle(color: Colors.red)),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Admin Command Center',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Monitor and manage your system',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 25),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.person,
-                      color: Colors.blue,
-                      count: '46',
-                      label: 'Teacher',
-                    ),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Admin Command Center',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.school,
-                      color: Colors.green,
-                      count: '1,240',
-                      label: 'Student',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.book_rounded,
-                      color: Colors.orange,
-                      count: '12',
-                      label: 'Subjects',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              const Text(
-                'System Configuration',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
                 ),
-              ),
-              const SizedBox(height: 20),
-              _buildMenuItem(
-                context,
-                icon: Icons.menu_book_rounded,
-                color: Colors.purple,
-                title: 'Scheme of Study',
-                subtitle: 'Define curriculum & subjects',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SchemeOfStudyScreen(),
+                const SizedBox(height: 4),
+                Text(
+                  'Monitor and manage your system',
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 25),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.person,
+                        color: Colors.blue,
+                        count: '46',
+                        label: 'Teacher',
+                      ),
                     ),
-                  );
-                },
-              ),
-              _buildMenuItem(
-                context,
-                icon: Icons.person_add_alt_1_rounded,
-                color: Colors.blue,
-                title: 'Manage Teachers',
-                subtitle: 'Add or edit faculty profiles',
-                onTap: () {},
-              ),
-              _buildMenuItem(
-                context,
-                icon: Icons.face_retouching_natural,
-                color: Colors.red,
-                title: 'Student & Facial Track',
-                subtitle: 'Enroll students with face sync',
-                onTap: () {},
-              ),
-              _buildMenuItem(
-                context,
-                icon: Icons.link_rounded,
-                color: Colors.orange,
-                title: 'Course Assignment',
-                subtitle: 'Assign teachers to courses',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CourseAssignmentScreen(),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.school,
+                        color: Colors.green,
+                        count: '1,240',
+                        label: 'Student',
+                      ),
                     ),
-                  );
-                },
-              ),
-              _buildMenuItem(
-                context,
-                icon: Icons.calendar_month_rounded,
-                color: Colors.green,
-                title: 'Semester Management',
-                subtitle: 'Handle terms and timelines',
-                onTap: () {},
-              ),
-              const SizedBox(height: 20),
-            ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.book_rounded,
+                        color: Colors.orange,
+                        count: '12',
+                        label: 'Subjects',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'System Configuration',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.menu_book_rounded,
+                  color: Colors.purple,
+                  title: 'Scheme of Study',
+                  subtitle: 'Define curriculum & subjects',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SchemeOfStudyScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.person_add_alt_1_rounded,
+                  color: Colors.blue,
+                  title: 'Manage Teachers',
+                  subtitle: 'Add or edit faculty profiles',
+                  onTap: () {},
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.face_retouching_natural,
+                  color: Colors.red,
+                  title: 'Student & Facial Track',
+                  subtitle: 'Enroll students with face sync',
+                  onTap: () {},
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.link_rounded,
+                  color: Colors.orange,
+                  title: 'Course Assignment',
+                  subtitle: 'Assign teachers to courses',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CourseAssignmentScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.calendar_month_rounded,
+                  color: Colors.green,
+                  title: 'Semester Management',
+                  subtitle: 'Handle terms and timelines',
+                  onTap: () {},
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),

@@ -48,223 +48,225 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
           subjects.contains(_searchQuery.toLowerCase());
     }).toList();
 
-    return Scaffold(
-      backgroundColor: const Color(0xffF8FAFC),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Premium Header with Unique Glass Stats
-          SliverAppBar(
-            expandedHeight: 230,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            automaticallyImplyLeading: false,
-            backgroundColor: ColorPallet.primaryBlue,
-            title: const Text(
-              "Course Allotment",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
-                letterSpacing: -0.5,
-              ),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  color: ColorPallet.primaryBlue,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(50),
-                    bottomRight: Radius.circular(50),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 80, 20, 10),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Unique Glassy Container for Stats
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildUniqueStat(
-                              "Staff",
-                              assignments.length.toString(),
-                              Icons.people_rounded,
-                            ),
-                            Container(
-                              width: 1.5,
-                              height: 18,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                            _buildUniqueStat(
-                              "Courses",
-                              _getTotalSubjects().toString(),
-                              Icons.book_rounded,
-                            ),
-                            Container(
-                              width: 1.5,
-                              height: 18,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                            _buildUniqueStat(
-                              "Term",
-                              "2024",
-                              Icons.calendar_month_rounded,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Modern Search Bar
-                      Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) =>
-                              setState(() => _searchQuery = value),
-                          decoration: InputDecoration(
-                            hintText: 'Search teacher or subject...',
-                            hintStyle: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 14,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: ColorPallet.primaryBlue,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                            ),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.close, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = "");
-                                    },
-                                  )
-                                : null,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xffF8FAFC),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Premium Header with Unique Glass Stats
+            SliverAppBar(
+              expandedHeight: 230,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              backgroundColor: ColorPallet.primaryBlue,
+              title: const Text(
+                "Course Allotment",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: -0.5,
                 ),
               ),
-            ),
-          ),
-
-          // Content List
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            sliver: assignments.isEmpty
-                ? SliverFillRemaining(child: _buildEmptyState())
-                : SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final data = assignments[index];
-                      return _buildAnimatedTeacherCard(data, index);
-                    }, childCount: assignments.length),
-                  ),
-          ),
-
-          // Manager Allotment Button as a Scrollable Item
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-              child: TweenAnimationBuilder(
-                duration: const Duration(milliseconds: 600),
-                tween: Tween<double>(begin: 0, end: 1),
-                builder: (context, double value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - value)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
                     color: ColorPallet.primaryBlue,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorPallet.primaryBlue.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(50),
+                      bottomRight: Radius.circular(50),
+                    ),
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const CourseAssignmentScreen(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 80, 20, 10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Unique Glassy Container for Stats
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 10,
                           ),
-                        );
-                        // Refresh regardless of result to be safe
-                        setState(() {});
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_task_outlined,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          SizedBox(width: 10),
-                          const Text(
-                            "MANAGE ALLOTMENT",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.1),
+                              width: 1.5,
                             ),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildUniqueStat(
+                                "Staff",
+                                assignments.length.toString(),
+                                Icons.people_rounded,
+                              ),
+                              Container(
+                                width: 1.5,
+                                height: 18,
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                              _buildUniqueStat(
+                                "Courses",
+                                _getTotalSubjects().toString(),
+                                Icons.book_rounded,
+                              ),
+                              Container(
+                                width: 1.5,
+                                height: 18,
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                              _buildUniqueStat(
+                                "Term",
+                                "2024",
+                                Icons.calendar_month_rounded,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Modern Search Bar
+                        Container(
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) =>
+                                setState(() => _searchQuery = value),
+                            decoration: InputDecoration(
+                              hintText: 'Search teacher or subject...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: ColorPallet.primaryBlue,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = "");
+                                      },
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Content List
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              sliver: assignments.isEmpty
+                  ? SliverFillRemaining(child: _buildEmptyState())
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final data = assignments[index];
+                        return _buildAnimatedTeacherCard(data, index);
+                      }, childCount: assignments.length),
+                    ),
+            ),
+
+            // Manager Allotment Button as a Scrollable Item
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+                child: TweenAnimationBuilder(
+                  duration: const Duration(milliseconds: 600),
+                  tween: Tween<double>(begin: 0, end: 1),
+                  builder: (context, double value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: ColorPallet.primaryBlue,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: ColorPallet.primaryBlue.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const CourseAssignmentScreen(),
+                            ),
+                          );
+                          // Refresh regardless of result to be safe
+                          setState(() {});
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_task_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            SizedBox(width: 10),
+                            const Text(
+                              "MANAGE ALLOTMENT",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

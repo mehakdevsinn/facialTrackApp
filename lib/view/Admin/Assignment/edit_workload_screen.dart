@@ -26,41 +26,43 @@ class _EditWorkloadScreenState extends State<EditWorkloadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffF8FAFC),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: ColorPallet.primaryBlue,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.pop(context),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xffF8FAFC),
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            "Edit Teacher Workload",
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+          ),
+          actions: [
+            IconButton(
+              onPressed: () => _openAssignScreen(),
+              icon: const Icon(Icons.add_circle_outline_rounded, size: 28),
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
-        title: const Text(
-          "Edit Teacher Workload",
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+        body: Column(
+          children: [
+            InkWell(
+              onTap: _showTeacherSelectionDialog,
+              child: _buildTeacherHeader(),
+            ),
+            Expanded(
+              child: assignedSubjects.isEmpty
+                  ? _buildEmptyState()
+                  : _buildSubjectList(),
+            ),
+            _buildSaveButton(),
+          ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () => _openAssignScreen(),
-            icon: const Icon(Icons.add_circle_outline_rounded, size: 28),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        children: [
-          InkWell(
-            onTap: _showTeacherSelectionDialog,
-            child: _buildTeacherHeader(),
-          ),
-          Expanded(
-            child: assignedSubjects.isEmpty
-                ? _buildEmptyState()
-                : _buildSubjectList(),
-          ),
-          _buildSaveButton(),
-        ],
       ),
     );
   }

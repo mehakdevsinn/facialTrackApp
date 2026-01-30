@@ -477,10 +477,10 @@ class BlueAssignedSubjectCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            const Color(0xFF6366F1).withOpacity(0.9), // Lighter Indigo
-            const Color(0xFF3B82F6).withOpacity(0.8), // Lighter Blue
+            Color(0xFF48C6EF), // Lighter Blue
+            Color(0xFF6F86D6), // Unique Blue-Purple
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -488,7 +488,7 @@ class BlueAssignedSubjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6366F1).withOpacity(0.15),
+            color: const Color(0xFF6F86D6).withOpacity(0.25),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-info.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
@@ -6,14 +7,14 @@ import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-class StudentLoginScreen extends StatefulWidget {
-  const StudentLoginScreen({super.key});
+class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({super.key});
 
   @override
-  State<StudentLoginScreen> createState() => _StudentLoginScreenState();
+  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _StudentLoginScreenState extends State<StudentLoginScreen> {
+class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final FocusNode studentIdFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
   bool _obscureText = true;
@@ -102,7 +103,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                     SizedBox(height: 6),
                     Text(
-                      "Student Attendance Portal",
+                      "Admin Portal",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
 
@@ -116,8 +117,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
-                  label: "Student ID",
-                  hint: "Enter your Student ID",
+                  label: "Admin ID",
+                  hint: "Enter your Admin ID",
                   icon: Icons.person_outline,
                   activeColor: ColorPallet.primaryBlue,
                   inactiveColor: Colors.grey,
@@ -207,7 +208,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const StudentRootScreen(),
+                                builder: (context) => StudentEnrollmentScreen(),
+                                // const StudentRootScreen(),
                               ),
                             );
                           }

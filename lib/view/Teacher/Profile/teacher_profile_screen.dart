@@ -1,4 +1,6 @@
-import 'package:facialtrackapp/view/teacher/Password%20Changed/change_password_inside_teacher_profile.dart';
+import 'package:facialtrackapp/view/Teacher/Password%20Changed/change_password_inside_teacher_profile.dart';
+import 'package:facialtrackapp/view/teacher/Password%20Changed/change_password_inside_teacher_profile.dart'
+    hide TeacherSideChangePasswordScreen;
 import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/account_setting_widget.dart';
 import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/logout_button.dart';
 import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/overview_card_widget.dart';
@@ -44,7 +46,8 @@ class TeacherProfileScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 30),
-                    const LogoutButtonWidget(), const SizedBox(height: 40),
+                    const LogoutButtonWidget(),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

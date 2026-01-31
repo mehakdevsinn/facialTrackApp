@@ -43,6 +43,8 @@ dependencies:
   printing: ^5.11.1 
   path_provider: ^2.1.2  # Storage access ke liye
   permission_handler: ^11.3.1 # Permission lene ke liye 
+  camera: ^0.11.0
+  google_mlkit_face_detection: ^0.11.0
 
 dev_dependencies:
   flutter_test:

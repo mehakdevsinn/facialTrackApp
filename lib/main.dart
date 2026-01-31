@@ -1,5 +1,7 @@
+import 'package:facialtrackapp/view/Admin/Manage%20Teachers/manage-teachers.dart';
+import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-face.dart';
 import 'package:facialtrackapp/view/Splash%20Screen/splash_screen.dart';
-import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
+import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -13,6 +15,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
- ); }
+      home:
+          //  FaceEnrollmentScreen()
+          SplashScreen(),
+      // ManageTeachersScreen(),
+    );
+  }
 }

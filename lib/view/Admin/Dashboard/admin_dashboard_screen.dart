@@ -14,7 +14,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xffF6F8FB),
+        backgroundColor: Colors.grey[100],
         appBar: AppBar(
           elevation: 0,
           automaticallyImplyLeading: false,

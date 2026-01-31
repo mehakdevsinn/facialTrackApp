@@ -28,7 +28,7 @@ class _EditWorkloadScreenState extends State<EditWorkloadScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: Colors.grey[100],
         appBar: AppBar(
           elevation: 0,
           backgroundColor: ColorPallet.primaryBlue,

@@ -57,7 +57,7 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: Colors.grey[100],
         body: Column(
           children: [
             AssignmentHeader(

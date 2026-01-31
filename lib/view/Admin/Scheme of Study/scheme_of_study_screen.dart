@@ -57,7 +57,7 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xffF6F8FB),
+        backgroundColor: Colors.grey[100],
         appBar: AppBar(
           elevation: 0,
           backgroundColor: ColorPallet.primaryBlue,

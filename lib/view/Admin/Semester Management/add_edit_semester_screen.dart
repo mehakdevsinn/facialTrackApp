@@ -69,7 +69,7 @@ class _AddEditSemesterScreenState extends State<AddEditSemesterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF6F8FB),
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
           widget.isEditing ? "Edit Semester" : "Add New Semester",

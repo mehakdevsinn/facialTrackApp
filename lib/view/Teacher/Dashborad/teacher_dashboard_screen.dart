@@ -1,9 +1,9 @@
-
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
 import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
+import 'package:facialtrackapp/view/teacher/Attendence%20Report/select_date_range.dart';
 import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/start_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
@@ -227,6 +227,19 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             },
                           ),
                           _AnimatedDashboardCard(
+                            color: Colors.pinkAccent,
+                            icon: Icons.analytics_rounded,
+                            title: 'Analytics',
+                            ontap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SelectionScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _AnimatedDashboardCard(
                             color: Colors.teal,
                             icon: Icons.menu_book,
                             title: 'Subjects',
@@ -397,7 +410,9 @@ class _AnimatedLogoutCardState extends State<AnimatedLogoutCard> {
               ? (Matrix4.identity()..scale(0.97))
               : Matrix4.identity(),
           decoration: BoxDecoration(
-            color: _isPressed ? ColorPallet.primaryBlue.withOpacity(0.1) : Colors.white,
+            color: _isPressed
+                ? ColorPallet.primaryBlue.withOpacity(0.1)
+                : Colors.white,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
@@ -459,10 +474,14 @@ void _showLogoutDialog(BuildContext context) {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                 CircleAvatar(
+                CircleAvatar(
                   radius: 30,
-                    backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
-                  child: Icon(Icons.logout, color: ColorPallet.primaryBlue, size: 30),
+                  backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
+                  child: Icon(
+                    Icons.logout,
+                    color: ColorPallet.primaryBlue,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text(

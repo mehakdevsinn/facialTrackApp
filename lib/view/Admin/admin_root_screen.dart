@@ -62,66 +62,70 @@ class _AdminRootScreenState extends State<AdminRootScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 12,
-              spreadRadius: 1,
+    return SafeArea(
+      child: Scaffold(
+        body: _screens[_selectedIndex],
+        bottomNavigationBar: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 12,
+                spreadRadius: 1,
+              ),
+            ],
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
-          ],
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_icons.length, (index) {
-            bool isSelected = _selectedIndex == index;
-            return GestureDetector(
-              onTap: () => _onItemTapped(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color.fromARGB(255, 35, 4, 170).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _icons[index],
-                      color: isSelected ? ColorPallet.primaryBlue : Colors.grey,
-                      size: isSelected ? 28 : 24,
-                    ),
-                    const SizedBox(width: 6),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        isSelected ? _labels[index] : "",
-                        style: TextStyle(
-                          color: ColorPallet.primaryBlue,
-                          fontWeight: FontWeight.w600,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_icons.length, (index) {
+              bool isSelected = _selectedIndex == index;
+              return GestureDetector(
+                onTap: () => _onItemTapped(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color.fromARGB(255, 35, 4, 170).withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _icons[index],
+                        color: isSelected
+                            ? ColorPallet.primaryBlue
+                            : Colors.grey,
+                        size: isSelected ? 28 : 24,
+                      ),
+                      const SizedBox(width: 6),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        child: Text(
+                          isSelected ? _labels[index] : "",
+                          style: TextStyle(
+                            color: ColorPallet.primaryBlue,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );

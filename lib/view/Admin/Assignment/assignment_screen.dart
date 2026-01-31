@@ -50,7 +50,7 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xffF8FAFC),
+        backgroundColor: Colors.grey[100],
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [

@@ -1,26 +1,43 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/individual_student_detail_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Add this for date formatting
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class AttendanceReportScreen extends StatefulWidget {
   // Add these parameters to the constructor
   final DateTime? startDate;
   final DateTime? endDate;
 
-  const AttendanceReportScreen({
-    super.key, 
-    this.startDate, 
-    this.endDate
-  });
+  const AttendanceReportScreen({super.key, this.startDate, this.endDate});
 
   @override
   State<AttendanceReportScreen> createState() => _AttendanceReportScreenState();
 }
 
-class _AttendanceReportScreenState extends State<AttendanceReportScreen> with SingleTickerProviderStateMixin {
+class _AttendanceReportScreenState extends State<AttendanceReportScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+
+  // Dummy Student Data (Moved here for access in PDF)
+  final List<Map<String, dynamic>> students = [
+    {
+      "name": "Mehak Fatima",
+      "id": "10001",
+      "perc": "95%",
+      "color": Colors.green,
+    },
+    {"name": "Ali Ahmed", "id": "10002", "perc": "88%", "color": Colors.blue},
+    {
+      "name": "Arooj Malik",
+      "id": "10003",
+      "perc": "76%",
+      "color": Colors.orange,
+    },
+  ];
 
   @override
   void initState() {
@@ -29,10 +46,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _animation = Tween<double>(begin: 0, end: 0.88).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutCubic,
-    ));
+    _animation = Tween<double>(begin: 0, end: 0.88).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    );
     _controller.forward();
   }
 
@@ -52,6 +68,177 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
     return "(Full Academic Session)"; // Default if no dates passed
   }
 
+  Future<void> _generatePdf(BuildContext context) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header
+              pw.Header(
+                level: 0,
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      "Class Attendance Analysis",
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      "Generated: ${DateFormat('dd MMM yyyy').format(DateTime.now())}",
+                      style: const pw.TextStyle(
+                        fontSize: 12,
+                        color: PdfColors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                "Period: ${_getRangeText()}",
+                style: const pw.TextStyle(
+                  fontSize: 14,
+                  color: PdfColors.grey700,
+                ),
+              ),
+              pw.SizedBox(height: 20),
+
+              // Overall Summary Section
+              pw.Container(
+                padding: const pw.EdgeInsets.all(16),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                  children: [
+                    pw.Column(
+                      children: [
+                        pw.Text(
+                          "Overall Attendance",
+                          style: const pw.TextStyle(
+                            fontSize: 12,
+                            color: PdfColors.grey,
+                          ),
+                        ),
+                        pw.Text(
+                          "88%",
+                          style: pw.TextStyle(
+                            fontSize: 24,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.Column(
+                      children: [
+                        pw.Text(
+                          "Present Days",
+                          style: const pw.TextStyle(
+                            fontSize: 12,
+                            color: PdfColors.grey,
+                          ),
+                        ),
+                        pw.Text(
+                          "150",
+                          style: pw.TextStyle(
+                            fontSize: 18,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.Column(
+                      children: [
+                        pw.Text(
+                          "Absent Days",
+                          style: const pw.TextStyle(
+                            fontSize: 12,
+                            color: PdfColors.grey,
+                          ),
+                        ),
+                        pw.Text(
+                          "20",
+                          style: pw.TextStyle(
+                            fontSize: 18,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 30),
+
+              // Students Table
+              pw.Text(
+                "Student Performance Details",
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+
+              pw.Table.fromTextArray(
+                context: context,
+                border: pw.TableBorder.all(color: PdfColors.grey300),
+                headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+                headerDecoration: const pw.BoxDecoration(color: PdfColors.blue),
+                rowDecoration: const pw.BoxDecoration(color: PdfColors.white),
+                cellAlignment: pw.Alignment.centerLeft,
+                cellPadding: const pw.EdgeInsets.all(8),
+                headers: ['Student Name', 'ID', 'Attendance %', 'Status'],
+                data: students.map((s) {
+                  double perc = double.parse(s['perc'].replaceAll('%', ''));
+                  String statusStr = perc >= 90
+                      ? "Excellent"
+                      : (perc >= 75 ? "Good" : "Needs Improvement");
+                  PdfColor statusColor = perc >= 90
+                      ? PdfColors.green
+                      : (perc >= 75 ? PdfColors.blue : PdfColors.orange);
+
+                  return [
+                    s['name'],
+                    s['id'],
+                    s['perc'],
+                    statusStr, // Simple status text for PDF
+                  ];
+                }).toList(),
+              ),
+
+              pw.SizedBox(height: 20),
+              pw.Text(
+                "End of Report",
+                style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,8 +254,19 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
         ),
         title: const Text(
           "Analytics Report",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: "Download Report",
+            onPressed: () => _generatePdf(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -83,7 +281,10 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
                   children: [
                     const Text(
                       "Overall Class Attendance",
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -94,16 +295,20 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               _buildModernProgressCard(),
-              
+
               const SizedBox(height: 35),
               const Text(
                 "Student Performance",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                ),
               ),
               const SizedBox(height: 15),
-      
+
               _buildAnimatedStudentList(),
               const SizedBox(height: 20),
             ],
@@ -114,7 +319,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
   }
 
   // ... (Rest of your helper methods: _buildModernProgressCard, _buildStatusBadge, etc. remain same)
-  
+
   Widget _buildModernProgressCard() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -123,10 +328,10 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.05), 
-            blurRadius: 20, 
+            color: Colors.blue.withOpacity(0.05),
+            blurRadius: 20,
             offset: const Offset(0, 10),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -152,8 +357,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
                   Text(
                     "${(_animation.value * 100).toInt()}%",
                     style: const TextStyle(
-                      fontSize: 24, 
-                      fontWeight: FontWeight.w900, 
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
                       color: Color(0xFF4A69BB),
                     ),
                   ),
@@ -167,7 +372,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
               const SizedBox(height: 12),
               _buildStatusBadge("Absent", "20 Days", Colors.redAccent),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -184,24 +389,28 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
       ),
       child: Column(
         children: [
-          Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
-          Text(val, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            val,
+            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildAnimatedStudentList() {
-    final List<Map<String, dynamic>> students = [
-      {"name": "Mehak Fatima", "id": "10001", "perc": "95%", "color": Colors.green},
-      {"name": "Ali Ahmed", "id": "10002", "perc": "88%", "color": Colors.blue},
-      {"name": "Arooj Malik", "id": "10003", "perc": "76%", "color": Colors.orange},
-    ];
-
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: students.length,
+      itemCount: students.length, // Uses the class member now
       itemBuilder: (context, index) {
         return TweenAnimationBuilder(
           duration: Duration(milliseconds: 600 + (index * 200)),
@@ -223,14 +432,18 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
   Widget _buildGlassStudentCard(Map<String, dynamic> data) {
     return InkWell(
       onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => StudentDetailOptionsScreen(studentName: data['name'],startDate: widget.startDate, // StatefulWidget ki dates pass ho rahi hain
-            endDate: widget.endDate,),
-        ),
-      );
-    },
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StudentDetailOptionsScreen(
+              studentName: data['name'],
+              startDate:
+                  widget.startDate, // StatefulWidget ki dates pass ho rahi hain
+              endDate: widget.endDate,
+            ),
+          ),
+        );
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
         padding: const EdgeInsets.all(16),
@@ -250,12 +463,12 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
             Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                shape: BoxShape.circle, 
+                shape: BoxShape.circle,
                 border: Border.all(color: data['color'].withOpacity(0.2)),
               ),
               child: const CircleAvatar(
-                radius: 20, 
-                backgroundColor: Color(0xFFF3F7FF), 
+                radius: 20,
+                backgroundColor: Color(0xFFF3F7FF),
                 child: Icon(Icons.person, color: Colors.grey, size: 20),
               ),
             ),
@@ -264,8 +477,17 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  Text("ID: ${data['id']}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(
+                    data['name'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    "ID: ${data['id']}",
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -285,7 +507,11 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> with Si
                 ),
                 Text(
                   data['perc'],
-                  style: TextStyle(color: data['color'], fontWeight: FontWeight.bold, fontSize: 9),
+                  style: TextStyle(
+                    color: data['color'],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 9,
+                  ),
                 ),
               ],
             ),

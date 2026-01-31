@@ -130,149 +130,151 @@ class DayByDayReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F7FF),
-      appBar: AppBar(
-        title: Text("$studentName History"),
-        backgroundColor: ColorPallet.primaryBlue,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            tooltip: "Download PDF",
-            onPressed: () => _generatePdf(context),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Header Range Info
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(15),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F7FF),
+        appBar: AppBar(
+          title: Text("$studentName History"),
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              tooltip: "Download PDF",
+              onPressed: () => _generatePdf(context),
             ),
-            child: Text(
-              "Logs: ${startDate != null ? DateFormat('dd MMM').format(startDate!) : '-'} - ${endDate != null ? DateFormat('dd MMM').format(endDate!) : '-'}",
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blueGrey,
-                fontSize: 13,
+          ],
+        ),
+        body: Column(
+          children: [
+            // Header Range Info
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+              ),
+              child: Text(
+                "Logs: ${startDate != null ? DateFormat('dd MMM').format(startDate!) : '-'} - ${endDate != null ? DateFormat('dd MMM').format(endDate!) : '-'}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey,
+                  fontSize: 13,
+                ),
               ),
             ),
-          ),
 
-          // Table Content
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(15),
-              itemCount: attendanceData.length,
-              itemBuilder: (context, index) {
-                var record = attendanceData[index];
-                String status = record['status'];
-                bool isLeave = status == "Leave";
+            // Table Content
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(15),
+                itemCount: attendanceData.length,
+                itemBuilder: (context, index) {
+                  var record = attendanceData[index];
+                  String status = record['status'];
+                  bool isLeave = status == "Leave";
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _getStatusColor(status).withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Main Row (Table Style)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            // Date Column
-                            SizedBox(
-                              width: 80,
-                              child: Text(
-                                DateFormat(
-                                  'dd MMM',
-                                ).format(DateTime.parse(record['date'])),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            // Time/Check-in Column
-                            Expanded(
-                              child: Text(
-                                status == "Sunday"
-                                    ? "Weekend"
-                                    : "In: ${record['time']}",
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            // Status Badge
-                            _buildStatusBadge(status),
-                          ],
-                        ),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _getStatusColor(status).withOpacity(0.2),
                       ),
-
-                      // Reason Section (Sirf tab dikhayen jab status 'Leave' ho)
-                      if (isLeave && record['reason'].isNotEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(
-                            left: 10,
-                            right: 10,
-                            bottom: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.orange.withOpacity(0.1),
-                            ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Main Row (Table Style)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 12,
                           ),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: Colors.orange,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
+                              // Date Column
+                              SizedBox(
+                                width: 80,
                                 child: Text(
-                                  "Reason: ${record['reason']}",
+                                  DateFormat(
+                                    'dd MMM',
+                                  ).format(DateTime.parse(record['date'])),
                                   style: const TextStyle(
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
+                              // Time/Check-in Column
+                              Expanded(
+                                child: Text(
+                                  status == "Sunday"
+                                      ? "Weekend"
+                                      : "In: ${record['time']}",
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              // Status Badge
+                              _buildStatusBadge(status),
                             ],
                           ),
                         ),
-                    ],
-                  ),
-                );
-              },
+
+                        // Reason Section (Sirf tab dikhayen jab status 'Leave' ho)
+                        if (isLeave && record['reason'].isNotEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(
+                              left: 10,
+                              right: 10,
+                              bottom: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.orange.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.info_outline,
+                                  size: 16,
+                                  color: Colors.orange,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Reason: ${record['reason']}",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

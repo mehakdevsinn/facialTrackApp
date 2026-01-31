@@ -50,64 +50,66 @@ class _StudentPercentageScreenState extends State<StudentPercentageScreen>
     //     ? "${DateFormat('MMM d').format(widget.startDate!)} - ${DateFormat('MMM d').format(widget.endDate!)}"
     //     : "Selected Range";
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFF),
-      // student_percenatge_screen.dart mein line 55 update karein:
-      appBar: AppBar(
-        title: Text("${widget.studentName} Report"), // widget. add karein
-        backgroundColor: ColorPallet.primaryBlue,
-        foregroundColor: ColorPallet.white,
-        // ... baaki code same rahega
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // --- Date Range Header ---
-            // Container(
-            //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            //   decoration: BoxDecoration(
-            //     color: ColorPallet.primaryBlue.withOpacity(0.1),
-            //     borderRadius: BorderRadius.circular(20),
-            //   ),
-            //   // child: Text(
-            //   //   rangeText,
-            //   //   style: TextStyle(
-            //   //     color: ColorPallet.primaryBlue,
-            //   //     fontWeight: FontWeight.bold,
-            //   //     fontSize: 13,
-            //   //   ),
-            //   // ),
-            // ),
-            const SizedBox(height: 20),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFF),
+        // student_percenatge_screen.dart mein line 55 update karein:
+        appBar: AppBar(
+          title: Text("${widget.studentName} Report"), // widget. add karein
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: ColorPallet.white,
+          // ... baaki code same rahega
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // --- Date Range Header ---
+              // Container(
+              //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              //   decoration: BoxDecoration(
+              //     color: ColorPallet.primaryBlue.withOpacity(0.1),
+              //     borderRadius: BorderRadius.circular(20),
+              //   ),
+              //   // child: Text(
+              //   //   rangeText,
+              //   //   style: TextStyle(
+              //   //     color: ColorPallet.primaryBlue,
+              //   //     fontWeight: FontWeight.bold,
+              //   //     fontSize: 13,
+              //   //   ),
+              //   // ),
+              // ),
+              const SizedBox(height: 20),
 
-            // --- Animated Main Chart ---
-            _buildBigPercentageChart(),
+              // --- Animated Main Chart ---
+              _buildBigPercentageChart(),
 
-            const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-            // --- Detailed Stats Breakdown ---
-            Row(
-              children: [
-                _buildStatCard("Total Days", "20", Colors.blue),
-                const SizedBox(width: 15),
-                _buildStatCard("Present", "19", Colors.green),
-              ],
-            ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                _buildStatCard("Absent", "01", Colors.redAccent),
-                const SizedBox(width: 15),
-                _buildStatCard("Leave", "00", Colors.orange),
-              ],
-            ),
+              // --- Detailed Stats Breakdown ---
+              Row(
+                children: [
+                  _buildStatCard("Total Days", "20", Colors.blue),
+                  const SizedBox(width: 15),
+                  _buildStatCard("Present", "19", Colors.green),
+                ],
+              ),
+              const SizedBox(height: 15),
+              Row(
+                children: [
+                  _buildStatCard("Absent", "01", Colors.redAccent),
+                  const SizedBox(width: 15),
+                  _buildStatCard("Leave", "00", Colors.orange),
+                ],
+              ),
 
-            const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-            // --- Performance Remark ---
-            _buildRemarkCard(),
-          ],
+              // --- Performance Remark ---
+              _buildRemarkCard(),
+            ],
+          ),
         ),
       ),
     );

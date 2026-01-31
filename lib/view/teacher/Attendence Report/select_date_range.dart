@@ -32,80 +32,82 @@ class _SelectionScreenState extends State<SelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFF), // Ultra light blue-grey
-      appBar: AppBar(
-        backgroundColor: ColorPallet.primaryBlue,
-        foregroundColor: ColorPallet.white,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          "Academic Selection",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: Colors.white,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFF), // Ultra light blue-grey
+        appBar: AppBar(
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: ColorPallet.white,
+          elevation: 0,
+          centerTitle: true,
+          title: const Text(
+            "Academic Selection",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: Colors.white,
+            ),
           ),
+          // shape: const RoundedRectangleBorder(
+          //   borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+          // ),
         ),
-        // shape: const RoundedRectangleBorder(
-        //   borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        // ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Analyze Reports",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF2D3142),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Analyze Reports",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF2D3142),
+                ),
               ),
-            ),
-            const Text(
-              "Select details to generate analytics",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            const SizedBox(height: 35),
+              const Text(
+                "Select details to generate analytics",
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 35),
 
-            // --- Semester Selection ---
-            _buildSectionHeader(
-              "Academic Semester",
-              Icons.auto_awesome_mosaic_rounded,
-            ),
-            _buildCustomDropdown(
-              hint: "Choose Semester",
-              value: selectedSemester,
-              items: semesters,
-              onChanged: (val) => setState(() => selectedSemester = val),
-              icon: Icons.school_rounded,
-            ),
+              // --- Semester Selection ---
+              _buildSectionHeader(
+                "Academic Semester",
+                Icons.auto_awesome_mosaic_rounded,
+              ),
+              _buildCustomDropdown(
+                hint: "Choose Semester",
+                value: selectedSemester,
+                items: semesters,
+                onChanged: (val) => setState(() => selectedSemester = val),
+                icon: Icons.school_rounded,
+              ),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 25),
 
-            // --- Subject Selection ---
-            _buildSectionHeader("Course Subject", Icons.menu_book_rounded),
-            _buildCustomDropdown(
-              hint: "Choose Subject",
-              value: selectedSubject,
-              items: subjects,
-              onChanged: (val) => setState(() => selectedSubject = val),
-              icon: Icons.subject_rounded,
-            ),
+              // --- Subject Selection ---
+              _buildSectionHeader("Course Subject", Icons.menu_book_rounded),
+              _buildCustomDropdown(
+                hint: "Choose Subject",
+                value: selectedSubject,
+                items: subjects,
+                onChanged: (val) => setState(() => selectedSubject = val),
+                icon: Icons.subject_rounded,
+              ),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 25),
 
-            // --- Date Range Selection (Unique Design) ---
-            _buildSectionHeader("Time Period", Icons.calendar_today_rounded),
-            _buildDateTile(),
+              // --- Date Range Selection (Unique Design) ---
+              _buildSectionHeader("Time Period", Icons.calendar_today_rounded),
+              _buildDateTile(),
 
-            const SizedBox(height: 50),
+              const SizedBox(height: 50),
 
-            // --- Premium Continue Button ---
-            _buildContinueButton(),
-          ],
+              // --- Premium Continue Button ---
+              _buildContinueButton(),
+            ],
+          ),
         ),
       ),
     );

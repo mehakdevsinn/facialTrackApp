@@ -241,77 +241,82 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        foregroundColor: ColorPallet.white,
-        backgroundColor: ColorPallet.primaryBlue,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 23),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Analytics Report",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          foregroundColor: ColorPallet.white,
+          backgroundColor: ColorPallet.primaryBlue,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, size: 23),
+            onPressed: () => Navigator.pop(context),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            tooltip: "Download Report",
-            onPressed: () => _generatePdf(context),
+          title: const Text(
+            "Analytics Report",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 15),
-              // --- UPDATED RANGE TEXT ---
-              Center(
-                child: Column(
-                  children: [
-                    const Text(
-                      "Overall Class Attendance",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              tooltip: "Download Report",
+              onPressed: () => _generatePdf(context),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 15),
+                // --- UPDATED RANGE TEXT ---
+                Center(
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Overall Class Attendance",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _getRangeText(),
-                      style: const TextStyle(color: Colors.grey, fontSize: 11),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        _getRangeText(),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              _buildModernProgressCard(),
+                _buildModernProgressCard(),
 
-              const SizedBox(height: 35),
-              const Text(
-                "Student Performance",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
+                const SizedBox(height: 35),
+                const Text(
+                  "Student Performance",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 15),
+                const SizedBox(height: 15),
 
-              _buildAnimatedStudentList(),
-              const SizedBox(height: 20),
-            ],
+                _buildAnimatedStudentList(),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),

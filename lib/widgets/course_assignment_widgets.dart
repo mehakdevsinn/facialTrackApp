@@ -477,20 +477,22 @@ class BlueAssignedSubjectCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF48C6EF), // Lighter Blue
-            Color(0xFF6F86D6), // Unique Blue-Purple
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6F86D6).withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(
+              0.08,
+            ), // Increased opacity from 0.04
+            blurRadius: 24, // Increased blur
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: ColorPallet.primaryBlue.withOpacity(
+              0.05,
+            ), // Added a subtle colored shadow for depth
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -498,7 +500,7 @@ class BlueAssignedSubjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         child: Stack(
           children: [
-            // Unique Glassmorphism Mesh Pattern
+            // Decorative Background Elements
             Positioned(
               right: -50,
               top: -50,
@@ -508,8 +510,8 @@ class BlueAssignedSubjectCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      Colors.white.withOpacity(0.2),
-                      Colors.white.withOpacity(0),
+                      ColorPallet.primaryBlue.withOpacity(0.08),
+                      ColorPallet.primaryBlue.withOpacity(0),
                     ],
                   ),
                   shape: BoxShape.circle,
@@ -523,7 +525,7 @@ class BlueAssignedSubjectCard extends StatelessWidget {
                 width: 130,
                 height: 130,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: ColorPallet.primaryBlue.withOpacity(0.03),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -542,25 +544,25 @@ class BlueAssignedSubjectCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: ColorPallet.primaryBlue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: ColorPallet.primaryBlue.withOpacity(0.1),
                             width: 1,
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.auto_awesome_mosaic_rounded,
-                              color: Colors.white,
+                              color: ColorPallet.primaryBlue,
                               size: 12,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               semester.toUpperCase(),
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: ColorPallet.primaryBlue,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.8,
@@ -577,12 +579,12 @@ class BlueAssignedSubjectCard extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
+                              color: ColorPallet.primaryBlue.withOpacity(0.08),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.edit_rounded,
-                              color: Colors.white,
+                              color: ColorPallet.primaryBlue,
                               size: 20,
                             ),
                           ),
@@ -596,18 +598,12 @@ class BlueAssignedSubjectCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
+                          color: ColorPallet.primaryBlue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                            ),
-                          ],
                         ),
                         child: const Icon(
                           Icons.menu_book_rounded,
-                          color: Colors.white,
+                          color: ColorPallet.primaryBlue,
                           size: 26,
                         ),
                       ),
@@ -619,7 +615,7 @@ class BlueAssignedSubjectCard extends StatelessWidget {
                             Text(
                               title,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: Color(0xFF1E293B),
                                 fontWeight: FontWeight.w900,
                                 fontSize: 19,
                                 letterSpacing: -0.4,
@@ -656,18 +652,19 @@ class BlueAssignedSubjectCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.08),
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.9), size: 13),
+          Icon(icon, color: Colors.grey.shade600, size: 13),
           const SizedBox(width: 5),
           Text(
             text,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.grey.shade700,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),

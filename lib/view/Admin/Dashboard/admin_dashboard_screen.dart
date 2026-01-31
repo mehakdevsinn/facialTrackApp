@@ -2,6 +2,7 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Admin/Course%20Assignment/course_assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Scheme%20of%20Study/scheme_of_study_screen.dart';
 import 'package:facialtrackapp/widgets/admin_animated_card.dart';
+import 'package:facialtrackapp/view/Admin/Semester Management/semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
@@ -216,7 +217,14 @@ class AdminDashboardScreen extends StatelessWidget {
                   color: Colors.green,
                   title: 'Semester Management',
                   subtitle: 'Handle terms and timelines',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SemesterManagementScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
               ],

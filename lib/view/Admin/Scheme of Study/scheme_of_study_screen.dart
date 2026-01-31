@@ -153,7 +153,8 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (value) => setState(() => searchQuery = value),
+                        onChanged: (value) =>
+                            setState(() => searchQuery = value),
                         decoration: InputDecoration(
                           hintText: 'Search subject or code...',
                           hintStyle: TextStyle(
@@ -202,7 +203,7 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
                       ),
                       const Text(
                         'Manage subjects for this semester',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(fontSize: 8, color: Colors.grey),
                       ),
                     ],
                   ),

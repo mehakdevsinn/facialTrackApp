@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
-import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
+import 'package:facialtrackapp/view/Student/Profile/student-profile-screen.dart';
 import 'package:facialtrackapp/widgets/dashboard-widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';

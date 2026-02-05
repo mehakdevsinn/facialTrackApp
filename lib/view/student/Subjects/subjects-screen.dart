@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/student/Subjects/subject-detail.dart';
+import 'package:facialtrackapp/view/Student/Subjects/subject-detail.dart';
 import 'package:flutter/material.dart';
 
 class Subject {

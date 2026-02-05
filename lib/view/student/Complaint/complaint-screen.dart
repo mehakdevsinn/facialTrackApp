@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/student/Complaint/submit-complaint-screen.dart';
+import 'package:facialtrackapp/view/Student/Complaint/submit-complaint-screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 

@@ -193,10 +193,10 @@
 // }
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/student/Attendence%20History/attendence-history-screen.dart';
-import 'package:facialtrackapp/view/student/Dashboard/dashboard-screeen.dart';
-import 'package:facialtrackapp/view/student/Subjects/subjects-screen.dart';
-import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
+import 'package:facialtrackapp/view/Student/Attendence%20History/attendence-history-screen.dart';
+import 'package:facialtrackapp/view/Student/Dashboard/dashboard-screeen.dart';
+import 'package:facialtrackapp/view/Student/Subjects/subjects-screen.dart';
+import 'package:facialtrackapp/view/Student/Profile/student-profile-screen.dart';
 import 'package:flutter/material.dart';
 
 class StudentRootScreen extends StatefulWidget {

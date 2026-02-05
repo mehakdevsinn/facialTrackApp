@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/student/Password%20Changed/password-changed-screen.dart';
+import 'package:facialtrackapp/view/Student/Password%20Changed/password-changed-screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 

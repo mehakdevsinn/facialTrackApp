@@ -267,8 +267,8 @@
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
-import 'package:facialtrackapp/view/student/Complaint/complaint-screen.dart';
-import 'package:facialtrackapp/view/student/Password%20Changed/password-change-inside-stident-profile.dart';
+import 'package:facialtrackapp/view/Student/Complaint/complaint-screen.dart';
+import 'package:facialtrackapp/view/Student/Password%20Changed/password-change-inside-stident-profile.dart';
 import 'package:facialtrackapp/widgets/dashboard-widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
@@ -1268,9 +1268,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: ColorPallet.orange.withOpacity(
-                                    0.3,
-                                  ),
+                                  color: ColorPallet.orange.withOpacity(0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),

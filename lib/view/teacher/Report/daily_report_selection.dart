@@ -58,72 +58,74 @@ class _DailyReportSelectionScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          "Specific Date Report",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 18,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text(
+            "Specific Date Report",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 18,
+            ),
+          ),
+          centerTitle: true,
+          backgroundColor: ColorPallet.primaryBlue,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
         ),
-        centerTitle: true,
-        backgroundColor: ColorPallet.primaryBlue,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Report Details",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Report Details",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Select the semester, subject and date to view the attendance report.",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            const SizedBox(height: 35),
+              const SizedBox(height: 8),
+              const Text(
+                "Select the semester, subject and date to view the attendance report.",
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 35),
 
-            _buildLabel("Select Semester"),
-            _buildDropdown(
-              hint: "Choose Semester",
-              value: selectedSemester,
-              items: semesters,
-              onChanged: (val) => setState(() => selectedSemester = val),
-              icon: Icons.school_outlined,
-            ),
-            const SizedBox(height: 25),
+              _buildLabel("Select Semester"),
+              _buildDropdown(
+                hint: "Choose Semester",
+                value: selectedSemester,
+                items: semesters,
+                onChanged: (val) => setState(() => selectedSemester = val),
+                icon: Icons.school_outlined,
+              ),
+              const SizedBox(height: 25),
 
-            _buildLabel("Select Subject"),
-            _buildDropdown(
-              hint: "Choose Subject",
-              value: selectedSubject,
-              items: subjects,
-              onChanged: (val) => setState(() => selectedSubject = val),
-              icon: Icons.auto_stories_outlined,
-            ),
-            const SizedBox(height: 25),
+              _buildLabel("Select Subject"),
+              _buildDropdown(
+                hint: "Choose Subject",
+                value: selectedSubject,
+                items: subjects,
+                onChanged: (val) => setState(() => selectedSubject = val),
+                icon: Icons.auto_stories_outlined,
+              ),
+              const SizedBox(height: 25),
 
-            _buildLabel("Select Date"),
-            _buildDateTile(),
+              _buildLabel("Select Date"),
+              _buildDateTile(),
 
-            const SizedBox(height: 50),
+              const SizedBox(height: 50),
 
-            _buildGenerateButton(),
-          ],
+              _buildGenerateButton(),
+            ],
+          ),
         ),
       ),
     );

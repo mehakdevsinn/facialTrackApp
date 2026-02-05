@@ -116,152 +116,154 @@ class _DailyAttendanceReportScreenState
     int absentCount = students.where((s) => s['status'] == 'Absent').length;
     int leaveCount = students.where((s) => s['status'] == 'Leave').length;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
-      appBar: AppBar(
-        title: const Text(
-          "Day Inspection",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FE),
+        appBar: AppBar(
+          title: const Text(
+            "Day Inspection",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-        ),
-        centerTitle: true,
-        backgroundColor: ColorPallet.primaryBlue,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-            onPressed: _generatePDFReport,
+          centerTitle: true,
+          backgroundColor: ColorPallet.primaryBlue,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Header Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 30),
-            decoration: const BoxDecoration(
-              color: ColorPallet.primaryBlue,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+              onPressed: _generatePDFReport,
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(bottom: 30),
+              decoration: const BoxDecoration(
+                color: ColorPallet.primaryBlue,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
               ),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  DateFormat('EEEE, dd MMMM yyyy').format(widget.date),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  "${widget.subject} • ${widget.semester}",
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 25),
-                // Stats Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStatItem(
-                      "Total",
-                      students.length.toString(),
-                      Colors.blue.shade100,
+              child: Column(
+                children: [
+                  Text(
+                    DateFormat('EEEE, dd MMMM yyyy').format(widget.date),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
-                    _buildStatItem(
-                      "Present",
-                      presentCount.toString(),
-                      Colors.greenAccent,
-                    ),
-                    _buildStatItem(
-                      "Absent",
-                      absentCount.toString(),
-                      Colors.redAccent,
-                    ),
-                    _buildStatItem(
-                      "Leave",
-                      leaveCount.toString(),
-                      Colors.orangeAccent,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Search / Filter Row (Optional placeholder for now)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 25),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Student Roll Call",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1C1E),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                  const SizedBox(height: 5),
+                  Text(
+                    "${widget.subject} • ${widget.semester}",
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
+                  const SizedBox(height: 25),
+                  // Stats Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Icon(
-                        Icons.filter_list,
-                        size: 14,
-                        color: ColorPallet.primaryBlue,
+                      _buildStatItem(
+                        "Total",
+                        students.length.toString(),
+                        Colors.blue.shade100,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "Filter",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: ColorPallet.primaryBlue,
-                        ),
+                      _buildStatItem(
+                        "Present",
+                        presentCount.toString(),
+                        Colors.greenAccent,
+                      ),
+                      _buildStatItem(
+                        "Absent",
+                        absentCount.toString(),
+                        Colors.redAccent,
+                      ),
+                      _buildStatItem(
+                        "Leave",
+                        leaveCount.toString(),
+                        Colors.orangeAccent,
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 15),
+            const SizedBox(height: 20),
 
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              physics: const BouncingScrollPhysics(),
-              itemCount: students.length,
-              itemBuilder: (context, index) {
-                return _buildStudentCard(students[index]);
-              },
+            // Search / Filter Row (Optional placeholder for now)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Student Roll Call",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1C1E),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.filter_list,
+                          size: 14,
+                          color: ColorPallet.primaryBlue,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Filter",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: ColorPallet.primaryBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 15),
+
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                physics: const BouncingScrollPhysics(),
+                itemCount: students.length,
+                itemBuilder: (context, index) {
+                  return _buildStudentCard(students[index]);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,23 +1,20 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import '../Teacher%20Login/login.dart';
-import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
+import '../Student%20Login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
-class TeacherWaitingApprovalScreen extends StatefulWidget {
-  final String userType; // 'Teacher' or 'Student'
-
-  const TeacherWaitingApprovalScreen({super.key, this.userType = 'Teacher'});
+class StudentWaitingApprovalScreen extends StatefulWidget {
+  const StudentWaitingApprovalScreen({super.key});
 
   @override
-  State<TeacherWaitingApprovalScreen> createState() =>
-      _TeacherWaitingApprovalScreenState();
+  State<StudentWaitingApprovalScreen> createState() =>
+      _StudentWaitingApprovalScreenState();
 }
 
-class _TeacherWaitingApprovalScreenState
-    extends State<TeacherWaitingApprovalScreen> {
+class _StudentWaitingApprovalScreenState
+    extends State<StudentWaitingApprovalScreen> {
   bool isApproved = false;
 
   @override
@@ -36,9 +33,7 @@ class _TeacherWaitingApprovalScreenState
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => widget.userType == 'Student'
-                    ? const StudentLoginScreen()
-                    : const TeacherLoginScreen(),
+                builder: (context) => const StudentLoginScreen(),
               ),
               (route) => false,
             );
@@ -70,7 +65,7 @@ class _TeacherWaitingApprovalScreenState
                     width: 200,
                     child: Lottie.asset(
                       isApproved
-                          ? 'assets/animations/face-detect.json' // Replace with a success animation if you have one
+                          ? 'assets/animations/face-detect.json'
                           : 'assets/animations/face-detect.json',
                       repeat: true,
                       animate: true,
@@ -126,8 +121,8 @@ class _TeacherWaitingApprovalScreenState
                         Expanded(
                           child: Text(
                             isApproved
-                                ? "Approval granted! You can now access your ${widget.userType.toLowerCase()} portal."
-                                : "Once approved, you will be able to log in to your ${widget.userType.toLowerCase()} portal.",
+                                ? "Approval granted! You can now access your student portal."
+                                : "Once approved, you will be able to log in to your student portal.",
                             style: const TextStyle(
                               color: Colors.black87,
                               fontSize: 14,

@@ -2,6 +2,7 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
+import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -229,23 +230,30 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    height: 18,
-                    width: 18,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(50)),
-                      color: ColorPallet.softGreen,
-                    ),
-
-                    child: Icon(Icons.done, color: ColorPallet.white, size: 10),
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    "Secure Login",
+                  const Text(
+                    "Don't have an account? ",
                     style: TextStyle(color: ColorPallet.grey),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StudentSignupScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Sign Up",
+                      style: TextStyle(
+                        color: ColorPallet.primaryBlue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

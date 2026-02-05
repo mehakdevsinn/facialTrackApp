@@ -20,9 +20,17 @@ class _AttendanceReportState extends State<AttendanceReport> {
 
   final Color accentOrange = const Color(0xFFFF8A65);
   bool showOnlyLow = false;
+  String selectedSemester = "Semester 2";
   String selectedMonth = "October 2025";
-
   String selectedSubject = "Computer Science";
+
+  // Even Semesters
+  final List<String> semesters = [
+    "Semester 2",
+    "Semester 4",
+    "Semester 6",
+    "Semester 8",
+  ];
 
   // Full list of 12 Months
   final List<String> months = [
@@ -40,38 +48,27 @@ class _AttendanceReportState extends State<AttendanceReport> {
     "December 2025",
   ];
 
-  // Expanded List of Subjects
+  // Subjects for the teacher
   final List<String> subjects = [
     "Computer Science",
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "English Literature",
-    "History",
-    "Geography",
-    "Economics",
-    "Business Studies",
-    "Art & Design",
-    "Physical Education",
+    "Software Engineering",
+    "Information Technology",
+    "Artificial Intelligence",
   ];
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      // Agar dashboard se aaye hain toh pop hona chahiye (true)
-      // Agar bottom nav se aaye hain toh pop nahi hona chahiye (false)
       canPop: widget.showBackButton,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
       },
-
       child: SafeArea(
         child: Scaffold(
           backgroundColor: Colors.grey[100],
           appBar: AppBar(
             foregroundColor: ColorPallet.white,
             automaticallyImplyLeading: false,
-
             backgroundColor: ColorPallet.primaryBlue,
             leading: widget.showBackButton
                 ? IconButton(
@@ -85,16 +82,19 @@ class _AttendanceReportState extends State<AttendanceReport> {
             ),
             centerTitle: true,
           ),
-
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 ReportDropdowns(
+                  selectedSemester: selectedSemester,
                   selectedMonth: selectedMonth,
                   selectedSubject: selectedSubject,
+                  semesters: semesters,
                   months: months,
                   subjects: subjects,
+                  onSemesterChanged: (val) =>
+                      setState(() => selectedSemester = val!),
                   onMonthChanged: (val) => setState(() => selectedMonth = val!),
                   onSubjectChanged: (val) =>
                       setState(() => selectedSubject = val!),
@@ -107,6 +107,7 @@ class _AttendanceReportState extends State<AttendanceReport> {
                 const SizedBox(height: 16),
                 PerformanceListCard(
                   showOnlyLow: showOnlyLow,
+                  selectedSemester: selectedSemester,
                   selectedMonth: selectedMonth,
                   selectedSubject: selectedSubject,
                 ),

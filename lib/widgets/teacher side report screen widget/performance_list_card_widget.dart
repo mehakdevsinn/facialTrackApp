@@ -3,12 +3,14 @@ import 'package:facialtrackapp/view/teacher/Report/view_full_report_screen.dart'
 
 class PerformanceListCard extends StatelessWidget {
   final bool showOnlyLow;
+  final String selectedSemester;
   final String selectedMonth;
   final String selectedSubject;
 
   const PerformanceListCard({
     super.key,
     required this.showOnlyLow,
+    required this.selectedSemester,
     required this.selectedMonth,
     required this.selectedSubject,
   });
@@ -20,7 +22,9 @@ class PerformanceListCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,8 +32,18 @@ class PerformanceListCard extends StatelessWidget {
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Class Performance", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-              Text("Sorted by %", style: TextStyle(color: Color(0xFF1A4B8F), fontSize: 12, fontWeight: FontWeight.w500)),
+              Text(
+                "Class Performance",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+              Text(
+                "Sorted by %",
+                style: TextStyle(
+                  color: Color(0xFF1A4B8F),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 15),
@@ -40,11 +54,24 @@ class PerformanceListCard extends StatelessWidget {
           Center(
             child: TextButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => FullReportScreen(month: selectedMonth, subject: selectedSubject),
-                ));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FullReportScreen(
+                      month: selectedMonth,
+                      subject: selectedSubject,
+                      semester: selectedSemester,
+                    ),
+                  ),
+                );
               },
-              child: const Text("View Complete Report", style: TextStyle(color: Color(0xFF1A4B8F), fontWeight: FontWeight.bold)),
+              child: const Text(
+                "View Complete Report",
+                style: TextStyle(
+                  color: Color(0xFF1A4B8F),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],
@@ -61,11 +88,25 @@ class PerformanceListCard extends StatelessWidget {
           CircleAvatar(
             radius: 18,
             backgroundColor: const Color(0xFF1A4B8F).withOpacity(0.1),
-            child: Text(name[0], style: const TextStyle(color: Color(0xFF1A4B8F), fontWeight: FontWeight.bold)),
+            child: Text(
+              name[0],
+              style: const TextStyle(
+                color: Color(0xFF1A4B8F),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600))),
-          Text("$percentage%", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Text(
+            "$percentage%",
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+          ),
           const SizedBox(width: 12),
           Container(
             width: 60,
@@ -75,8 +116,14 @@ class PerformanceListCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
-              child: Text(isLow ? "LOW" : "OKAY", 
-                style: TextStyle(color: isLow ? Colors.orange : Colors.teal, fontSize: 10, fontWeight: FontWeight.bold)),
+              child: Text(
+                isLow ? "LOW" : "OKAY",
+                style: TextStyle(
+                  color: isLow ? Colors.orange : Colors.teal,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],

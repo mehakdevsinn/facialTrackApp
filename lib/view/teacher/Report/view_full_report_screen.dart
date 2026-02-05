@@ -4,14 +4,21 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw; // PDF widgets ko 'pw' prefix dena zaroori hai
+import 'package:pdf/widgets.dart'
+    as pw; // PDF widgets ko 'pw' prefix dena zaroori hai
 import 'package:printing/printing.dart';
 
 class FullReportScreen extends StatefulWidget {
   final String month;
   final String subject;
+  final String semester;
 
-  const FullReportScreen({super.key, required this.month, required this.subject});
+  const FullReportScreen({
+    super.key,
+    required this.month,
+    required this.subject,
+    required this.semester,
+  });
 
   @override
   State<FullReportScreen> createState() => _FullReportScreenState();
@@ -42,23 +49,33 @@ class _FullReportScreenState extends State<FullReportScreen> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text("Attendance Report", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                "Attendance Report",
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
               pw.SizedBox(height: 10),
               pw.Text("Subject: ${widget.subject}"),
               pw.Text("Month: ${widget.month}"),
               pw.Divider(),
               pw.SizedBox(height: 20),
-              
+
               // Table for PDF
               pw.TableHelper.fromTextArray(
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 headers: ['Student Name', 'Present', 'Absent', 'Percentage'],
-                data: data.map((item) => [
-                  item['name'],
-                  item['present'].toString(),
-                  item['absent'].toString(),
-                  "${item['percent']}%"
-                ]).toList(),
+                data: data
+                    .map(
+                      (item) => [
+                        item['name'],
+                        item['present'].toString(),
+                        item['absent'].toString(),
+                        "${item['percent']}%",
+                      ],
+                    )
+                    .toList(),
               ),
             ],
           );
@@ -74,10 +91,15 @@ class _FullReportScreenState extends State<FullReportScreen> {
       await file.writeAsBytes(bytes);
 
       // PDF Share/Print option dikhane ke liye (Optional but Recommended)
-      await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ PDF Downloaded Successfully"), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text("✅ PDF Downloaded Successfully"),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       debugPrint("PDF Error: $e");
@@ -87,7 +109,9 @@ class _FullReportScreenState extends State<FullReportScreen> {
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> filteredStudents = students
-        .where((s) => s['name'].toLowerCase().contains(searchQuery.toLowerCase()))
+        .where(
+          (s) => s['name'].toLowerCase().contains(searchQuery.toLowerCase()),
+        )
         .toList();
 
     return SafeArea(
@@ -98,8 +122,18 @@ class _FullReportScreenState extends State<FullReportScreen> {
           backgroundColor: ColorPallet.primaryBlue,
           title: Column(
             children: [
-              const Text("Detailed Attendance", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-              Text("${widget.subject} • ${widget.month}", style: const TextStyle(fontSize: 11, color: Colors.white70)),
+              const Text(
+                "Detailed Attendance",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                "${widget.subject} • ${widget.semester} • ${widget.month}",
+                style: const TextStyle(fontSize: 11, color: Colors.white70),
+              ),
             ],
           ),
           centerTitle: true,
@@ -119,14 +153,20 @@ class _FullReportScreenState extends State<FullReportScreen> {
                 onChanged: (value) => setState(() => searchQuery = value),
                 decoration: InputDecoration(
                   hintText: "Search student name...",
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF1A4B8F)),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF1A4B8F),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-            
+
             // Header Row
             _buildTableHeader(),
 
@@ -135,7 +175,8 @@ class _FullReportScreenState extends State<FullReportScreen> {
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: filteredStudents.length,
-                itemBuilder: (context, index) => _buildStudentCard(filteredStudents[index]),
+                itemBuilder: (context, index) =>
+                    _buildStudentCard(filteredStudents[index]),
               ),
             ),
           ],
@@ -149,10 +190,53 @@ class _FullReportScreenState extends State<FullReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Row(
         children: const [
-          Expanded(flex: 3, child: Text("STUDENT", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
-          Expanded(flex: 1, child: Text("P", textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal))),
-          Expanded(flex: 1, child: Text("A", textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange))),
-          Expanded(flex: 2, child: Text("STATUS", textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+          Expanded(
+            flex: 3,
+            child: Text(
+              "STUDENT",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              "P",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              "A",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "STATUS",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -166,25 +250,62 @@ class _FullReportScreenState extends State<FullReportScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Expanded(
             flex: 3,
-            child: Text(student['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            child: Text(
+              student['name'],
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
           ),
-          Expanded(child: Text("${student['present']}", textAlign: TextAlign.center, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold))),
-          Expanded(child: Text("${student['absent']}", textAlign: TextAlign.center, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))),
+          Expanded(
+            child: Text(
+              "${student['present']}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.teal,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              "${student['absent']}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           Expanded(
             flex: 2,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
-                color: isLow ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                color: isLow
+                    ? Colors.red.withOpacity(0.1)
+                    : Colors.green.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text("${student['percent']}%", textAlign: TextAlign.center, style: TextStyle(color: isLow ? Colors.red : Colors.green, fontWeight: FontWeight.bold, fontSize: 11)),
+              child: Text(
+                "${student['percent']}%",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isLow ? Colors.red : Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
             ),
           ),
         ],

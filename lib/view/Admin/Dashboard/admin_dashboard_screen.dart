@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Admin/Course%20Assignment/course_assignment_screen.dart';
+import 'package:facialtrackapp/view/Admin/Manage%20Teachers/manage-teachers.dart';
 import 'package:facialtrackapp/view/Admin/Scheme%20of%20Study/scheme_of_study_screen.dart';
 import 'package:facialtrackapp/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Semester Management/semester_management_screen.dart';
@@ -186,7 +187,14 @@ class AdminDashboardScreen extends StatelessWidget {
                   color: Colors.blue,
                   title: 'Manage Teachers',
                   subtitle: 'Add or edit faculty profiles',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ManageTeachersScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   context,

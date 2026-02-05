@@ -1,49 +1,55 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Teacher/Forgot%20Password/forgot-password-screen.dart';
-import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
+import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import '../Teacher%20Login/login.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
-import '../Teacher%20Signup/signup.dart';
+import '../Waiting%20Approval/waiting_approval_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
-class TeacherLoginScreen extends StatefulWidget {
-  const TeacherLoginScreen({super.key});
+class TeacherSignupScreen extends StatefulWidget {
+  const TeacherSignupScreen({super.key});
 
   @override
-  State<TeacherLoginScreen> createState() => _TeacherLoginScreenState();
+  State<TeacherSignupScreen> createState() => _TeacherSignupScreenState();
 }
 
-class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
-  final FocusNode teacherIdFocus = FocusNode();
+class _TeacherSignupScreenState extends State<TeacherSignupScreen> {
+  final FocusNode emailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
+  final FocusNode qualificationFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
-    teacherIdFocus.addListener(() => setState(() {}));
+    emailFocus.addListener(() => setState(() {}));
     passwordFocus.addListener(() => setState(() {}));
+    qualificationFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    teacherIdFocus.dispose();
+    emailFocus.dispose();
     passwordFocus.dispose();
+    qualificationFocus.dispose();
     super.dispose();
   }
 
   bool _obscureText = true;
-  String teacherId = "";
+  String email = "";
   String password = "";
+  String qualification = "";
 
   bool isLoading = false;
-  bool get isButtonEnabled => teacherId.isNotEmpty && password.isNotEmpty;
+  bool get isButtonEnabled =>
+      email.isNotEmpty && password.isNotEmpty && qualification.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.white, // Dark Background
-        statusBarIconBrightness: Brightness.dark, // Light Icons
+        statusBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -69,13 +75,17 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RoleSelectionScreen(),
+                            ),
+                          );
                         },
-
-                        child: const Padding(
-                          padding: EdgeInsets.only(left: 20, top: 15),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 20, top: 15),
                           child: Row(
-                            children: [
+                            children: const [
                               Icon(Icons.arrow_back, color: ColorPallet.white),
                             ],
                           ),
@@ -90,7 +100,6 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                           animate: true,
                         ),
                       ),
-
                       const SizedBox(height: 15),
                       const Text(
                         "Facial Track",
@@ -103,35 +112,31 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        "Teacher Portal",
+                        "Teacher Registration",
                         style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
-
                       const SizedBox(height: 11),
                     ],
                   ),
                 ),
-                const SizedBox(height: 40),
-
+                const SizedBox(height: 30),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: buildTextField(
                     activeColor: ColorPallet.primaryBlue,
                     inactiveColor: Colors.grey,
-                    focusNode: teacherIdFocus,
+                    focusNode: emailFocus,
                     onChange: (value) {
                       setState(() {
-                        teacherId = value;
+                        email = value;
                       });
                     },
-                    label: "Teacher ID",
-                    hint: "Enter your Teacher ID",
-                    icon: Icons.person_outline,
+                    label: "Email Address",
+                    hint: "Enter your email",
+                    icon: Icons.email_outlined,
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: buildTextField(
@@ -144,7 +149,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                       });
                     },
                     label: "Password",
-                    hint: "Enter your password",
+                    hint: "Create a password",
                     icon: Icons.lock_outline,
                     obscureText: _obscureText,
                     suffixIcon: IconButton(
@@ -160,33 +165,24 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                     ),
                   ),
                 ),
-
+                const SizedBox(height: 20),
                 Padding(
-                  padding: const EdgeInsets.only(right: 15),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ForgotPasswordScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "Forgot Password?",
-                        style: TextStyle(
-                          color: ColorPallet.primaryBlue,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: 25),
+                  child: buildTextField(
+                    activeColor: ColorPallet.primaryBlue,
+                    inactiveColor: Colors.grey,
+                    focusNode: qualificationFocus,
+                    onChange: (value) {
+                      setState(() {
+                        qualification = value;
+                      });
+                    },
+                    label: "Qualification",
+                    hint: "Enter your qualification",
+                    icon: Icons.school_outlined,
                   ),
                 ),
-
-                const SizedBox(height: 39),
-
+                const SizedBox(height: 40),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25),
                   child: SizedBox(
@@ -207,15 +203,15 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                               setState(() {
                                 isLoading = true;
                               });
-                              // Simulate login delay
+                              // Simulate signup delay
                               Future.delayed(const Duration(seconds: 2), () {
                                 if (mounted) {
-                                  Navigator.pushAndRemoveUntil(
+                                  Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => TeacherRootScreen(),
+                                      builder: (context) =>
+                                          const WaitingApprovalScreen(),
                                     ),
-                                    (route) => false,
                                   );
                                 }
                               });
@@ -231,7 +227,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                               ),
                             )
                           : const Text(
-                              "Login",
+                              "Sign Up",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -241,61 +237,30 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                const SizedBox(height: 20),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don't have an account? ",
+                      "Already have an account? ",
                       style: TextStyle(color: ColorPallet.grey),
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const TeacherSignupScreen(),
+                            builder: (context) => const TeacherLoginScreen(),
                           ),
                         );
                       },
                       child: const Text(
-                        "Sign Up",
+                        "Login",
                         style: TextStyle(
                           color: ColorPallet.primaryBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      height: 18,
-                      width: 18,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(50)),
-                        color: ColorPallet.softGreen,
-                      ),
-
-                      child: Icon(
-                        Icons.done,
-                        color: ColorPallet.white,
-                        size: 10,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      "Secure Login",
-                      style: TextStyle(color: ColorPallet.grey),
                     ),
                   ],
                 ),

@@ -85,31 +85,31 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.calendar_month, color: Colors.white),
-              onPressed: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                );
+          // actions: [
+          //   IconButton(
+          //     icon: const Icon(Icons.calendar_month, color: Colors.white),
+          //     onPressed: () async {
+          //       DateTime? pickedDate = await showDatePicker(
+          //         context: context,
+          //         initialDate: DateTime.now(),
+          //         firstDate: DateTime(2020),
+          //         lastDate: DateTime(2030),
+          //       );
 
-                if (pickedDate != null) {
-                  setState(() {
-                    // 1. Filter Container ke liye (YYYY-MM-DD) update hoga
-                    selectedDate =
-                        "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+          //       if (pickedDate != null) {
+          //         setState(() {
+          //           // 1. Filter Container ke liye (YYYY-MM-DD) update hoga
+          //           selectedDate =
+          //               "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
 
-                    // 2. Summary Section ke liye Month Name (December 10, 2025) update hoga
-                    displayDate = DateFormat('MMMM d, y').format(pickedDate);
-                  });
-                }
-              },
-            ),
-            SizedBox(width: 8),
-          ],
+          //           // 2. Summary Section ke liye Month Name (December 10, 2025) update hoga
+          //           displayDate = DateFormat('MMMM d, y').format(pickedDate);
+          //         });
+          //       }
+          //     },
+          //   ),
+          //   SizedBox(width: 8),
+          // ],
         ),
         body: Column(
           children: [
@@ -374,26 +374,27 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                         //   }
                         // },
                         // AttendanceLogsScreen ke andar IconButton (Edit) ka logic
-onPressed: () async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditAttendanceScreen(studentData: data),
-    ),
-  );
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  EditAttendanceScreen(studentData: data),
+                            ),
+                          );
 
-  if (result != null) {
-    setState(() {
-      data['entryTime'] = result['entryTime'];
-      data['exitTime'] = result['exitTime'];
-      data['time'] = result['time'];
-      data['leaveReason'] = result['leaveReason'];
-      
-      // Status ko update karein (Absent se Leave ho jayega agar reason hai)
-      data['status'] = result['status']; 
-    });
-  }
-},
+                          if (result != null) {
+                            setState(() {
+                              data['entryTime'] = result['entryTime'];
+                              data['exitTime'] = result['exitTime'];
+                              data['time'] = result['time'];
+                              data['leaveReason'] = result['leaveReason'];
+
+                              // Status ko update karein (Absent se Leave ho jayega agar reason hai)
+                              data['status'] = result['status'];
+                            });
+                          }
+                        },
                       ),
                       _buildStatusBadge(data['status']),
                     ],
@@ -427,49 +428,50 @@ onPressed: () async {
 
   // Status Badge Widget
   Widget _buildStatusBadge(String status) {
-  // Colors and Icons logic
-  Color mainColor;
-  Color bgColor;
-  IconData icon;
+    // Colors and Icons logic
+    Color mainColor;
+    Color bgColor;
+    IconData icon;
 
-  if (status == "Present") {
-    mainColor = const Color(0xFF4CAF50); // Green
-    bgColor = const Color(0xFFE8F5E9);
-    icon = Icons.check_box;
-  } else if (status == "Leave") {
-    mainColor = Colors.amber.shade800; // Dark Yellow/Amber for text
-    bgColor = const Color(0xFFFFFDE7); // Light Yellow for background
-    icon = Icons.event_note;
-  } else {
-    mainColor = const Color(0xFFFF7043); // Orange/Red for Absent
-    bgColor = const Color(0xFFFBE9E7);
-    icon = Icons.cancel;
+    if (status == "Present") {
+      mainColor = const Color(0xFF4CAF50); // Green
+      bgColor = const Color(0xFFE8F5E9);
+      icon = Icons.check_box;
+    } else if (status == "Leave") {
+      mainColor = Colors.amber.shade800; // Dark Yellow/Amber for text
+      bgColor = const Color(0xFFFFFDE7); // Light Yellow for background
+      icon = Icons.event_note;
+    } else {
+      mainColor = const Color(0xFFFF7043); // Orange/Red for Absent
+      bgColor = const Color(0xFFFBE9E7);
+      icon = Icons.cancel;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: mainColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: mainColor),
+          const SizedBox(width: 4),
+          Text(
+            status,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: mainColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(6),
-      border: Border.all(color: mainColor, width: 1),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12, color: mainColor),
-        const SizedBox(width: 4),
-        Text(
-          status,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: mainColor,
-          ),
-        ),
-      ],
-    ),
-  );
-}
   Widget _buildStatusChip(String status) {
     Color bgColor = status == "Present"
         ? Colors.green
@@ -617,24 +619,24 @@ onPressed: () async {
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-   decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
-      // Adding a thin blue border and a matching shadow
-      border: Border.all(
-        color: const Color(0xFF1A4B8F).withOpacity(0.2), 
-        width: 1.5,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0xFF1A4B8F).withOpacity(0.08),
-          blurRadius: 15,
-          spreadRadius: 2,
-          offset: const Offset(0, 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        // Adding a thin blue border and a matching shadow
+        border: Border.all(
+          color: const Color(0xFF1A4B8F).withOpacity(0.2),
+          width: 1.5,
         ),
-      ],
-    ),
-       child: Row(
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1A4B8F).withOpacity(0.08),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
         // crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -645,7 +647,7 @@ onPressed: () async {
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(width: 80,),
+          SizedBox(width: 80),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(

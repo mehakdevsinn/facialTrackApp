@@ -4,7 +4,7 @@ import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.d
 import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/select_date_range.dart';
-import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
+import 'package:facialtrackapp/view/teacher/Report/report_options_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/start_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:flutter/material.dart';
@@ -211,48 +211,65 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                               );
                             },
                           ),
+                          // _AnimatedDashboardCard(
+                          //   color: Colors.purple,
+                          //   icon: Icons.bar_chart,
+                          //   title: 'Monthly Report',
+                          //   ontap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         // Yahan showBackButton true bhejain
+                          //         builder: (context) =>
+                          //             AttendanceReport(showBackButton: true),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
+                          // _AnimatedDashboardCard(
+                          //   color: Colors.pinkAccent,
+                          //   icon: Icons.analytics_rounded,
+                          //   title: 'Analytics',
+                          //   ontap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (context) => const SelectionScreen(),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
+                          // _AnimatedDashboardCard(
+                          //   color: Colors.teal,
+                          //   icon: Icons.menu_book,
+                          //   title: 'Subjects',
+                          //   ontap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (context) =>
+                          //             const SubjectListScreen(),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
                           _AnimatedDashboardCard(
                             color: Colors.purple,
                             icon: Icons.bar_chart,
-                            title: 'Monthly Report',
-                            ontap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  // Yahan showBackButton true bhejain
-                                  builder: (context) =>
-                                      AttendanceReport(showBackButton: true),
-                                ),
-                              );
-                            },
-                          ),
-                          _AnimatedDashboardCard(
-                            color: Colors.pinkAccent,
-                            icon: Icons.analytics_rounded,
-                            title: 'Analytics',
-                            ontap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SelectionScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _AnimatedDashboardCard(
-                            color: Colors.teal,
-                            icon: Icons.menu_book,
-                            title: 'Subjects',
+                            title: 'Report',
                             ontap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const SubjectListScreen(),
+                                      const TeacherReportOptionsScreen(
+                                        showBackButton: true,
+                                      ),
                                 ),
                               );
                             },
                           ),
+
                           _AnimatedDashboardCard(
                             color: Colors.indigo,
                             icon: Icons.person,

@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-info.dart';
+import 'package:facialtrackapp/view/Admin/admin_root_screen.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
@@ -208,7 +209,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => StudentEnrollmentScreen(),
+                                builder: (context) => AdminRootScreen(),
                                 // const StudentRootScreen(),
                               ),
                             );

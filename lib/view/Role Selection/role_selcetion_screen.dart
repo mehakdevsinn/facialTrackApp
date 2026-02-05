@@ -226,7 +226,8 @@ import 'package:facialtrackapp/view/Admin/Admin%20Login/admin-login.dart';
 import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/view/Student/Student%20Login/login.dart'
     hide StudentLoginScreen;
-import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';
+import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
+import 'package:facialtrackapp/view/teacher/Teacher%20Signup/signup.dart';
 import 'package:flutter/material.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -293,12 +294,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       color: Colors.blue,
                       isPressed: _isTeacherPressed,
                       onTap: () {
-                        Navigator.pushAndRemoveUntil(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const TeacherLoginScreen(),
+                            builder: (context) => const TeacherSignupScreen(),
                           ),
-                          (route) => false,
                         );
                       },
                       onPressState: (val) =>
@@ -316,7 +316,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const StudentLoginScreen(),
+                            builder: (context) => const StudentSignupScreen(),
                           ),
                           (route) => false,
                         );

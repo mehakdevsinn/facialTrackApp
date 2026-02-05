@@ -1,8 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Admin/Assignment/assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Dashboard/admin_dashboard_screen.dart';
-import 'package:facialtrackapp/view/Admin/Enroll%20Student/enroll_student_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
+import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-info.dart';
 import 'package:flutter/material.dart';
 
 class AdminRootScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _AdminRootScreenState extends State<AdminRootScreen>
 
   final List<Widget> _screens = [
     const AdminDashboardScreen(),
-    const EnrollStudentScreen(),
+    const StudentEnrollmentScreen(),
     const AssignmentScreen(),
     const AdminProfileScreen(),
   ];

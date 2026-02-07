@@ -5,15 +5,16 @@ import 'package:facialtrackapp/widgets/teacher%20side%20report%20screen%20widget
 import 'package:facialtrackapp/widgets/teacher%20side%20report%20screen%20widget/report_dropdown_widget.dart';
 import 'package:flutter/material.dart';
 
-class AttendanceReport extends StatefulWidget {
+class MonthlyAttendanceReport extends StatefulWidget {
   final bool showBackButton;
-  const AttendanceReport({super.key, this.showBackButton = false});
+  const MonthlyAttendanceReport({super.key, this.showBackButton = false});
 
   @override
-  State<AttendanceReport> createState() => _AttendanceReportState();
+  State<MonthlyAttendanceReport> createState() =>
+      _MonthlyAttendanceReportState();
 }
 
-class _AttendanceReportState extends State<AttendanceReport> {
+class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
   final Color primaryDark = const Color(0xFF1A4B8F);
 
   final Color accentTeal = const Color(0xFF26A69A);
@@ -76,9 +77,17 @@ class _AttendanceReportState extends State<AttendanceReport> {
                     onPressed: () => Navigator.pop(context),
                   )
                 : null,
-            title: const Text(
-              'Monthly Report',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            title: Column(
+              children: [
+                const Text(
+                  'Monthly Report',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                ),
+                Text(
+                  "$selectedSubject • $selectedSemester",
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                ),
+              ],
             ),
             centerTitle: true,
           ),

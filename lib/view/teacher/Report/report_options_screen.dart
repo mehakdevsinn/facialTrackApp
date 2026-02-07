@@ -1,7 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/select_date_range.dart';
 import 'package:facialtrackapp/view/teacher/Report/daily_report_selection.dart';
-import 'package:facialtrackapp/view/teacher/Report/report_screen.dart';
+import 'package:facialtrackapp/view/teacher/Report/montly_report_screen.dart';
+import 'package:facialtrackapp/view/teacher/Report/semester_wise_report.dart';
 import 'package:flutter/material.dart';
 
 class TeacherReportOptionsScreen extends StatelessWidget {
@@ -136,9 +137,23 @@ class TeacherReportOptionsScreen extends StatelessWidget {
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const AttendanceReport(
+                                  builder: (_) => const MonthlyAttendanceReport(
                                     showBackButton: true,
                                   ),
+                                ),
+                              ),
+                            ),
+                            _buildOptionCard(
+                              context,
+                              title: "Semester-wise Report",
+                              desc: "Overall performance for the full semester",
+                              icon: Icons.analytics_rounded,
+                              color: Colors.deepPurpleAccent,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const SemesterWiseReportScreen(),
                                 ),
                               ),
                             ),

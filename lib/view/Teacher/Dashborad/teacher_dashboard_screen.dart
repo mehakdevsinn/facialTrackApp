@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
+import 'package:facialtrackapp/view/teacher/Dashborad/complaints_inbox_screen.dart';
 import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/select_date_range.dart';
@@ -141,7 +142,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         'Monday, October 28, 2024',
                         style: TextStyle(color: Colors.grey),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 20),
+
+                      // ---------------- COMPLAINTS BANNER ----------------
+                      _buildComplaintsBanner(context),
+
+                      const SizedBox(height: 20),
 
                       // ---------------- GRID CARDS ----------------
                       GridView.count(
@@ -296,6 +302,103 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComplaintsBanner(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [ColorPallet.primaryBlue, Color(0xFF2A5FB0)],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: ColorPallet.primaryBlue.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TeacherComplaintsInbox()),
+            );
+          },
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.mail_outline_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        height: 12,
+                        width: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: ColorPallet.primaryBlue,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        "Complaints Inbox",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "2 New student challenges pending",
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white54,
+                  size: 16,
+                ),
+              ],
             ),
           ),
         ),

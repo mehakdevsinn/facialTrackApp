@@ -55,7 +55,7 @@
 //  void _stopSession() {
 //   setState(() {
 //     _isSessionRunning = false;
-//     _timer?.cancel(); 
+//     _timer?.cancel();
 //   });
 
 //   // Future.delayed(const Duration(milliseconds: 500), () {
@@ -79,7 +79,7 @@
 //           foregroundColor: Colors.white,
 //           elevation: 0,
 //           titleSpacing: 0,
-          
+
 //           title: Row(
 //             children: [
 //         IconButton(
@@ -90,13 +90,13 @@
 //       Navigator.pushAndRemoveUntil(
 //         context,
 //         MaterialPageRoute(
-//           builder: (context) => const TeacherRootScreen(), 
+//           builder: (context) => const TeacherRootScreen(),
 //         ),
 //         (route) => false, // Iska matlab hai purana koi rasta (back) nahi bachega
 //       );
 //         },
 //       ),
-        
+
 //               const Text("Live Session Status",
 //                   style: TextStyle(
 //                       color: Colors.white,
@@ -151,7 +151,7 @@
 //               const SizedBox(height: 25),
 //               _buildSessionTimeline(),
 //               // const SizedBox(height: 20),
-      
+
 //               // Stats Row
 //               Row(
 //                 children: [
@@ -165,9 +165,9 @@
 //                       Icons.timer, orangeTheme),
 //                 ],
 //               ),
-      
+
 //               const SizedBox(height: 35),
-      
+
 //               // End Session Button
 //               ElevatedButton(
 //                 // onPressed: (){},
@@ -582,17 +582,19 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
+
 class SessionManager {
   static bool isLive = false;
   static DateTime? startTime;
 }
+
 class LiveSessionScreen extends StatefulWidget {
-final bool autoStart;
+  final bool autoStart;
   final bool isResume; // Dashboard se wapas aane ke liye
 
   const LiveSessionScreen({
-    super.key, 
-    this.autoStart = false, 
+    super.key,
+    this.autoStart = false,
     this.isResume = false,
   });
   @override
@@ -600,27 +602,28 @@ final bool autoStart;
 }
 
 class _LiveSessionScreenState extends State<LiveSessionScreen> {
-  
   // Timer variables
   Timer? _timer;
   String _currentTime = "";
-  Duration _duration =
-      const Duration(hours: 0, minutes: 23, seconds: 45); // Initial time
+  Duration _duration = const Duration(
+    hours: 0,
+    minutes: 23,
+    seconds: 45,
+  ); // Initial time
   bool _isSessionRunning = true;
 
-  
   @override
-// File ke bilkul top par (Imports ke niche) ye class dal dein agar alag file nahi banayi
-
-
-// State class ke andar
-@override
-void initState() {
+  // File ke bilkul top par (Imports ke niche) ye class dal dein agar alag file nahi banayi
+  // State class ke andar
+  @override
+  void initState() {
     super.initState();
     _updateTime();
 
     // --- STEP 2: Logic Fix (widget. prefix zaroori hai) ---
-    if (widget.isResume && SessionManager.isLive && SessionManager.startTime != null) {
+    if (widget.isResume &&
+        SessionManager.isLive &&
+        SessionManager.startTime != null) {
       final difference = DateTime.now().difference(SessionManager.startTime!);
       _duration = difference;
       _isSessionRunning = true;
@@ -634,13 +637,15 @@ void initState() {
       _isSessionRunning = false;
     }
   }
-String _formatDuration(Duration duration) {
- String twoDigits(int n) => n.toString().padLeft(2, "0");
- String hours = twoDigits(duration.inHours);
- String minutes = twoDigits(duration.inMinutes.remainder(60));
- String seconds = twoDigits(duration.inSeconds.remainder(60));
- return "$hours:$minutes:$seconds";
- }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$hours:$minutes:$seconds";
+  }
+
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isSessionRunning) {
@@ -662,20 +667,18 @@ String _formatDuration(Duration duration) {
     });
   }
 
- void _stopSession() {
-  setState(() {
-    _isSessionRunning = false;
-    _timer?.cancel(); 
-  });
+  void _stopSession() {
+    setState(() {
+      _isSessionRunning = false;
+      _timer?.cancel();
+    });
 
-  // Future.delayed(const Duration(milliseconds: 500), () {
-  //   if (mounted) {
-  //     // Yeh line user ko seedha pehli screen (Dashboard) par phenk degi
-  //     // Raste mein jitni bhi screens (StartSessionScreen wagera) hongi, wo remove ho jayengi
-  //     Navigator.of(context).popUntil((route) => route.isFirst);
-  //   }
-  // });
-} @override
+    // --- GLOBAL SESSION STOP ---
+    SessionManager.isLive = false;
+    SessionManager.startTime = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     const primaryBlue = Color.fromARGB(255, 35, 4, 170);
     const orangeTheme = Color(0xFFFF7043);
@@ -684,34 +687,39 @@ String _formatDuration(Duration duration) {
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F7FA),
         appBar: AppBar(
-          automaticallyImplyLeading: false, // Default back button ko khatam kiya
+          automaticallyImplyLeading:
+              false, // Default back button ko khatam kiya
           backgroundColor: primaryBlue,
           foregroundColor: Colors.white,
           elevation: 0,
           titleSpacing: 0,
-          
+
           title: Row(
             children: [
-        IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () {
-      // Ye logic purani saari screens (Splash, Login, StartSession) khatam karke
-      // seedha Dashboard par le jayegi.
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TeacherRootScreen(), 
-        ),
-        (route) => false, // Iska matlab hai purana koi rasta (back) nahi bachega
-      );
-        },
-      ),
-        
-              const Text("Live Session Status",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900)),
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  // Ye logic purani saari screens (Splash, Login, StartSession) khatam karke
+                  // seedha Dashboard par le jayegi.
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TeacherRootScreen(),
+                    ),
+                    (route) =>
+                        false, // Iska matlab hai purana koi rasta (back) nahi bachega
+                  );
+                },
+              ),
+
+              const Text(
+                "Live Session Status",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -728,27 +736,33 @@ String _formatDuration(Duration duration) {
                 boxShadow: _isSessionRunning
                     ? [
                         BoxShadow(
-                            color: orangeTheme.withOpacity(0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4))
+                          color: orangeTheme.withOpacity(0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       ]
                     : [],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.timer_outlined, color: Colors.white, size: 18),
+                  const Icon(
+                    Icons.timer_outlined,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                   const SizedBox(width: 6),
                   Text(
-                  _currentTime, // Dynamic Time
+                    _currentTime, // Dynamic Time
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
         body: SingleChildScrollView(
@@ -761,23 +775,35 @@ String _formatDuration(Duration duration) {
               const SizedBox(height: 25),
               _buildSessionTimeline(),
               // const SizedBox(height: 20),
-      
+
               // Stats Row
               Row(
                 children: [
                   _buildStatCard(
-                      "Attendance", "92%", Icons.pie_chart, Colors.teal),
+                    "Attendance",
+                    "92%",
+                    Icons.pie_chart,
+                    Colors.teal,
+                  ),
                   const SizedBox(width: 12),
                   _buildStatCard(
-                      "Avg Entry", "09:05 AM", Icons.access_time, primaryBlue),
+                    "Avg Entry",
+                    "09:05 AM",
+                    Icons.access_time,
+                    primaryBlue,
+                  ),
                   const SizedBox(width: 12),
-                  _buildStatCard("Duration", _formatDuration(_duration),
-                      Icons.timer, orangeTheme),
+                  _buildStatCard(
+                    "Duration",
+                    _formatDuration(_duration),
+                    Icons.timer,
+                    orangeTheme,
+                  ),
                 ],
               ),
-      
+
               const SizedBox(height: 35),
-      
+
               // End Session Button
               ElevatedButton(
                 // onPressed: (){},
@@ -786,28 +812,39 @@ String _formatDuration(Duration duration) {
                     : null, // Click karne par stop ho jaye
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorPallet.orange,
-                  disabledBackgroundColor: Colors.grey, // Stop hone ke baad grey
+                  disabledBackgroundColor:
+                      Colors.grey, // Stop hone ke baad grey
                   minimumSize: const Size(double.infinity, 54),
                   shape: const StadiumBorder(),
                 ),
                 child: Text(
                   _isSessionRunning ? "End Session" : "Session Ended",
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
               Center(
-                  child: Text("This will finalize attendance",
-                      style: TextStyle(
-                          color: _isSessionRunning ? orangeTheme : Colors.grey,
-                          fontSize: 13))),
+                child: Text(
+                  "This will finalize attendance",
+                  style: TextStyle(
+                    color: _isSessionRunning ? orangeTheme : Colors.grey,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
               const SizedBox(height: 10),
               OutlinedButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>AttendanceLogsScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AttendanceLogsScreen(),
+                    ),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: primaryBlue, width: 1.5),
@@ -816,8 +853,10 @@ String _formatDuration(Duration duration) {
                 ),
                 child: const Text(
                   "View Logs",
-                  style:
-                      TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -837,19 +876,24 @@ String _formatDuration(Duration duration) {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: const Color(0xFF34A853), width: 2), // Green Border
+          color: const Color(0xFF34A853),
+          width: 2,
+        ), // Green Border
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Semester 2 - OOP",
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1D2671))),
+          const Text(
+            "Semester 2 - OOP",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1D2671),
+            ),
+          ),
           const SizedBox(height: 10),
           // LIVE Tag with light green background
           Container(
@@ -863,11 +907,17 @@ String _formatDuration(Duration duration) {
               children: [
                 const Icon(Icons.circle, color: Colors.orange, size: 10),
                 const SizedBox(width: 6),
-                const Text("LIVE",
-                    style: TextStyle(
-                        color: Color(0xFF34A853), fontWeight: FontWeight.bold)),
-                const Text(" - 23 students detected",
-                    style: TextStyle(color: Colors.black54, fontSize: 12)),
+                const Text(
+                  "LIVE",
+                  style: TextStyle(
+                    color: Color(0xFF34A853),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  " - 23 students detected",
+                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -879,8 +929,9 @@ String _formatDuration(Duration duration) {
               value: 0.8,
               minHeight: 8, // Moti progress bar
               backgroundColor: Colors.grey[200],
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFFFF7043)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFFF7043),
+              ),
             ),
           ),
         ],
@@ -982,100 +1033,103 @@ String _formatDuration(Duration duration) {
   //   );
   // }
   Widget _buildStudentsGrid() {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Column(
-      children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            mainAxisSpacing: 18, // Spacing thodi barha di hai
-            crossAxisSpacing: 15,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              mainAxisSpacing: 18, // Spacing thodi barha di hai
+              crossAxisSpacing: 15,
+            ),
+            itemCount: 15,
+            itemBuilder: (context, index) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          // Visible Grey Shadow:
+                          color: Colors.green.withOpacity(0.15),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                          offset: const Offset(
+                            0,
+                            3,
+                          ), // Shadow thoda niche tak visible hoga
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundColor: const Color(0xFF34A853),
+                      child: Text(
+                        index % 2 == 0 ? "AK" : "SM",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: CircleAvatar(
+                      radius: 9,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF34A853),
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-          itemCount: 15,
-          itemBuilder: (context, index) {
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        // Visible Grey Shadow:
-                        color: Colors.green.withOpacity(0.15), 
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 3), // Shadow thoda niche tak visible hoga
-                      ),
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: 25,
-                    backgroundColor: const Color(0xFF34A853),
-                    child: Text(
-                      index % 2 == 0 ? "AK" : "SM",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+          const SizedBox(height: 25),
+          // Bottom indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF34A853), width: 2),
                 ),
-                const Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: CircleAvatar(
-                    radius: 9,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF34A853),
-                      size: 16,
-                    ),
-                  ),
-                )
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 25),
-        // Bottom indicator
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF34A853), width: 2),
+                child: const Text(
+                  "23",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
               ),
-              child: const Text(
-                "23",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              const SizedBox(width: 8),
+              const Text(
+                "/25 students detected",
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              "/25 students detected",
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSessionTimeline() {
     const greenColor = Color(0xFF34A853);
@@ -1090,8 +1144,15 @@ String _formatDuration(Duration duration) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Student Timeline",style: TextStyle(fontSize: 18,color: Colors.black, fontWeight: FontWeight.bold),),
-      SizedBox(height: 10,),
+        Text(
+          "Student Timeline",
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 10),
         Container(
           height: 100,
           width: double.infinity,
@@ -1106,10 +1167,7 @@ String _formatDuration(Duration duration) {
                   Positioned(
                     left: -startPadding,
                     right: -startPadding,
-                    child: Container(
-                      height: lineThickness,
-                      color: greyLine,
-                    ),
+                    child: Container(height: lineThickness, color: greyLine),
                   ),
 
                   // 2. Colored Progress Lines (Moti Line)
@@ -1151,12 +1209,22 @@ String _formatDuration(Duration duration) {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _timelineLabel("09:00 AM -", "Session Started",
-                      CrossAxisAlignment.start),
-                  _timelineLabel("09:15 AM -", "15 students detected",
-                      CrossAxisAlignment.center),
-                  _timelineLabel("", "Current Time", CrossAxisAlignment.end,
-                      isCurrent: true),
+                  _timelineLabel(
+                    "09:00 AM -",
+                    "Session Started",
+                    CrossAxisAlignment.start,
+                  ),
+                  _timelineLabel(
+                    "09:15 AM -",
+                    "15 students detected",
+                    CrossAxisAlignment.center,
+                  ),
+                  _timelineLabel(
+                    "",
+                    "Current Time",
+                    CrossAxisAlignment.end,
+                    isCurrent: true,
+                  ),
                 ],
               ),
             ],
@@ -1179,15 +1247,19 @@ String _formatDuration(Duration duration) {
                   color: color.withOpacity(0.4),
                   blurRadius: 8,
                   spreadRadius: 4,
-                )
+                ),
               ]
             : [],
       ),
     );
   }
 
-  Widget _timelineLabel(String time, String desc, CrossAxisAlignment alignment,
-      {bool isCurrent = false}) {
+  Widget _timelineLabel(
+    String time,
+    String desc,
+    CrossAxisAlignment alignment, {
+    bool isCurrent = false,
+  }) {
     return Expanded(
       child: Column(
         crossAxisAlignment: alignment,
@@ -1202,8 +1274,8 @@ String _formatDuration(Duration duration) {
             textAlign: alignment == CrossAxisAlignment.center
                 ? TextAlign.center
                 : (alignment == CrossAxisAlignment.start
-                    ? TextAlign.left
-                    : TextAlign.right),
+                      ? TextAlign.left
+                      : TextAlign.right),
             style: TextStyle(
               fontSize: 11,
               color: isCurrent ? const Color(0xFFFF7043) : Colors.black54,
@@ -1215,37 +1287,42 @@ String _formatDuration(Duration duration) {
     );
   }
 
-// Widget _timelineLabel(String time, String desc, {bool isCurrent = false}) {
-//   return Expanded(
-//     child: Column(
-//       children: [
-//         if (time.isNotEmpty)
-//           Text(
-//             time,
-//             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-//             textAlign: TextAlign.center,
-//           ),
-//         Text(
-//           desc,
-//           style: TextStyle(
-//             fontSize: 10,
-//             color: isCurrent ? const Color(0xFFFF7043) : Colors.black54,
-//             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-//           ),
-//           textAlign: TextAlign.center,
-//         ),
-//       ],
-//     ),
-//   );
-// }
+  // Widget _timelineLabel(String time, String desc, {bool isCurrent = false}) {
+  //   return Expanded(
+  //     child: Column(
+  //       children: [
+  //         if (time.isNotEmpty)
+  //           Text(
+  //             time,
+  //             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+  //             textAlign: TextAlign.center,
+  //           ),
+  //         Text(
+  //           desc,
+  //           style: TextStyle(
+  //             fontSize: 10,
+  //             color: isCurrent ? const Color(0xFFFF7043) : Colors.black54,
+  //             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+  //           ),
+  //           textAlign: TextAlign.center,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
   Widget _timelineNode(String time, String label, bool isDone) {
     return Column(
       children: [
-        Icon(Icons.circle,
-            color: isDone ? Colors.teal : Colors.orange, size: 16),
+        Icon(
+          Icons.circle,
+          color: isDone ? Colors.teal : Colors.orange,
+          size: 16,
+        ),
         const SizedBox(height: 4),
-        Text(time,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+        Text(
+          time,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+        ),
         Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
       ],
     );
@@ -1259,23 +1336,31 @@ String _formatDuration(Duration duration) {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5),
           ],
         ),
         child: Column(
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(height: 5),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w900)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(val,
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              val,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),

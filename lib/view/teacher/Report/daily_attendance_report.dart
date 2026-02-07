@@ -28,18 +28,83 @@ class DailyAttendanceReportScreen extends StatefulWidget {
 
 class _DailyAttendanceReportScreenState
     extends State<DailyAttendanceReportScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> filteredStudents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredStudents = students;
+  }
+
+  void _filterStudents(String query) {
+    setState(() {
+      filteredStudents = students
+          .where(
+            (student) =>
+                student['name'].toLowerCase().contains(query.toLowerCase()) ||
+                student['rollNo'].toLowerCase().contains(query.toLowerCase()),
+          )
+          .toList();
+    });
+  }
+
   final List<Map<String, dynamic>> students = [
-    {"name": "Mehak Fatima", "status": "Present", "reason": ""},
-    {"name": "Ali Ahmed", "status": "Absent", "reason": ""},
-    {"name": "Arooj Malik", "status": "Leave", "reason": "Medical Emergency"},
-    {"name": "Usman Khan", "status": "Present", "reason": ""},
-    {"name": "Saba Qamar", "status": "Leave", "reason": "Family Function"},
-    {"name": "Hamza Ali", "status": "Present", "reason": ""},
-    {"name": "Zainab Bibi", "status": "Absent", "reason": ""},
+    {
+      "name": "Mehak Fatima",
+      "rollNo": "FA21-BCS-001",
+      "status": "Present",
+      "inTime": "08:30 AM",
+      "outTime": "02:30 PM",
+      "reason": "",
+    },
+    {
+      "name": "Ali Ahmed",
+      "rollNo": "FA21-BCS-045",
+      "status": "Absent",
+      "inTime": "-",
+      "outTime": "-",
+      "reason": "",
+    },
+    {
+      "name": "Arooj Malik",
+      "rollNo": "FA21-BCS-012",
+      "status": "Leave",
+      "inTime": "-",
+      "outTime": "-",
+      "reason": "Medical Emergency",
+    },
+    {
+      "name": "Usman Khan",
+      "rollNo": "FA21-BCS-089",
+      "status": "Late",
+      "inTime": "09:15 AM",
+      "outTime": "02:30 PM",
+      "reason": "",
+    },
+    {
+      "name": "Saba Qamar",
+      "rollNo": "FA21-BCS-022",
+      "status": "Left Early",
+      "inTime": "08:30 AM",
+      "outTime": "12:00 PM",
+      "reason": "",
+    },
+    {
+      "name": "Hamza Ali",
+      "rollNo": "FA21-BCS-033",
+      "status": "Present",
+      "inTime": "08:35 AM",
+      "outTime": "02:25 PM",
+      "reason": "",
+    },
   ];
 
   Future<void> _generatePDFReport() async {
     final pdf = pw.Document();
+
+    // Helvetica font use kar rahe hain taake Unicode/Emoji error na aaye
+    final font = pw.Font.helvetica();
 
     pdf.addPage(
       pw.Page(
@@ -51,27 +116,49 @@ class _DailyAttendanceReportScreenState
               pw.Text(
                 "Daily Attendance Report",
                 style: pw.TextStyle(
+                  font: font,
                   fontSize: 24,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
               pw.SizedBox(height: 10),
-              pw.Text("Semester: ${widget.semester}"),
-              pw.Text("Subject: ${widget.subject}"),
+              pw.Text(
+                "Semester: ${widget.semester}",
+                style: pw.TextStyle(font: font),
+              ),
+              pw.Text(
+                "Subject: ${widget.subject}",
+                style: pw.TextStyle(font: font),
+              ),
               pw.Text(
                 "Date: ${DateFormat('EEEE, dd MMMM yyyy').format(widget.date)}",
+                style: pw.TextStyle(font: font),
               ),
               pw.Divider(),
               pw.SizedBox(height: 20),
               pw.TableHelper.fromTextArray(
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                headers: ['Student Name', 'Status', 'Reason (if any)'],
-                data: students
+                headerStyle: pw.TextStyle(
+                  font: font,
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 10,
+                ),
+                cellStyle: pw.TextStyle(font: font, fontSize: 9),
+                headers: ['Name', 'Roll No', 'Status', 'In', 'Out', 'Note'],
+                data: filteredStudents
                     .map(
                       (item) => [
-                        item['name'],
-                        item['status'],
-                        item['reason'] ?? "-",
+                        item['name'].toString().replaceAll(
+                          RegExp(r'[^\x00-\x7F]+'),
+                          '',
+                        ), // Sanitize
+                        item['rollNo'].toString(),
+                        item['status'].toString(),
+                        item['inTime'].toString(),
+                        item['outTime'].toString(),
+                        (item['reason'] ?? "-").toString().replaceAll(
+                          RegExp(r'[^\x00-\x7F]+'),
+                          '',
+                        ), // Sanitize
                       ],
                     )
                     .toList(),
@@ -83,30 +170,31 @@ class _DailyAttendanceReportScreenState
     );
 
     try {
-      final Uint8List bytes = await pdf.save();
-
-      if (!kIsWeb) {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File(
-          "${directory.path}/Attendance_${widget.subject}_${DateFormat('dd_MM_yyyy').format(widget.date)}.pdf",
-        );
-        await file.writeAsBytes(bytes);
-      }
-
+      // Direct printing dialog open kar rahe hain
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
+        name:
+            "Attendance_${widget.subject}_${DateFormat('dd_MM_yyyy').format(widget.date)}.pdf",
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("✅ PDF Generated Successfully"),
+            content: Text("✅ PDF Processing Complete"),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       debugPrint("PDF Error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("❌ PDF Error: Please restart the app"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -115,6 +203,10 @@ class _DailyAttendanceReportScreenState
     int presentCount = students.where((s) => s['status'] == 'Present').length;
     int absentCount = students.where((s) => s['status'] == 'Absent').length;
     int leaveCount = students.where((s) => s['status'] == 'Leave').length;
+    int lateCount = students.where((s) => s['status'] == 'Late').length;
+    int leftEarlyCount = students
+        .where((s) => s['status'] == 'Left Early')
+        .length;
 
     return SafeArea(
       child: Scaffold(
@@ -182,19 +274,29 @@ class _DailyAttendanceReportScreenState
                         Colors.blue.shade100,
                       ),
                       _buildStatItem(
-                        "Present",
+                        "P",
                         presentCount.toString(),
                         Colors.greenAccent,
                       ),
                       _buildStatItem(
-                        "Absent",
+                        "A",
                         absentCount.toString(),
                         Colors.redAccent,
                       ),
                       _buildStatItem(
-                        "Leave",
+                        "L",
                         leaveCount.toString(),
                         Colors.orangeAccent,
+                      ),
+                      _buildStatItem(
+                        "LT",
+                        lateCount.toString(),
+                        Colors.amberAccent,
+                      ),
+                      _buildStatItem(
+                        "LE",
+                        leftEarlyCount.toString(),
+                        Colors.cyanAccent,
                       ),
                     ],
                   ),
@@ -204,7 +306,55 @@ class _DailyAttendanceReportScreenState
 
             const SizedBox(height: 20),
 
-            // Search / Filter Row (Optional placeholder for now)
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterStudents,
+                  decoration: InputDecoration(
+                    hintText: "Search name or roll no...",
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: ColorPallet.primaryBlue,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              _filterStudents("");
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Row(
@@ -218,34 +368,6 @@ class _DailyAttendanceReportScreenState
                       color: Color(0xFF1A1C1E),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.filter_list,
-                          size: 14,
-                          color: ColorPallet.primaryBlue,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Filter",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: ColorPallet.primaryBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -253,14 +375,36 @@ class _DailyAttendanceReportScreenState
             const SizedBox(height: 15),
 
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                physics: const BouncingScrollPhysics(),
-                itemCount: students.length,
-                itemBuilder: (context, index) {
-                  return _buildStudentCard(students[index]);
-                },
-              ),
+              child: filteredStudents.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person_search_rounded,
+                            size: 80,
+                            color: Colors.grey.shade300,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No students found",
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: filteredStudents.length,
+                      itemBuilder: (context, index) {
+                        return _buildStudentCard(filteredStudents[index]);
+                      },
+                    ),
             ),
           ],
         ),
@@ -298,133 +442,259 @@ class _DailyAttendanceReportScreenState
 
     switch (student['status']) {
       case 'Present':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
+        statusColor = const Color(0xFF10B981); // Emerald Green
+        statusIcon = Icons.check_circle_rounded;
         break;
       case 'Absent':
-        statusColor = Colors.red;
-        statusIcon = Icons.highlight_off;
+        statusColor = const Color(0xFFEF4444); // Rose Red
+        statusIcon = Icons.cancel_rounded;
+        break;
+      case 'Late':
+        statusColor = const Color(0xFFF59E0B); // Amber
+        statusIcon = Icons.rule_rounded;
+        break;
+      case 'Left Early':
+        statusColor = const Color(0xFF06B6D4); // Cyan
+        statusIcon = Icons.logout_rounded;
         break;
       case 'Leave':
-        statusColor = Colors.orange;
-        statusIcon = Icons.info_outline;
+        statusColor = const Color(0xFFF97316); // Orange
+        statusIcon = Icons.event_note_rounded;
         break;
       default:
         statusColor = Colors.grey;
-        statusIcon = Icons.help_outline;
+        statusIcon = Icons.help_outline_rounded;
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: statusColor.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: statusColor, width: 6)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Avatar + Info + Status
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: statusColor.withOpacity(0.1),
-                      child: Text(
-                        student['name'][0],
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.2),
+                          width: 2,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: statusColor.withOpacity(0.1),
+                        child: Text(
+                          student['name'][0],
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 16),
                     Expanded(
-                      child: Text(
-                        student['name'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            student['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: Color(0xFF1E293B),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              student['rollNo'],
+                              style: TextStyle(
+                                color: Colors.blueGrey.shade600,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildStatusBadge(
+                      student['status'],
+                      statusColor,
+                      statusIcon,
+                    ),
+                  ],
+                ),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                ),
+
+                // Bottom Row: Times
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTimeSection(
+                        "IN-TIME",
+                        student['inTime'],
+                        Icons.login_rounded,
+                        const Color(0xFF10B981),
+                      ),
+                    ),
+                    Container(
+                      height: 30,
+                      width: 1,
+                      color: const Color(0xFFF1F5F9),
+                    ),
+                    Expanded(
+                      child: _buildTimeSection(
+                        "OUT-TIME",
+                        student['outTime'],
+                        Icons.logout_rounded,
+                        const Color(0xFFF43F5E),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(statusIcon, size: 14, color: statusColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        student['status'],
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+
+                // Leave Reason if exists
+                if (student['status'] == 'Leave' &&
+                    student['reason'].isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFED7AA)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_rounded,
+                          size: 16,
+                          color: Color(0xFFF97316),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (student['status'] == 'Leave' && student['reason'].isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.note_alt_outlined,
-                    size: 14,
-                    color: Colors.orange,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Reason: ${student['reason']}",
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                      ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            student['reason'],
+                            style: const TextStyle(
+                              color: Color(0xFF9A3412),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            status.toUpperCase(),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSection(
+    String label,
+    String time,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 12, color: color.withOpacity(0.6)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.blueGrey.shade300,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
           ],
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          time,
+          style: const TextStyle(
+            color: Color(0xFF1E293B),
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 }

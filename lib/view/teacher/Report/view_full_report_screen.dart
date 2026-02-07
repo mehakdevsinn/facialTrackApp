@@ -26,13 +26,62 @@ class FullReportScreen extends StatefulWidget {
 
 class _FullReportScreenState extends State<FullReportScreen> {
   final List<Map<String, dynamic>> students = [
-    {"name": "Jane Doe", "present": 22, "absent": 2, "percent": 91},
-    {"name": "Lisa Davis", "present": 18, "absent": 6, "percent": 75},
-    {"name": "Mike King", "present": 15, "absent": 9, "percent": 62},
-    {"name": "Alex Smith", "present": 24, "absent": 0, "percent": 100},
-    {"name": "John Wick", "present": 20, "absent": 4, "percent": 83},
-    {"name": "Sarah Connor", "present": 12, "absent": 12, "percent": 50},
-    {"name": "Peter Parker", "present": 21, "absent": 3, "percent": 87},
+    {
+      "name": "Jane Doe",
+      "rollNo": "2021-CS-01",
+      "total": 24,
+      "present": 22,
+      "absent": 2,
+      "percent": 91,
+    },
+    {
+      "name": "Lisa Davis",
+      "rollNo": "2021-CS-02",
+      "total": 24,
+      "present": 18,
+      "absent": 6,
+      "percent": 75,
+    },
+    {
+      "name": "Mike King",
+      "rollNo": "2021-CS-03",
+      "total": 24,
+      "present": 15,
+      "absent": 9,
+      "percent": 62,
+    },
+    {
+      "name": "Alex Smith",
+      "rollNo": "2021-CS-04",
+      "total": 24,
+      "present": 24,
+      "absent": 0,
+      "percent": 100,
+    },
+    {
+      "name": "John Wick",
+      "rollNo": "2021-CS-05",
+      "total": 24,
+      "present": 20,
+      "absent": 4,
+      "percent": 83,
+    },
+    {
+      "name": "Sarah Connor",
+      "rollNo": "2021-CS-06",
+      "total": 24,
+      "present": 12,
+      "absent": 12,
+      "percent": 50,
+    },
+    {
+      "name": "Peter Parker",
+      "rollNo": "2021-CS-07",
+      "total": 24,
+      "present": 21,
+      "absent": 3,
+      "percent": 87,
+    },
   ];
 
   String searchQuery = "";
@@ -40,6 +89,9 @@ class _FullReportScreenState extends State<FullReportScreen> {
   // PDF Generate aur Download karne ka function
   Future<void> _generatePDFReport(List<Map<String, dynamic>> data) async {
     final pdf = pw.Document();
+
+    // Standard font use kar rahe hain taake Unicode error na aaye
+    final font = pw.Font.helvetica();
 
     // PDF UI Layout
     pdf.addPage(
@@ -50,26 +102,54 @@ class _FullReportScreenState extends State<FullReportScreen> {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                "Attendance Report",
+                "Monthly Attendance Report",
                 style: pw.TextStyle(
+                  font: font,
                   fontSize: 24,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
               pw.SizedBox(height: 10),
-              pw.Text("Subject: ${widget.subject}"),
-              pw.Text("Month: ${widget.month}"),
+              pw.Text(
+                "Subject: ${widget.subject}",
+                style: pw.TextStyle(font: font),
+              ),
+              pw.Text(
+                "Semester: ${widget.semester}",
+                style: pw.TextStyle(font: font),
+              ),
+              pw.Text(
+                "Month: ${widget.month}",
+                style: pw.TextStyle(font: font),
+              ),
               pw.Divider(),
               pw.SizedBox(height: 20),
 
               // Table for PDF
               pw.TableHelper.fromTextArray(
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                headers: ['Student Name', 'Present', 'Absent', 'Percentage'],
+                headerStyle: pw.TextStyle(
+                  font: font,
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 10,
+                ),
+                cellStyle: pw.TextStyle(font: font, fontSize: 9),
+                headers: [
+                  'Student Name',
+                  'Roll No',
+                  'Total',
+                  'Presents',
+                  'Absents',
+                  'Att %',
+                ],
                 data: data
                     .map(
                       (item) => [
-                        item['name'],
+                        item['name'].toString().replaceAll(
+                          RegExp(r'[^\x00-\x7F]+'),
+                          '',
+                        ), // Non-ASCII remove kar rahe hain
+                        item['rollNo'].toString(),
+                        item['total'].toString(),
                         item['present'].toString(),
                         item['absent'].toString(),
                         "${item['percent']}%",
@@ -83,26 +163,28 @@ class _FullReportScreenState extends State<FullReportScreen> {
       ),
     );
 
-    // Save PDF
+    // Save and Display PDF
     try {
-      final Uint8List bytes = await pdf.save();
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File("${directory.path}/Attendance_${widget.subject}.pdf");
-      await file.writeAsBytes(bytes);
-
-      // PDF Share/Print option dikhane ke liye (Optional but Recommended)
+      // Direct printing plugin use kar rahe hain kyunke path_provider kabhi kabhi restart maangta hai
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: "Attendance_${widget.subject}.pdf",
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("✅ PDF Downloaded Successfully"),
+          content: Text("✅ PDF Processing Complete"),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       debugPrint("PDF Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ PDF Error: Please restart the app"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -120,10 +202,11 @@ class _FullReportScreenState extends State<FullReportScreen> {
         appBar: AppBar(
           foregroundColor: ColorPallet.white,
           backgroundColor: ColorPallet.primaryBlue,
+          elevation: 0,
           title: Column(
             children: [
               const Text(
-                "Detailed Attendance",
+                "Complete Report",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -140,13 +223,24 @@ class _FullReportScreenState extends State<FullReportScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-              onPressed: () => _generatePDFReport(filteredStudents),
+              onPressed: () {
+                if (filteredStudents.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("⚠️ No data available to download"),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                } else {
+                  _generatePDFReport(filteredStudents);
+                }
+              },
             ),
           ],
         ),
         body: Column(
           children: [
-            // Search Bar (same as before)
+            // Search Bar
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
@@ -159,25 +253,67 @@ class _FullReportScreenState extends State<FullReportScreen> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
                     borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1A4B8F),
+                      width: 1,
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // Header Row
+            // Table Header
             _buildTableHeader(),
 
-            // List
+            // List or Empty View
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredStudents.length,
-                itemBuilder: (context, index) =>
-                    _buildStudentCard(filteredStudents[index]),
-              ),
+              child: filteredStudents.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 80,
+                            color: Colors.grey.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No student found",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.withOpacity(0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Try searching with a different name",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      itemCount: filteredStudents.length,
+                      itemBuilder: (context, index) =>
+                          _buildStudentRow(filteredStudents[index]),
+                    ),
             ),
           ],
         ),
@@ -187,17 +323,49 @@ class _FullReportScreenState extends State<FullReportScreen> {
 
   Widget _buildTableHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A4B8F),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
       child: Row(
         children: const [
           Expanded(
             flex: 3,
             child: Text(
-              "STUDENT",
+              "NAME",
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "ROLL NO",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              "TOT",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ),
@@ -207,9 +375,9 @@ class _FullReportScreenState extends State<FullReportScreen> {
               "P",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.teal,
+                color: Colors.white,
               ),
             ),
           ),
@@ -219,21 +387,21 @@ class _FullReportScreenState extends State<FullReportScreen> {
               "A",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.orange,
+                color: Colors.white,
               ),
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 1,
             child: Text(
-              "STATUS",
+              "%",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: Colors.white,
               ),
             ),
           ),
@@ -242,21 +410,13 @@ class _FullReportScreenState extends State<FullReportScreen> {
     );
   }
 
-  Widget _buildStudentCard(Map<String, dynamic> student) {
+  Widget _buildStudentRow(Map<String, dynamic> student) {
     bool isLow = student['percent'] < 75;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.2))),
       ),
       child: Row(
         children: [
@@ -264,47 +424,62 @@ class _FullReportScreenState extends State<FullReportScreen> {
             flex: 3,
             child: Text(
               student['name'],
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Colors.black87,
+              ),
             ),
           ),
           Expanded(
+            flex: 2,
+            child: Text(
+              student['rollNo'],
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 10, color: Colors.black54),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Text(
+              "${student['total']}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(
+            flex: 1,
             child: Text(
               "${student['present']}",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.teal,
                 fontWeight: FontWeight.bold,
+                fontSize: 11,
               ),
             ),
           ),
           Expanded(
+            flex: 1,
             child: Text(
               "${student['absent']}",
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.orange,
                 fontWeight: FontWeight.bold,
+                fontSize: 11,
               ),
             ),
           ),
           Expanded(
-            flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              decoration: BoxDecoration(
-                color: isLow
-                    ? Colors.red.withOpacity(0.1)
-                    : Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "${student['percent']}%",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isLow ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                ),
+            flex: 1,
+            child: Text(
+              "${student['percent']}%",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isLow ? Colors.red : Colors.green,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
               ),
             ),
           ),

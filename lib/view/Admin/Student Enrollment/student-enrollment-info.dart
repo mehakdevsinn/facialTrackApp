@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-face.dart';
+import 'package:facialtrackapp/view/Student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 
@@ -23,18 +24,18 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: ColorPallet.primaryBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
           onPressed: () {},
         ),
         title: const Text(
           "Student Enrollment",
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            // fontSize: 28,
+            // fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
@@ -62,7 +63,7 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
               "Basic Information",
               style: TextStyle(
                 color: Colors.black,
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -206,7 +207,8 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => FaceEnrollmentScreen(),
+                      builder: (context) => StudentFace(),
+                      //  FaceEnrollmentScreen(),
                     ),
                   );
                 },

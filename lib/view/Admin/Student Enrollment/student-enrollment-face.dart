@@ -358,6 +358,51 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
     if (mounted) setState(() {});
   }
 
+  // void _processCameraImage(CameraImage image) async {
+  //   if (_isBusy) return;
+  //   _isBusy = true;
+
+  //   final inputImage = _inputImageFromCameraImage(image);
+  //   if (inputImage == null) {
+  //     _isBusy = false;
+  //     return;
+  //   }
+
+  //   final faces = await _faceDetector.processImage(inputImage);
+
+  //   if (faces.isNotEmpty) {
+  //     final face = faces.first;
+  //     double headY = face.headEulerAngleY ?? 0;
+  //     double headX = face.headEulerAngleX ?? 0;
+
+  //     bool detected = false;
+  //     switch (currentStep) {
+  //       case 0:
+  //         if (headY.abs() < 8 && headX.abs() < 8) detected = true;
+  //         break;
+  //       case 1:
+  //         if (headY > 18) detected = true;
+  //         break;
+  //       case 2:
+  //         if (headY < -18) detected = true;
+  //         break;
+  //       case 3:
+  //         if (headX > 12) detected = true;
+  //         break;
+  //       case 4:
+  //         if (headX < -12) detected = true;
+  //         break;
+  //     }
+
+  //     if (detected != _canProceed) {
+  //       setState(() => _canProceed = detected);
+  //     }
+  //   } else {
+  //     if (_canProceed) setState(() => _canProceed = false);
+  //   }
+  //   _isBusy = false;
+  // }
+
   void _processCameraImage(CameraImage image) async {
     if (_isBusy) return;
     _isBusy = true;
@@ -368,38 +413,53 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
       return;
     }
 
-    final faces = await _faceDetector.processImage(inputImage);
+    try {
+      final faces = await _faceDetector.processImage(inputImage);
 
-    if (faces.isNotEmpty) {
-      final face = faces.first;
-      double headY = face.headEulerAngleY ?? 0;
-      double headX = face.headEulerAngleX ?? 0;
+      if (faces.isNotEmpty) {
+        final face = faces.first;
+        double headY = face.headEulerAngleY ?? 0; // Left/Right
+        double headX = face.headEulerAngleX ?? 0; // Up/Down
 
-      bool detected = false;
-      switch (currentStep) {
-        case 0:
-          if (headY.abs() < 8 && headX.abs() < 8) detected = true;
-          break;
-        case 1:
-          if (headY > 18) detected = true;
-          break;
-        case 2:
-          if (headY < -18) detected = true;
-          break;
-        case 3:
-          if (headX > 12) detected = true;
-          break;
-        case 4:
-          if (headX < -12) detected = true;
-          break;
+        bool detected = false;
+
+        // Detection Logic based on current step
+        switch (currentStep) {
+          case 0: // Straight
+            if (headY.abs() < 10 && headX.abs() < 10) detected = true;
+            break;
+          case 1: // Left (User turns face left, Euler Y is positive)
+            if (headY > 20) detected = true;
+            break;
+          case 2: // Right (User turns face right, Euler Y is negative)
+            if (headY < -20) detected = true;
+            break;
+          case 3: // Up
+            if (headX > 15) detected = true;
+            break;
+          case 4: // Down
+            if (headX < -15) detected = true;
+            break;
+        }
+
+        // Sirf tab update karein jab status change ho
+        if (detected != _canProceed) {
+          setState(() {
+            _canProceed = detected;
+          });
+        }
+      } else {
+        // Agar koi face nahi hai toh button disable rakhein
+        if (_canProceed) {
+          setState(() {
+            _canProceed = false;
+          });
+        }
       }
-
-      if (detected != _canProceed) {
-        setState(() => _canProceed = detected);
-      }
-    } else {
-      if (_canProceed) setState(() => _canProceed = false);
+    } catch (e) {
+      debugPrint("Error: $e");
     }
+
     _isBusy = false;
   }
 
@@ -464,18 +524,18 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: ColorPallet.primaryBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Student Enrollment",
           style: TextStyle(
-            color: Colors.black87,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            // fontSize: 18,
+            // fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
@@ -484,20 +544,28 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 7),
-              Text(
-                "Face Enrollment",
-                style: TextStyle(
-                  color: primaryBlue,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.only(left: 22),
+                child: Text(
+                  "Face Enrollment",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 5),
-              const Text(
-                "Position your face within the frame",
-                style: TextStyle(color: Colors.black54, fontSize: 13),
+              Padding(
+                padding: const EdgeInsets.only(left: 22),
+                child: const Text(
+                  "Position your face within the frame",
+                  style: TextStyle(color: Colors.black54, fontSize: 13),
+                ),
               ),
 
               const SizedBox(height: 30),
@@ -558,11 +626,23 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
                     ),
 
                     // Corner Brackets
+                    // SizedBox(
+                    //   width: 310,
+                    //   height: 310,
+                    //   child: CustomPaint(
+                    //     painter: LightCornerPainter(primaryBlue),
+                    //   ),
+                    // ),
+                    // Corner Brackets inside the Stack
                     SizedBox(
                       width: 310,
                       height: 310,
                       child: CustomPaint(
-                        painter: LightCornerPainter(primaryBlue),
+                        painter: LightCornerPainter(
+                          _canProceed
+                              ? Colors.green
+                              : primaryBlue, // Color badal jayega
+                        ),
                       ),
                     ),
 
@@ -614,7 +694,7 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
                             borderRadius: BorderRadius.all(Radius.circular(40)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withOpacity(0.3),
                                 blurRadius: 20,
                               ),
                             ],
@@ -646,7 +726,7 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
                         Text(
                           steps[index]['label'],
                           style: TextStyle(
-                            color: isActive ? primaryBlue : Colors.black38,
+                            color: isActive ? primaryBlue : Colors.black,
                             fontSize: 10,
                           ),
                         ),
@@ -668,27 +748,45 @@ class _FaceEnrollmentScreenState extends State<FaceEnrollmentScreen>
                 child: SizedBox(
                   width: double.infinity,
                   height: 55,
-                  child: ElevatedButton(
-                    onPressed: _canProceed ? _nextStep : SizedBox.shrink,
+                  // child: ElevatedButton(
+                  //   onPressed: _canProceed ? _nextStep : SizedBox.shrink,
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: _canProceed
+                  //         ? ColorPallet.primaryBlue
+                  //         : Colors.grey.shade400,
+                  //     disabledBackgroundColor: Colors.grey[300],
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.circular(12),
+                  //     ),
+                  //     elevation: 2,
+                  //   ),
+                  //   child: Text(
+                  //     "Capture ${steps[currentStep]['label']} Angle",
+                  //     style: TextStyle(
+                  //       color: _canProceed
+                  //           ? Colors.white
+                  //           : const Color.fromARGB(66, 21, 21, 21),
+                  //       fontWeight: FontWeight.bold,
+                  //       fontSize: 16,
+                  //     ),
+                  //   ),
+                  // ),
+                  child: // Button code inside build method
+                  ElevatedButton(
+                    onPressed: _canProceed
+                        ? _nextStep
+                        : null, // null dene se button automatically disable ho jata hai
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _canProceed
                           ? ColorPallet.primaryBlue
                           : Colors.grey.shade400,
-                      disabledBackgroundColor: Colors.grey[300],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
+                      // ... baki styling
                     ),
                     child: Text(
-                      "Capture ${steps[currentStep]['label']} Angle",
-                      style: TextStyle(
-                        color: _canProceed
-                            ? Colors.white
-                            : const Color.fromARGB(66, 21, 21, 21),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      _canProceed
+                          ? "Next Step"
+                          : "Position Your Face", // Text change karein feedback ke liye
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ),

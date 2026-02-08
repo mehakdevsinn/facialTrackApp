@@ -1,12 +1,13 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Admin/Course%20Assignment/course_assignment_screen.dart';
-import 'package:facialtrackapp/view/Admin/Manage%20Teachers/manage-teachers.dart';
-import 'package:facialtrackapp/view/Admin/Scheme%20of%20Study/scheme_of_study_screen.dart';
+import 'package:facialtrackapp/view/Admin/Course Assignment/course_assignment_screen.dart';
+import 'package:facialtrackapp/view/Admin/Manage Teachers/manage-teachers.dart';
+import 'package:facialtrackapp/view/Admin/Scheme of Study/scheme_of_study_screen.dart';
 import 'package:facialtrackapp/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Semester Management/semester_management_screen.dart';
-import 'package:facialtrackapp/view/Admin/Dashboard/technical_complaints_screen.dart';
+import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
+import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
-import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:facialtrackapp/view/Role Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -231,6 +232,21 @@ class AdminDashboardScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const SemesterManagementScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.how_to_reg_rounded,
+                  color: Colors.teal,
+                  title: 'User Approval',
+                  subtitle: 'Approve or reject registrations',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserApprovalScreen(),
                       ),
                     );
                   },

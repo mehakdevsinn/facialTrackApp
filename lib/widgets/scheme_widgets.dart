@@ -43,7 +43,7 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
           children: [
             Icon(Icons.add_rounded, color: Colors.white, size: 20),
             SizedBox(width: 4),
-            const Text(
+            Text(
               "Add Subject",
               style: TextStyle(
                 color: Colors.white,
@@ -390,6 +390,7 @@ class SchemeModernField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final bool isNum;
+  final int maxLines;
 
   const SchemeModernField({
     super.key,
@@ -397,12 +398,13 @@ class SchemeModernField extends StatelessWidget {
     required this.hint,
     required this.icon,
     this.isNum = false,
+    this.maxLines = 1,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(15),
@@ -411,6 +413,7 @@ class SchemeModernField extends StatelessWidget {
       child: TextField(
         controller: controller,
         keyboardType: isNum ? TextInputType.number : TextInputType.text,
+        maxLines: maxLines,
         style: TextStyle(
           color: ColorPallet.primaryBlue,
           fontWeight: FontWeight.w600,
@@ -418,13 +421,65 @@ class SchemeModernField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(icon, color: ColorPallet.primaryBlue, size: 22),
+          prefixIcon: Padding(
+            padding: EdgeInsets.only(bottom: maxLines > 1 ? 40 : 0),
+            child: Icon(icon, color: ColorPallet.primaryBlue, size: 22),
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             vertical: 15,
             horizontal: 10,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class SchemeToggleField extends StatelessWidget {
+  final String label;
+  final bool value;
+  final IconData icon;
+  final ValueChanged<bool> onChanged;
+
+  const SchemeToggleField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: ColorPallet.primaryBlue, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: ColorPallet.primaryBlue.withOpacity(0.8),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: ColorPallet.primaryBlue,
+          ),
+        ],
       ),
     );
   }
@@ -492,7 +547,6 @@ class SchemeDialogs {
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
             ),
             const SizedBox(height: 20),
-            // Mock teacher list for selection
             ...<Map<String, dynamic>>[
               {
                 "name": "Dr. Sarah Ahmed",
@@ -538,10 +592,9 @@ class SchemeDialogs {
                   color: ColorPallet.primaryBlue,
                 ),
                 onTap: () {
-                  // Update the central data service
                   AssignmentDataService.addSubjectToTeacher(t['name']!, {
                     "course": title,
-                    "semester": "2nd Sem", // Default for now
+                    "semester": "2nd Sem",
                     "section": "Section A",
                     "code": code,
                     "credits": credits,

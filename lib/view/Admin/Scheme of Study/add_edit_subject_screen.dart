@@ -18,6 +18,8 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
   final _titleController = TextEditingController();
   final _codeController = TextEditingController();
   final _creditsController = TextEditingController();
+  final _outlineController = TextEditingController();
+  bool _attendanceRequired = true;
 
   @override
   void initState() {
@@ -26,6 +28,8 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
       _titleController.text = widget.initialData!['title'] ?? "";
       _codeController.text = widget.initialData!['code'] ?? "";
       _creditsController.text = widget.initialData!['credits'] ?? "";
+      _outlineController.text = widget.initialData!['outline'] ?? "";
+      _attendanceRequired = widget.initialData!['attendanceRequired'] ?? true;
     }
 
     _controller = AnimationController(
@@ -42,6 +46,7 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
     _titleController.dispose();
     _codeController.dispose();
     _creditsController.dispose();
+    _outlineController.dispose();
     super.dispose();
   }
 
@@ -100,7 +105,6 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
                           hint: "Subject Title",
                           icon: Icons.edit_note_rounded,
                         ),
-                        const SizedBox(height: 5),
                         Row(
                           children: [
                             Expanded(
@@ -133,7 +137,22 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 50),
+                        const SchemeLabel(text: "Course Settings"),
+                        SchemeToggleField(
+                          label: "Attendance Required",
+                          value: _attendanceRequired,
+                          icon: Icons.fact_check_rounded,
+                          onChanged: (val) =>
+                              setState(() => _attendanceRequired = val),
+                        ),
+                        const SchemeLabel(text: "Course Outline"),
+                        SchemeModernField(
+                          controller: _outlineController,
+                          hint: "Briefly describe the course content...",
+                          icon: Icons.description_rounded,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 30),
                         SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -200,6 +219,8 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
       "title": _titleController.text,
       "code": _codeController.text,
       "credits": _creditsController.text,
+      "outline": _outlineController.text,
+      "attendanceRequired": _attendanceRequired,
     });
   }
 }

@@ -207,7 +207,8 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => StudentFace(),
+                      builder: (context) => 
+                      StudentFace(),
                       //  FaceEnrollmentScreen(),
                     ),
                   );

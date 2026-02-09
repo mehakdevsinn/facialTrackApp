@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:facialtrackapp/view/Student/Face Enrolment/enrollment-result-screen.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class StudentFace extends StatefulWidget {
@@ -17,25 +18,31 @@ class _StudentFaceState extends State<StudentFace>
     with SingleTickerProviderStateMixin {
   CameraController? _controller;
   bool _isBusy = false;
-  bool _isCaptured = false;
+  bool _isCaptured = false; // Current step captured state
+  bool _isSubmitting = false;
+  bool _isPoseMatching = false; // To show green guide
+  String _feedbackMessage = ""; // Corrective instruction for the user
 
-  XFile? _capturedImage;
+  XFile? _currentCapturedImage;
+  List<XFile> _capturedImages = [];
+
+  // Steps configuration
+  final List<Map<String, dynamic>> steps = [
+    {'label': 'Straight', 'instruction': 'Look straight at the camera'},
+    {'label': 'Left', 'instruction': 'Turn head left'},
+    {'label': 'Right', 'instruction': 'Turn head right'},
+    {'label': 'Up', 'instruction': 'Tilt head up'},
+    {'label': 'Down', 'instruction': 'Tilt head down'},
+  ];
+
   int currentStep = 0;
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(enableTracking: true, enableLandmarks: true),
   );
 
-  final List<Map<String, dynamic>> steps = [
-    {'label': 'Straight', 'icon': Icons.face},
-    {'label': 'Left', 'icon': Icons.turn_left},
-    {'label': 'Right', 'icon': Icons.turn_right},
-    {'label': 'Up', 'icon': Icons.arrow_upward},
-    {'label': 'Down', 'icon': Icons.arrow_downward},
-  ];
-
   final Color primaryBlue = ColorPallet.primaryBlue;
-  final Color scaffoldBg = Colors.grey[100]!;
+  final Color scaffoldBg = Colors.grey[50]!;
 
   @override
   void initState() {
@@ -45,9 +52,18 @@ class _StudentFaceState extends State<StudentFace>
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
-    final front = cameras.firstWhere(
-      (c) => c.lensDirection == CameraLensDirection.front,
-    );
+    CameraDescription? front;
+
+    // Find front camera
+    try {
+      front = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.front,
+      );
+    } catch (e) {
+      if (cameras.isNotEmpty) front = cameras[0];
+    }
+
+    if (front == null) return;
 
     _controller = CameraController(
       front,
@@ -56,13 +72,14 @@ class _StudentFaceState extends State<StudentFace>
     );
 
     await _controller!.initialize();
-    await _controller!.startImageStream(_processCameraImage);
-
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      await _controller!.startImageStream(_processCameraImage);
+    }
   }
 
   void _processCameraImage(CameraImage image) async {
-    if (_isBusy || _isCaptured) return; // Stop processing if already captured
+    if (_isBusy || _isCaptured || _isSubmitting) return;
     _isBusy = true;
 
     final inputImage = _inputImageFromCameraImage(image);
@@ -71,46 +88,114 @@ class _StudentFaceState extends State<StudentFace>
       return;
     }
 
-    final faces = await _faceDetector.processImage(inputImage);
+    try {
+      final faces = await _faceDetector.processImage(inputImage);
 
-    if (faces.isNotEmpty && !_isCaptured) {
-      final face = faces.first;
-      double headY = face.headEulerAngleY ?? 0;
-      double headX = face.headEulerAngleX ?? 0;
-
-      bool poseOk = false;
-
-      switch (currentStep) {
-        case 0: // straight
-          if (headY.abs() < 8 && headX.abs() < 8) poseOk = true;
-          break;
-        case 1: // left
-          if (headY > 18) poseOk = true;
-          break;
-        case 2: // right
-          if (headY < -18) poseOk = true;
-          break;
-        case 3: // up
-          if (headX > 12) poseOk = true;
-          break;
-        case 4: // down
-          if (headX < -12) poseOk = true;
-          break;
+      if (faces.isNotEmpty) {
+        final face = faces.first;
+        _checkPoseAndAutoCapture(face);
+      } else {
+        if (_isPoseMatching && mounted) {
+          setState(() => _isPoseMatching = false);
+        }
       }
+    } catch (e) {
+      print("Face detection error: $e");
+    } finally {
+      if (mounted) _isBusy = false;
+    }
+  }
 
-      if (poseOk) {
-        print("Pose matched for step $currentStep -> Capturing");
-        _isBusy = false; // Ensure busy flag is cleared before capture logic
-        await _capturePhoto();
-        return; // Exit to avoid race conditions
-      }
+  void _checkPoseAndAutoCapture(Face face) async {
+    double headY = face.headEulerAngleY ?? 0; // Left/Right (Yaw)
+    double headX = face.headEulerAngleX ?? 0; // Up/Down (Pitch)
+
+    // Debugging: Print angles to console to help troubleshooting
+    print(
+      "Head Angles -> Yaw: ${headY.toStringAsFixed(2)}, Pitch: ${headX.toStringAsFixed(2)}",
+    );
+
+    bool poseOk = false;
+
+    // Adjusted Thresholds for easier/smoother detection
+    // Note: Android ML Kit Euler Y: negative is Right, positive is Left (usually).
+    // Let's assume standard: Y+ = Left, Y- = Right. X+ = Up, X- = Down.
+    // Verify with testing, but usually:
+    // Head turns Left -> Y increases (> 10)
+    // Head turns Right -> Y decreases (< -10)
+    // Head tilts Up -> X increases (> 10)
+    // Head tilts Down -> X decreases (< -10)
+
+    String message = "";
+
+    switch (currentStep) {
+      case 0: // Straight
+        if (headY.abs() < 15 && headX.abs() < 15) {
+          poseOk = true;
+          message = "Perfect! Hold still...";
+        } else {
+          if (headY > 15)
+            message = "Turn Head Right";
+          else if (headY < -15)
+            message = "Turn Head Left";
+          else if (headX > 15)
+            message = "Look Down";
+          else if (headX < -15)
+            message = "Look Up";
+          else
+            message = "Look Straight";
+        }
+        break;
+      case 1: // Left (User turns head Left -> Y increases positive)
+        if (headY > 25) {
+          poseOk = true;
+          message = "Perfect! Hold still...";
+        } else {
+          message = "Turn Head Left";
+        }
+        break;
+      case 2: // Right (User turns head Right -> Y decreases negative)
+        if (headY < -25) {
+          poseOk = true;
+          message = "Perfect! Hold still...";
+        } else {
+          message = "Turn Head Right";
+        }
+        break;
+      case 3: // Up (User looks Up -> X increases positive)
+        if (headX > 15) {
+          poseOk = true;
+          message = "Perfect! Hold still...";
+        } else {
+          message = "Look Up";
+        }
+        break;
+      case 4: // Down (User looks Down -> X decreases negative)
+        if (headX < -15) {
+          poseOk = true;
+          message = "Perfect! Hold still...";
+        } else {
+          message = "Look Down";
+        }
+        break;
     }
 
-    _isBusy = false;
+    // Update UI state with feedback
+    if (mounted) {
+      setState(() {
+        _isPoseMatching = poseOk;
+        _feedbackMessage = message;
+      });
+    }
+
+    if (poseOk) {
+      // Optional: Add a small delay/stability check here if needed
+      // For now, capture immediately
+      await _capturePhoto();
+    }
   }
 
   InputImage? _inputImageFromCameraImage(CameraImage image) {
-    // Check if controller is initialized to avoid null access
     if (_controller == null || _controller!.description == null) return null;
 
     final sensorOrientation = _controller!.description.sensorOrientation;
@@ -118,6 +203,7 @@ class _StudentFaceState extends State<StudentFace>
       image.format.raw,
     );
     if (inputImageFormat == null) return null;
+
     final plane = image.planes.first;
 
     return InputImage.fromBytes(
@@ -134,67 +220,80 @@ class _StudentFaceState extends State<StudentFace>
   }
 
   Future<void> _capturePhoto() async {
-    if (_isCaptured) return; // Prevent double capture
+    if (_isCaptured ||
+        _isSubmitting ||
+        _controller == null ||
+        !_controller!.value.isInitialized)
+      return;
+
+    _isCaptured = true;
 
     try {
-      if (_controller == null || !_controller!.value.isInitialized) return;
-
-      // Stop stream before taking picture
       await _controller!.stopImageStream();
-      await Future.delayed(const Duration(milliseconds: 150));
-
-      final photo = await _controller!.takePicture();
+      final xFile = await _controller!.takePicture();
 
       if (mounted) {
         setState(() {
-          _capturedImage = photo;
-          _isCaptured = true;
+          _currentCapturedImage = xFile;
+          // Reset pose matching so guide goes back to neutral/white for review
+          _isPoseMatching = false;
         });
       }
-
-      // Removed dialog show
     } catch (e) {
-      print("Capture Error: $e");
-      // If error, try to restart stream
-      if (!_controller!.value.isStreamingImages) {
+      print("Capture failed: $e");
+      if (mounted) {
+        setState(() {
+          _isCaptured = false;
+        });
         await _controller!.startImageStream(_processCameraImage);
       }
     }
   }
 
-  Future<void> _goNext() async {
+  Future<void> _confirmAndNext() async {
+    if (_currentCapturedImage == null) return;
+
+    setState(() {
+      _capturedImages.add(_currentCapturedImage!);
+      _isCaptured = false;
+      _currentCapturedImage = null;
+      _isPoseMatching = false;
+    });
+
     if (currentStep < steps.length - 1) {
       setState(() {
-        _isCaptured = false;
-        _capturedImage = null;
         currentStep++;
       });
-      // Restart camera stream for next step
       await _controller!.startImageStream(_processCameraImage);
     } else {
-      _showSuccess();
+      _finalizeEnrollment();
     }
   }
 
-  void _showSuccess() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Success", style: TextStyle(color: primaryBlue)),
-        content: const Text("Face Enrollment Completed Successfully!"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close screen
-            },
-            child: Text("Done", style: TextStyle(color: primaryBlue)),
+  Future<void> _finalizeEnrollment() async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      if (mounted) {
+        // Navigate to Success Screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EnrollmentResultScreen(isSuccess: true),
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
+  }
+
+  void _manualCapture() {
+    // Optional: Warn if pose is not matching?
+    // For now, allow fallback capture.
+    _capturePhoto();
   }
 
   @override
@@ -206,433 +305,287 @@ class _StudentFaceState extends State<StudentFace>
 
   @override
   Widget build(BuildContext context) {
+    int totalSteps = steps.length;
+    double progress = (currentStep + (_isCaptured ? 1 : 0)) / totalSteps;
+
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: primaryBlue,
         title: const Text("Student Enrollment"),
+        backgroundColor: primaryBlue,
         centerTitle: true,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 12),
-          Text(
-            "Step ${currentStep + 1}/${steps.length}: Look ${steps[currentStep]['label']}",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: primaryBlue, width: 2),
-                color: Colors.black,
+      body: _isSubmitting
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: primaryBlue),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Submitting...",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-              clipBehavior: Clip.hardEdge,
-              child: _controller?.value.isInitialized == true
-                  ? (_isCaptured && _capturedImage != null
-                        ? Image.file(
-                            File(_capturedImage!.path),
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          )
-                        : CameraPreview(_controller!))
-                  : const Center(child: CircularProgressIndicator()),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isCaptured
-                    ? _goNext
-                    : null, // Enabled only if captured
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
-                  disabledBackgroundColor: Colors.grey,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            )
+          : Column(
+              children: [
+                // 1. Progress Section
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Image ${currentStep + 1} of $totalSteps",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            "${(progress * 100).toInt()}%",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: primaryBlue,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.grey[200],
+                        color: primaryBlue,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
                   ),
                 ),
-                child: Text(
-                  currentStep == steps.length - 1 ? "Finish" : "Next",
-                  style: const TextStyle(fontSize: 18),
+
+                // 2. Camera Preview with Face Guide
+                Expanded(
+                  child: Container(
+                    color: Colors.black,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (_controller?.value.isInitialized == true)
+                          _isCaptured && _currentCapturedImage != null
+                              ? Image.file(
+                                  File(_currentCapturedImage!.path),
+                                  fit: BoxFit.cover,
+                                )
+                              : CameraPreview(_controller!)
+                        else
+                          const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+
+                        // Face Guide Overlay
+                        if (!_isCaptured)
+                          CustomPaint(
+                            painter: FaceGuidePainter(
+                              isPoseMatching: _isPoseMatching,
+                              borderColor: _isPoseMatching
+                                  ? Colors.greenAccent
+                                  : Colors.white,
+                            ),
+                          ),
+
+                        // Feedback Text Overlay (Top Center of Camera)
+                        if (!_isCaptured && _isPoseMatching)
+                          Positioned(
+                            top: 20,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  "Perfect!",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+
+                // 3. Bottom Control Board
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        steps[currentStep]['instruction'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Step ${currentStep + 1}: ${steps[currentStep]['label']}",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      if (_capturedImages.isNotEmpty)
+                        SizedBox(
+                          height: 70,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _capturedImages.length,
+                            separatorBuilder: (c, i) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              return Container(
+                                width: 60,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: primaryBlue,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: FileImage(
+                                      File(_capturedImages[index].path),
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 20,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                      if (_capturedImages.isNotEmpty)
+                        const SizedBox(height: 20),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: _isCaptured
+                            ? ElevatedButton(
+                                onPressed: _confirmAndNext,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryBlue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  currentStep == steps.length - 1
+                                      ? "Submit"
+                                      : "Next",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            : ElevatedButton.icon(
+                                onPressed: _manualCapture,
+                                icon: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  "Capture",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryBlue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }
 
-// import 'dart:io';
+class FaceGuidePainter extends CustomPainter {
+  final bool isPoseMatching;
+  final Color borderColor;
 
-// import 'package:facialtrackapp/constants/color_pallet.dart';
-// import 'package:flutter/material.dart';
-// import 'package:camera/camera.dart';
-// import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+  FaceGuidePainter({
+    this.isPoseMatching = false,
+    this.borderColor = Colors.white,
+  });
 
-// class StudentFace extends StatefulWidget {
-//   const StudentFace({super.key});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = borderColor.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isPoseMatching ? 5.0 : 3.0; // Thicker if matching
 
-//   @override
-//   State<StudentFace> createState() => _StudentFaceState();
-// }
+    final rect = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: size.width * 0.75, // Slightly wider
+      height: size.height * 0.55,
+    );
 
-// class _StudentFaceState extends State<StudentFace>
-//     with SingleTickerProviderStateMixin {
-//   CameraController? _controller;
-//   bool _isBusy = false;
-//   bool _canProceed = false;
-//   bool _isCaptured = false;
+    canvas.drawOval(rect, paint);
 
-//   XFile? _capturedImage;
+    final bgPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addOval(rect)
+      ..fillType = PathFillType.evenOdd;
 
-//   int currentStep = 0;
-//   late AnimationController _scanController;
+    canvas.drawPath(bgPath, Paint()..color = Colors.black.withOpacity(0.4));
+  }
 
-//   final FaceDetector _faceDetector = FaceDetector(
-//     options: FaceDetectorOptions(enableTracking: true, enableLandmarks: true),
-//   );
-
-//   final List<Map<String, dynamic>> steps = [
-//     {'label': 'Straight', 'icon': Icons.face},
-//     {'label': 'Left', 'icon': Icons.turn_left},
-//     {'label': 'Right', 'icon': Icons.turn_right},
-//     {'label': 'Up', 'icon': Icons.arrow_upward},
-//     {'label': 'Bottom', 'icon': Icons.arrow_downward},
-//   ];
-
-//   final Color primaryBlue = ColorPallet.primaryBlue;
-//   final Color scaffoldBg = Colors.grey[100]!;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initializeCamera();
-//     _scanController = AnimationController(
-//       vsync: this,
-//       duration: const Duration(seconds: 2),
-//     )..repeat(reverse: true);
-//   }
-
-//   Future<void> _initializeCamera() async {
-//     final cameras = await availableCameras();
-//     final front = cameras.firstWhere(
-//       (c) => c.lensDirection == CameraLensDirection.front,
-//     );
-//     _controller = CameraController(
-//       front,
-//       ResolutionPreset.medium,
-//       enableAudio: false,
-//     );
-//     await _controller!.initialize();
-//     _controller!.startImageStream(_processCameraImage);
-
-//     if (mounted) setState(() {});
-//   }
-
-//   void _processCameraImage(CameraImage image) async {
-//     if (_isBusy) return;
-//     _isBusy = true;
-
-//     final inputImage = _inputImageFromCameraImage(image);
-//     if (inputImage == null) {
-//       _isBusy = false;
-//       return;
-//     }
-
-//     final faces = await _faceDetector.processImage(inputImage);
-
-//     if (faces.isNotEmpty) {
-//       final face = faces.first;
-//       double headY = face.headEulerAngleY ?? 0;
-//       double headX = face.headEulerAngleX ?? 0;
-
-//       bool detected = false;
-//       switch (currentStep) {
-//         case 0:
-//           if (headY.abs() < 8 && headX.abs() < 8) detected = true;
-//           break;
-//         case 1:
-//           if (headY > 18) detected = true;
-//           break;
-//         case 2:
-//           if (headY < -18) detected = true;
-//           break;
-//         case 3:
-//           if (headX > 12) detected = true;
-//           break;
-//         case 4:
-//           if (headX < -12) detected = true;
-//           break;
-//       }
-
-//       if (detected) {
-//         if (!_canProceed) {
-//           setState(() => _canProceed = true);
-//         }
-//         if (!_isCaptured) {
-//           _isCaptured = true;
-//           _capturePhoto();
-//         }
-//       } else {
-//         if (_canProceed) setState(() => _canProceed = false);
-//         _isCaptured = false;
-//       }
-//     } else {
-//       if (_canProceed) setState(() => _canProceed = false);
-//       _isCaptured = false;
-//     }
-
-//     _isBusy = false;
-//   }
-
-//   InputImage? _inputImageFromCameraImage(CameraImage image) {
-//     final sensorOrientation = _controller!.description.sensorOrientation;
-//     final inputImageFormat = InputImageFormatValue.fromRawValue(
-//       image.format.raw,
-//     );
-//     if (inputImageFormat == null) return null;
-//     final plane = image.planes.first;
-//     return InputImage.fromBytes(
-//       bytes: plane.bytes,
-//       metadata: InputImageMetadata(
-//         size: Size(image.width.toDouble(), image.height.toDouble()),
-//         rotation:
-//             InputImageRotationValue.fromRawValue(sensorOrientation) ??
-//             InputImageRotation.rotation0deg,
-//         format: inputImageFormat,
-//         bytesPerRow: plane.bytesPerRow,
-//       ),
-//     );
-//   }
-
-//   Future<void> _capturePhoto() async {
-//     try {
-//       if (_controller == null || !_controller!.value.isInitialized) return;
-
-//       final photo = await _controller!.takePicture();
-//       _capturedImage = photo;
-
-//       if (mounted) setState(() {});
-
-//       _showPhotoCaptured(photo.path);
-//     } catch (e) {
-//       print("Capture Error: $e");
-//     }
-//   }
-
-//   void _showPhotoCaptured(String path) {
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-//         title: Text("Captured!", style: TextStyle(color: primaryBlue)),
-//         content: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             Image.file(File(path)),
-//             const SizedBox(height: 8),
-//             const Text("Face captured successfully."),
-//           ],
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: Text("OK", style: TextStyle(color: primaryBlue)),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   void _nextStep() {
-//     if (currentStep < steps.length - 1) {
-//       setState(() {
-//         currentStep++;
-//         _canProceed = false;
-//         _isCaptured = false;
-//       });
-//     } else {
-//       _showSuccess();
-//     }
-//   }
-
-//   void _showSuccess() {
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-//         title: Text("Success", style: TextStyle(color: primaryBlue)),
-//         content: const Text("Face Enrollment Completed Successfully!"),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: Text("Done", style: TextStyle(color: primaryBlue)),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   @override
-//   void dispose() {
-//     _controller?.dispose();
-//     _scanController.dispose();
-//     _faceDetector.close();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: scaffoldBg,
-//       appBar: AppBar(
-//         backgroundColor: primaryBlue,
-//         elevation: 0,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.white),
-//           onPressed: () => Navigator.pop(context),
-//         ),
-//         title: const Text(
-//           "Student Enrollment",
-//           style: TextStyle(color: Colors.white),
-//         ),
-//         centerTitle: true,
-//       ),
-//       body: SafeArea(
-//         child: SingleChildScrollView(
-//           child: Column(
-//             children: [
-//               const SizedBox(height: 12),
-//               Text(
-//                 "Look ${steps[currentStep]['label']}",
-//                 style: const TextStyle(
-//                   fontSize: 18,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               const SizedBox(height: 20),
-
-//               Center(
-//                 child: Stack(
-//                   alignment: Alignment.center,
-//                   children: [
-//                     Container(
-//                       width: 280,
-//                       height: 280,
-//                       decoration: BoxDecoration(
-//                         borderRadius: BorderRadius.circular(25),
-//                         boxShadow: [
-//                           BoxShadow(color: Colors.black26, blurRadius: 12),
-//                         ],
-//                       ),
-//                       child: ClipRRect(
-//                         borderRadius: BorderRadius.circular(25),
-//                         child:
-//                             (_controller != null &&
-//                                 _controller!.value.isInitialized)
-//                             ? CameraPreview(_controller!)
-//                             : Container(color: Colors.grey[400]),
-//                       ),
-//                     ),
-
-//                     AnimatedBuilder(
-//                       animation: _scanController,
-//                       builder: (context, child) => Positioned(
-//                         top: 40 + (_scanController.value * 200),
-//                         child: Container(
-//                           width: 220,
-//                           height: 2,
-//                           decoration: BoxDecoration(
-//                             gradient: LinearGradient(
-//                               colors: [
-//                                 Colors.transparent,
-//                                 primaryBlue,
-//                                 Colors.transparent,
-//                               ],
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               const SizedBox(height: 30),
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: List.generate(steps.length, (index) {
-//                   bool isDone = index < currentStep;
-//                   bool isActive = index == currentStep;
-//                   return Padding(
-//                     padding: const EdgeInsets.symmetric(horizontal: 6),
-//                     child: Column(
-//                       children: [
-//                         CircleAvatar(
-//                           radius: 20,
-//                           backgroundColor: isDone
-//                               ? Colors.green
-//                               : (isActive ? primaryBlue : Colors.white),
-//                           child: Icon(
-//                             isDone ? Icons.check : steps[index]['icon'],
-//                             color: isDone || isActive
-//                                 ? Colors.white
-//                                 : Colors.black26,
-//                           ),
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Text(
-//                           steps[index]['label'],
-//                           style: TextStyle(
-//                             fontSize: 10,
-//                             color: isActive ? primaryBlue : Colors.black54,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 }),
-//               ),
-
-//               const SizedBox(height: 20),
-
-//               Padding(
-//                 padding: const EdgeInsets.symmetric(horizontal: 24),
-//                 child: ElevatedButton(
-//                   onPressed: _canProceed ? _nextStep : null,
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: _canProceed ? primaryBlue : Colors.grey,
-//                     minimumSize: const Size(double.infinity, 55),
-//                   ),
-//                   child: Text(
-//                     _canProceed ? "Next" : "Hold Still to Capture",
-//                     style: const TextStyle(fontSize: 16),
-//                   ),
-//                 ),
-//               ),
-
-//               const SizedBox(height: 14),
-//               const Text(
-//                 "Ensure clear background, no glasses/mask during scan",
-//                 textAlign: TextAlign.center,
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+  @override
+  bool shouldRepaint(covariant FaceGuidePainter oldDelegate) {
+    return oldDelegate.isPoseMatching != isPoseMatching ||
+        oldDelegate.borderColor != borderColor;
+  }
+}

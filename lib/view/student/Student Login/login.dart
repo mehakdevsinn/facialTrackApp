@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:facialtrackapp/view/Student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
@@ -208,7 +209,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const StudentRootScreen(),
+                                builder: (context) => StudentFace(),
+                                // const StudentRootScreen(),
                               ),
                             );
                           }

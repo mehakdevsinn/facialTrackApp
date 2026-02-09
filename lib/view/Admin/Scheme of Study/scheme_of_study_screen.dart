@@ -17,24 +17,96 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
 
   final Map<String, List<Map<String, dynamic>>> coursesBySemester = {
     "2nd Sem": [
-      {"title": "Introduction to Computing", "code": "CS-101", "credits": "3"},
-      {"title": "Programming Fundamentals", "code": "CS-102", "credits": "4"},
-      {"title": "Discrete Structures", "code": "CS-201", "credits": "3"},
+      {
+        "title": "Introduction to Computing",
+        "code": "CS-101",
+        "credits": "3",
+        "outline": "Basics of computers and logic.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Programming Fundamentals",
+        "code": "CS-102",
+        "credits": "4",
+        "outline": "Introduction to C++ and basic syntax.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Discrete Structures",
+        "code": "CS-201",
+        "credits": "3",
+        "outline": "Mathematical foundations for CS.",
+        "attendanceRequired": false,
+      },
     ],
     "4th Sem": [
-      {"title": "Data Structures", "code": "CS-202", "credits": "4"},
-      {"title": "Operating Systems", "code": "CS-301", "credits": "4"},
-      {"title": "Database Systems", "code": "CS-302", "credits": "3"},
+      {
+        "title": "Data Structures",
+        "code": "CS-202",
+        "credits": "4",
+        "outline": "Implementation of lists, stacks, and queues.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Operating Systems",
+        "code": "CS-301",
+        "credits": "4",
+        "outline": "Kernel basics and process management.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Database Systems",
+        "code": "CS-302",
+        "credits": "3",
+        "outline": "SQL and relational algebra.",
+        "attendanceRequired": true,
+      },
     ],
     "6th Sem": [
-      {"title": "Software Engineering", "code": "SE-301", "credits": "3"},
-      {"title": "Computer Networks", "code": "CS-401", "credits": "4"},
-      {"title": "Artificial Intelligence", "code": "AI-401", "credits": "4"},
+      {
+        "title": "Software Engineering",
+        "code": "SE-301",
+        "credits": "3",
+        "outline": "SDLC and agile methodologies.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Computer Networks",
+        "code": "CS-401",
+        "credits": "4",
+        "outline": "TCP/IP layers and routing.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Artificial Intelligence",
+        "code": "AI-401",
+        "credits": "4",
+        "outline": "Search algorithms and neural networks.",
+        "attendanceRequired": true,
+      },
     ],
     "8th Sem": [
-      {"title": "Final Year Project", "code": "FYP-499", "credits": "6"},
-      {"title": "Cloud Computing", "code": "CS-412", "credits": "3"},
-      {"title": "Professional Ethics", "code": "HU-401", "credits": "2"},
+      {
+        "title": "Final Year Project",
+        "code": "FYP-499",
+        "credits": "6",
+        "outline": "Practical implementation of a software project.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Cloud Computing",
+        "code": "CS-412",
+        "credits": "3",
+        "outline": "AWS and distributed systems.",
+        "attendanceRequired": true,
+      },
+      {
+        "title": "Professional Ethics",
+        "code": "HU-401",
+        "credits": "2",
+        "outline": "Ethical standards in IT.",
+        "attendanceRequired": false,
+      },
     ],
   };
 

@@ -2,7 +2,7 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Admin/Assignment/assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Dashboard/admin_dashboard_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
-import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-info.dart';
+import 'package:facialtrackapp/view/Admin/User%20Approval/user_approval_screen.dart';
 import 'package:flutter/material.dart';
 
 class AdminRootScreen extends StatefulWidget {
@@ -19,21 +19,21 @@ class _AdminRootScreenState extends State<AdminRootScreen>
 
   final List<Widget> _screens = [
     const AdminDashboardScreen(),
-    const StudentEnrollmentScreen(),
+    const UserApprovalScreen(showBackButton: false),
     const AssignmentScreen(),
     const AdminProfileScreen(),
   ];
 
   final List<IconData> _icons = [
     Icons.dashboard_rounded,
-    Icons.camera_alt_outlined,
+    Icons.how_to_reg_rounded,
     Icons.link,
     Icons.person_rounded,
   ];
 
   final List<String> _labels = [
     "Dashboard",
-    "Enroll Student",
+    "Student Approval",
     "Assignment",
     "Profile",
   ];

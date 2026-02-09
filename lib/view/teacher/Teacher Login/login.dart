@@ -244,35 +244,34 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
 
                 const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
+                // const SizedBox(height: 20),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: ColorPallet.grey),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TeacherSignupScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          color: ColorPallet.primaryBlue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     const Text(
+                //       "Don't have an account? ",
+                //       style: TextStyle(color: ColorPallet.grey),
+                //     ),
+                //     GestureDetector(
+                //       onTap: () {
+                //         Navigator.push(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (context) => const TeacherSignupScreen(),
+                //           ),
+                //         );
+                //       },
+                //       child: const Text(
+                //         "Sign Up",
+                //         style: TextStyle(
+                //           color: ColorPallet.primaryBlue,
+                //           fontWeight: FontWeight.bold,
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 const SizedBox(height: 10),
 
                 Row(

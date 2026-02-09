@@ -79,14 +79,14 @@ class _TechnicalComplaintDetailScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.complaint['studentName'],
+                            widget.complaint['userName'],
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           Text(
-                            widget.complaint['rollNo'],
+                            "${widget.complaint['userRole']}${widget.complaint['userRole'] == "Student" ? " (${widget.complaint['semester']})" : ""} • ${widget.complaint['idNumber']}",
                             style: TextStyle(
                               color: Colors.grey.shade500,
                               fontSize: 13,

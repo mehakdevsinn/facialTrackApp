@@ -198,14 +198,14 @@ class AdminDashboardScreen extends StatelessWidget {
                     );
                   },
                 ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.face_retouching_natural,
-                  color: Colors.red,
-                  title: 'Student & Facial Track',
-                  subtitle: 'Enroll students with face sync',
-                  onTap: () {},
-                ),
+                // _buildMenuItem(
+                //   context,
+                //   icon: Icons.face_retouching_natural,
+                //   color: Colors.red,
+                //   title: 'Student & Facial Track',
+                //   subtitle: 'Enroll students with face sync',
+                //   onTap: () {},
+                // ),
                 _buildMenuItem(
                   context,
                   icon: Icons.link_rounded,
@@ -240,8 +240,8 @@ class AdminDashboardScreen extends StatelessWidget {
                   context,
                   icon: Icons.how_to_reg_rounded,
                   color: Colors.teal,
-                  title: 'User Approval',
-                  subtitle: 'Approve or reject registrations',
+                  title: 'Student Approval',
+                  subtitle: 'Approve or reject student registrations',
                   onTap: () {
                     Navigator.push(
                       context,

@@ -142,46 +142,46 @@ class AdminProfileScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 15),
                                     // Edit Profile Tile
-                                    ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      leading: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.person_outline,
-                                          color: Colors.blue,
-                                        ),
-                                      ),
-                                      title: const Text(
-                                        "Edit Profile",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      trailing: const Icon(
-                                        Icons.chevron_right,
-                                        color: Colors.grey,
-                                      ),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const AdminEditProfileScreen(),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    Divider(
-                                      height: 20,
-                                      thickness: 1,
-                                      color: Colors.grey.withOpacity(0.1),
-                                    ),
+                                    // ListTile(
+                                    //   contentPadding: EdgeInsets.zero,
+                                    //   leading: Container(
+                                    //     padding: const EdgeInsets.all(8),
+                                    //     decoration: BoxDecoration(
+                                    //       color: Colors.blue.withOpacity(0.1),
+                                    //       borderRadius: BorderRadius.circular(
+                                    //         8,
+                                    //       ),
+                                    //     ),
+                                    //     child: const Icon(
+                                    //       Icons.person_outline,
+                                    //       color: Colors.blue,
+                                    //     ),
+                                    //   ),
+                                    //   title: const Text(
+                                    //     "Edit Profile",
+                                    //     style: TextStyle(
+                                    //       fontWeight: FontWeight.w500,
+                                    //     ),
+                                    //   ),
+                                    //   trailing: const Icon(
+                                    //     Icons.chevron_right,
+                                    //     color: Colors.grey,
+                                    //   ),
+                                    //   onTap: () {
+                                    //     Navigator.push(
+                                    //       context,
+                                    //       MaterialPageRoute(
+                                    //         builder: (context) =>
+                                    //             const AdminEditProfileScreen(),
+                                    //       ),
+                                    //     );
+                                    //   },
+                                    // ),
+                                    // Divider(
+                                    //   height: 20,
+                                    //   thickness: 1,
+                                    //   color: Colors.grey.withOpacity(0.1),
+                                    // ),
                                     // Change Password Tile (Teacher Style)
                                     ListTile(
                                       contentPadding: EdgeInsets.zero,

@@ -27,8 +27,10 @@ class _AdminTechnicalComplaintsScreenState
   final List<Map<String, dynamic>> technicalComplaints = [
     {
       "id": 1,
-      "studentName": "Zain Ali",
-      "rollNo": "FA21-BCS-102",
+      "userName": "Zain Ali",
+      "userRole": "Student",
+      "idNumber": "FA21-BCS-102",
+      "semester": "6th Semester",
       "category": "Face Recognition Error",
       "date": "Feb 08, 2026",
       "shortDesc": "Face not detected in outdoors.",
@@ -41,8 +43,25 @@ class _AdminTechnicalComplaintsScreenState
     },
     {
       "id": 2,
-      "studentName": "Amna Sheikh",
-      "rollNo": "FA21-BCS-056",
+      "userName": "Dr. Saima Kamran",
+      "userRole": "Teacher",
+      "idNumber": "TCH-2025-014",
+      "category": "Schedule Problem",
+      "date": "Feb 09, 2026",
+      "shortDesc": "Monday's lab not showing in schedule.",
+      "fullDesc":
+          "I have a Mobile App Dev lab scheduled for Monday at 11:30 AM, but it is not appearing in my 'Assigned Subjects' or 'Start Session' list.",
+      "status": "Pending",
+      "reportedAt": "10:15 AM",
+      "deviceInfo": "iPhone 14 • iOS 17",
+      "appVersion": "v1.0.5",
+    },
+    {
+      "id": 3,
+      "userName": "Amna Sheikh",
+      "userRole": "Student",
+      "idNumber": "FA21-BCS-056",
+      "semester": "4th Semester",
       "category": "App Crash",
       "date": "Feb 07, 2026",
       "shortDesc": "App closes when opening logs.",
@@ -54,9 +73,11 @@ class _AdminTechnicalComplaintsScreenState
       "appVersion": "v1.0.4",
     },
     {
-      "id": 3,
-      "studentName": "Hassan Raza",
-      "rollNo": "FA21-BCS-012",
+      "id": 4,
+      "userName": "Hassan Raza",
+      "userRole": "Student",
+      "idNumber": "FA21-BCS-012",
+      "semester": "8th Semester",
       "category": "Sync Problem",
       "date": "Feb 06, 2026",
       "shortDesc": "Attendance not updating.",
@@ -248,12 +269,27 @@ class _AdminTechnicalComplaintsScreenState
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(
-                        complaint['studentName'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            complaint['userName'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            "${complaint['userRole']}${complaint['userRole'] == "Student" ? " • ${complaint['semester']}" : ""}",
+                            style: TextStyle(
+                              color: complaint['userRole'] == "Teacher"
+                                  ? Colors.deepPurple
+                                  : Colors.blue,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Container(

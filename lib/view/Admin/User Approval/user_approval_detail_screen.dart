@@ -56,24 +56,16 @@ class UserApprovalDetailScreen extends StatelessWidget {
                       "Department",
                       user.department,
                     ),
-                    if (user.role == 'Teacher') ...[
-                      _buildDetailItem(
-                        Icons.school_outlined,
-                        "Qualification",
-                        user.qualification ?? "N/A",
-                      ),
-                    ] else ...[
-                      _buildDetailItem(
-                        Icons.badge_outlined,
-                        "Registration Number",
-                        user.rollNo ?? "N/A",
-                      ),
-                      _buildDetailItem(
-                        Icons.calendar_month_outlined,
-                        "Current Semester",
-                        user.semester ?? "N/A",
-                      ),
-                    ],
+                    _buildDetailItem(
+                      Icons.badge_outlined,
+                      "Registration Number",
+                      user.rollNo ?? "N/A",
+                    ),
+                    _buildDetailItem(
+                      Icons.calendar_month_outlined,
+                      "Current Semester",
+                      user.semester ?? "N/A",
+                    ),
                     _buildDetailItem(
                       Icons.info_outline,
                       "Current Status",
@@ -102,7 +94,7 @@ class UserApprovalDetailScreen extends StatelessWidget {
                                 Navigator.pop(context);
                               },
                               child: const Text(
-                                "Approve User",
+                                "Approve Student",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,

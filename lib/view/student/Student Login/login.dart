@@ -209,7 +209,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => StudentFace(),
+                                builder: (context) => StudentFaceEnrolements(),
                                 // const StudentRootScreen(),
                               ),
                             );

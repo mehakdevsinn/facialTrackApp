@@ -1,295 +1,154 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Student/Complaint/submit-complaint-screen.dart';
-import 'package:facialtrackapp/widgets/textfield_login.dart';
+import 'package:facialtrackapp/view/Student/Complaint/my_complaints_screen.dart';
+import 'package:facialtrackapp/view/Student/Complaint/technical_complaint_screen.dart';
 import 'package:flutter/material.dart';
 
-class ComplaintScreen extends StatefulWidget {
-  @override
-  _ComplaintScreenState createState() => _ComplaintScreenState();
-}
-
-class _ComplaintScreenState extends State<ComplaintScreen> {
-  bool isDateSelected = false;
-
-  bool isTypeSelected = false;
-
-  String? selectedIssue;
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController();
-
-  final FocusNode description = FocusNode();
-  String descriptions = "";
-
-  bool get isButtonEnabled => descriptions.isNotEmpty;
-  final List<String> issueTypes = [
-    'Attendance Not Marked',
-    'Wrong Entry/Exit Time',
-    'App Technical Issue',
-    'Others',
-  ];
+class ComplaintScreen extends StatelessWidget {
+  const ComplaintScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        appBar: AppBar(
-          leading: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
-
-            child: Icon(Icons.arrow_back, color: ColorPallet.white),
-          ),
-          title: Text(
-            "New Complaint",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: ColorPallet.primaryBlue,
-          elevation: 0,
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text(
+          "Complaints & Support",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        body: Padding(
-          padding: const EdgeInsets.only(
-            top: 33,
-            left: 20,
-            bottom: 20,
-            right: 20,
+        backgroundColor: ColorPallet.primaryBlue,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          // IconButton(
+          //   icon: const Icon(Icons.history),
+          //   onPressed: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (context) => const MyComplaintsScreen(),
+          //       ),
+          //     );
+          //   },
+          //   tooltip: "My Complaints",
+          // ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(19.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildOptionCard(
+              context,
+              title: "Report Technical Issue",
+              description:
+                  "App bugs, login problems, or face verification issues.",
+              icon: Icons.build_circle_outlined,
+              color: ColorPallet.primaryBlue,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TechnicalComplaintScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            // _buildOptionCard(
+            //   context,
+            //   title: "Attendance Issues",
+            //   description:
+            //       "To report attendance issues, please go to your Attendance History and select the specific class session.",
+            //   icon: Icons.calendar_today_outlined,
+            //   color: Colors.blue,
+            //   onTap: () {
+            //     // This is just informational as requested in requirements:
+            //     // "Access: From attendance history details"
+            //     ScaffoldMessenger.of(context).showSnackBar(
+            //       const SnackBar(
+            //         content: Text(
+            //           "Please go to Attendance History to report specific class issues.",
+            //         ),
+            //       ),
+            //     );
+            //   },
+            // ),
+            const SizedBox(height: 16),
+
+            _buildOptionCard(
+              context,
+              title: "View My Complaints",
+              description: "Check the status of your reported issues.",
+              icon: Icons.assignment_outlined,
+              color: ColorPallet.primaryBlue,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyComplaintsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionCard(
+    BuildContext context, {
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            // offset: const Offset(2, 2),
           ),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 11,
-                  spreadRadius: 3,
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Issue Type",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blueGrey[900],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    menuMaxHeight: 300,
-                    borderRadius: BorderRadius.circular(12),
-                    alignment: AlignmentDirectional.bottomStart,
-                    dropdownColor: Colors.grey[300],
-                    hint: Text(
-                      "Select Issue Type",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: ColorPallet.lightGray,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: isTypeSelected
-                              ? ColorPallet.primaryBlue
-                              : Colors.grey,
-                          width: 2.0,
-                        ),
-                      ),
-
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: isTypeSelected
-                              ? ColorPallet.primaryBlue
-                              : ColorPallet.primaryBlue,
-                          width: 2.0,
-                        ),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 15,
-                      ),
-                    ),
-                    value: selectedIssue,
-                    items: issueTypes.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        selectedIssue = newValue;
-                        isTypeSelected = true;
-                      });
-                    },
-                  ),
-                  SizedBox(height: 20),
-
-                  Text(
-                    "Description",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blueGrey[900],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  buildTextFieldDescription(
-                    controller: _descriptionController,
-                    line: 5,
-                    length: 500,
-
-                    activeColor: ColorPallet.primaryBlue,
-                    inactiveColor: Colors.grey,
-                    focusNode: description,
-                    counter:
-                        "${_descriptionController.text.length}/500 characters",
-                    hint: "Please explain the issue in detail...",
-
-                    onChange: (text) => setState(() {
-                      descriptions = text;
-                    }),
-                  ),
-                  SizedBox(height: 20),
-
-                  Text(
-                    "Date of Incident",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blueGrey[900],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  TextField(
-                    controller: _dateController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: ColorPallet.lightGray,
-                      hintText: "mm/dd/yyyy",
-                      suffixIcon: Icon(Icons.calendar_today_outlined),
-                      hintStyle: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: isDateSelected
-                              ? ColorPallet.primaryBlue
-                              : Colors.grey,
-                          width: 2.0,
-                        ),
-                      ),
-
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: isDateSelected
-                              ? ColorPallet.primaryBlue
-                              : ColorPallet.primaryBlue,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                    onTap: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.light(
-                                primary: const Color.fromARGB(
-                                  255,
-                                  156,
-                                  155,
-                                  155,
-                                ),
-                                onPrimary: Colors.black,
-                                onSurface: Colors.black,
-                              ),
-                              textButtonTheme: TextButtonThemeData(
-                                style: TextButton.styleFrom(
-                                  foregroundColor: ColorPallet.primaryBlue,
-                                ),
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-
-                      if (pickedDate != null) {
-                        setState(() {
-                          _dateController.text =
-                              "${pickedDate.month}/${pickedDate.day}/${pickedDate.year}";
-                          isDateSelected = true;
-                        });
-                      }
-                    },
-                  ),
-                  SizedBox(height: 40),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton.icon(
-                      onPressed: isButtonEnabled
-                          ? () {
-                              // Dialog(child: ComplaintSubmittedScreen());
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) =>
-                              //         ComplaintSubmittedScreen(),
-                              //   ),
-                              // );
-
-                              showComplaintSubmittedDialog(context);
-                            }
-                          : SizedBox.shrink,
-                      icon: Icon(Icons.send_outlined, size: 18),
-                      label: Text(
-                        "Submit Complaint",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isButtonEnabled
-                            ? ColorPallet.primaryBlue
-                            : Colors.grey.shade400,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            ],
           ),
         ),
       ),

@@ -7,14 +7,14 @@ import 'package:camera/camera.dart';
 import 'package:facialtrackapp/view/Student/Face Enrolment/enrollment-result-screen.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-class StudentFace extends StatefulWidget {
-  const StudentFace({super.key});
+class StudentFaceEnrolements extends StatefulWidget {
+  const StudentFaceEnrolements({super.key});
 
   @override
-  State<StudentFace> createState() => _StudentFaceState();
+  State<StudentFaceEnrolements> createState() => _StudentFaceEnrolementsState();
 }
 
-class _StudentFaceState extends State<StudentFace>
+class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
     with SingleTickerProviderStateMixin {
   CameraController? _controller;
   bool _isBusy = false;

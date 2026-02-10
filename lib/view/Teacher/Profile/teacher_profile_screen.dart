@@ -6,6 +6,7 @@ import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widge
 import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/overview_card_widget.dart';
 import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/profile_screen_header_widget.dart';
 import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/subject_card_widget.dart';
+import 'package:facialtrackapp/view/teacher/Complaints/teacher_report_issue_screen.dart';
 import 'package:flutter/material.dart';
 
 class TeacherProfileScreen extends StatelessWidget {
@@ -36,11 +37,19 @@ class TeacherProfileScreen extends StatelessWidget {
                     const SubjectsCard(),
                     const SizedBox(height: 20),
                     AccountSettingsCard(
-                      onTap: () {
+                      onChangePasswordTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => TeacherSideChangePasswordScreen(),
+                          ),
+                        );
+                      },
+                      onReportIssueTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TeacherReportIssueScreen(),
                           ),
                         );
                       },

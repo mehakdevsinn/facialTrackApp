@@ -1,5 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class SemesterWiseReportScreen extends StatefulWidget {
   const SemesterWiseReportScreen({super.key});
@@ -100,6 +103,160 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
     });
   }
 
+  Future<void> _generatePDF() async {
+    final pdf = pw.Document();
+    final font = pw.Font.helvetica();
+
+    // Prepare data
+    List<Map<String, dynamic>> reportData = [];
+    if (selectedStudent == "All Students" || selectedStudent == null) {
+      reportData = studentData
+          .where((s) => s['name'] != "All Students")
+          .toList();
+    } else {
+      reportData = studentData
+          .where((s) => s['name'] == selectedStudent)
+          .toList();
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    "Semester Attendance Report",
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blue900,
+                    ),
+                  ),
+                  pw.Text(
+                    DateTime.now().toString().split(' ')[0],
+                    style: pw.TextStyle(font: font, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      "Course: $selectedCourse",
+                      style: pw.TextStyle(
+                        font: font,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      "Semester: $selectedSemester",
+                      style: pw.TextStyle(font: font),
+                    ),
+                  ],
+                ),
+                if (selectedStudent != null &&
+                    selectedStudent != "All Students")
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        "Student Report",
+                        style: pw.TextStyle(
+                          font: font,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        selectedStudent!,
+                        style: pw.TextStyle(font: font),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            pw.SizedBox(height: 20),
+            pw.Divider(thickness: 1, color: PdfColors.grey300),
+            pw.SizedBox(height: 20),
+            pw.TableHelper.fromTextArray(
+              headerStyle: pw.TextStyle(
+                font: font,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blue800,
+              ),
+              cellStyle: pw.TextStyle(font: font, fontSize: 10),
+              headers: [
+                'Student Name',
+                'Total',
+                'Present',
+                'Absent',
+                'Leave',
+                'Att %',
+              ],
+              data: reportData.map((s) {
+                double perc = (s['presents'] / s['totalClasses']) * 100;
+                return [
+                  s['name'].toString().replaceAll(RegExp(r'[^\x00-\x7F]+'), ''),
+                  s['totalClasses'].toString(),
+                  s['presents'].toString(),
+                  s['absents'].toString(),
+                  s['leaves'].toString(),
+                  "${perc.toStringAsFixed(1)}%",
+                ];
+              }).toList(),
+            ),
+            pw.SizedBox(height: 40),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Column(
+                children: [
+                  pw.Container(
+                    width: 150,
+                    decoration: const pw.BoxDecoration(
+                      border: pw.Border(top: pw.BorderSide(width: 1)),
+                    ),
+                  ),
+                  pw.SizedBox(height: 5),
+                  pw.Text(
+                    "Authorized Signature",
+                    style: pw.TextStyle(font: font, fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+          ];
+        },
+      ),
+    );
+
+    try {
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: "Semester_Report_${selectedCourse}_${selectedSemester}.pdf",
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error generating PDF: $e")));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -121,6 +278,13 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            if (selectedCourse != null && selectedSemester != null)
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                onPressed: _generatePDF,
+              ),
+          ],
         ),
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),

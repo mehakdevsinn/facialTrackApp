@@ -276,22 +276,22 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             },
                           ),
 
-                          _AnimatedDashboardCard(
-                            color: Colors.indigo,
-                            icon: Icons.person,
-                            title: 'Profile',
-                            ontap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  // Yahan showBackButton true bhejain
-                                  builder: (context) => TeacherProfileScreen(
-                                    showBackButton: true,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                          // _AnimatedDashboardCard(
+                          //   color: Colors.indigo,
+                          //   icon: Icons.person,
+                          //   title: 'Profile',
+                          //   ontap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         // Yahan showBackButton true bhejain
+                          //         builder: (context) => TeacherProfileScreen(
+                          //           showBackButton: true,
+                          //         ),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
                         ],
                       ),
 

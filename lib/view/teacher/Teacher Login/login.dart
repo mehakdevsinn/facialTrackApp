@@ -15,18 +15,18 @@ class TeacherLoginScreen extends StatefulWidget {
 }
 
 class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
-  final FocusNode teacherIdFocus = FocusNode();
+  final FocusNode teacherEmailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
   @override
   void initState() {
     super.initState();
-    teacherIdFocus.addListener(() => setState(() {}));
+    teacherEmailFocus.addListener(() => setState(() {}));
     passwordFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    teacherIdFocus.dispose();
+    teacherEmailFocus.dispose();
     passwordFocus.dispose();
     super.dispose();
   }
@@ -118,14 +118,14 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                   child: buildTextField(
                     activeColor: ColorPallet.primaryBlue,
                     inactiveColor: Colors.grey,
-                    focusNode: teacherIdFocus,
+                    focusNode: teacherEmailFocus,
                     onChange: (value) {
                       setState(() {
                         teacherId = value;
                       });
                     },
-                    label: "Teacher ID",
-                    hint: "Enter your Teacher ID",
+                    label: "Teacher Email",
+                    hint: "Enter your Teacher Email",
                     icon: Icons.person_outline,
                   ),
                 ),
@@ -244,35 +244,34 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
 
                 const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
+                // const SizedBox(height: 20),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: ColorPallet.grey),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TeacherSignupScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          color: ColorPallet.primaryBlue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     const Text(
+                //       "Don't have an account? ",
+                //       style: TextStyle(color: ColorPallet.grey),
+                //     ),
+                //     GestureDetector(
+                //       onTap: () {
+                //         Navigator.push(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (context) => const TeacherSignupScreen(),
+                //           ),
+                //         );
+                //       },
+                //       child: const Text(
+                //         "Sign Up",
+                //         style: TextStyle(
+                //           color: ColorPallet.primaryBlue,
+                //           fontWeight: FontWeight.bold,
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 const SizedBox(height: 10),
 
                 Row(

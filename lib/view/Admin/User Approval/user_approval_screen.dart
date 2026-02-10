@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'user_approval_detail_screen.dart';
+import 'package:facialtrackapp/view/Admin/admin_root_screen.dart';
 import 'package:flutter/material.dart';
 
 class ApprovableUser {
@@ -31,16 +32,14 @@ class ApprovableUser {
 }
 
 class UserApprovalScreen extends StatefulWidget {
-  const UserApprovalScreen({super.key});
+  final bool showBackButton;
+  const UserApprovalScreen({super.key, this.showBackButton = true});
 
   @override
   State<UserApprovalScreen> createState() => _UserApprovalScreenState();
 }
 
-class _UserApprovalScreenState extends State<UserApprovalScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
+class _UserApprovalScreenState extends State<UserApprovalScreen> {
   final List<ApprovableUser> _allUsers = [
     // Students
     ApprovableUser(
@@ -63,25 +62,6 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
       rollNo: 'F22-SE-045',
       status: 'Pending',
     ),
-    // Teachers
-    ApprovableUser(
-      id: 'T1',
-      name: 'Dr. John Doe',
-      email: 'john.doe@university.edu',
-      role: 'Teacher',
-      department: 'Computer Science',
-      qualification: 'PhD in AI & Machine Learning',
-      status: 'Pending',
-    ),
-    ApprovableUser(
-      id: 'T2',
-      name: 'Ms. Maryam Aziz',
-      email: 'maryam.aziz@university.edu',
-      role: 'Teacher',
-      department: 'Information Technology',
-      qualification: 'MS in Cybersecurity',
-      status: 'Pending',
-    ),
     ApprovableUser(
       id: 'S3',
       name: 'Zainab Bibi',
@@ -97,12 +77,10 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -131,16 +109,27 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
           backgroundColor: ColorPallet.primaryBlue,
           elevation: 4,
           shadowColor: Colors.black26,
-          leading: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
+          automaticallyImplyLeading: widget.showBackButton,
+          leading: widget.showBackButton
+              ? IconButton(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminRootScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back_ios,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                )
+              : null,
           title: const Text(
-            "User Approvals",
+            "Student Approvals",
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -149,35 +138,41 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
             ),
           ),
           centerTitle: true,
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.white,
-            indicatorWeight: 4,
-            indicatorSize: TabBarIndicatorSize.label,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-            dividerColor: Colors.transparent,
-            tabs: const [
-              Tab(text: "Students"),
-              Tab(text: "Teachers"),
-            ],
-          ),
         ),
-        body: TabBarView(
-          controller: _tabController,
+        body: Column(
           children: [
-            _buildList(
-              users: _allUsers.where((u) => u.role == 'Student').toList()
-                ..sort((a, b) => a.status == 'Pending' ? -1 : 1),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Action Required",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Empower the next generation by verifying their academic journey.",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            _buildList(
-              users: _allUsers.where((u) => u.role == 'Teacher').toList()
-                ..sort((a, b) => a.status == 'Pending' ? -1 : 1),
-              isTeacherTab: true,
+            Expanded(
+              child: _buildList(
+                users: _allUsers.where((u) => u.role == 'Student').toList()
+                  ..sort((a, b) => a.status == 'Pending' ? -1 : 1),
+              ),
             ),
           ],
         ),
@@ -292,44 +287,30 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
                           padding: EdgeInsets.symmetric(vertical: 15),
                           child: Divider(height: 1),
                         ),
-                        if (isTeacherTab || user.role == 'Teacher') ...[
-                          _buildInfoRow(
-                            Icons.business_outlined,
-                            "Department",
-                            user.department,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoRow(
-                            Icons.school_outlined,
-                            "Qualification",
-                            user.qualification ?? "N/A",
-                          ),
-                        ] else ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoRow(
-                                  Icons.badge_outlined,
-                                  "Roll No",
-                                  user.rollNo ?? "N/A",
-                                ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildInfoRow(
+                                Icons.badge_outlined,
+                                "Roll No",
+                                user.rollNo ?? "N/A",
                               ),
-                              Expanded(
-                                child: _buildInfoRow(
-                                  Icons.calendar_today_outlined,
-                                  "Semester",
-                                  user.semester ?? "N/A",
-                                ),
+                            ),
+                            Expanded(
+                              child: _buildInfoRow(
+                                Icons.calendar_today_outlined,
+                                "Semester",
+                                user.semester ?? "N/A",
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _buildInfoRow(
-                            Icons.business_outlined,
-                            "Department",
-                            user.department,
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoRow(
+                          Icons.business_outlined,
+                          "Department",
+                          user.department,
+                        ),
                         if (isPending) ...[
                           const SizedBox(height: 20),
                           Row(

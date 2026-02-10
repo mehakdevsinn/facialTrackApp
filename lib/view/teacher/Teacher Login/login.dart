@@ -15,18 +15,18 @@ class TeacherLoginScreen extends StatefulWidget {
 }
 
 class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
-  final FocusNode teacherIdFocus = FocusNode();
+  final FocusNode teacherEmailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
   @override
   void initState() {
     super.initState();
-    teacherIdFocus.addListener(() => setState(() {}));
+    teacherEmailFocus.addListener(() => setState(() {}));
     passwordFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    teacherIdFocus.dispose();
+    teacherEmailFocus.dispose();
     passwordFocus.dispose();
     super.dispose();
   }
@@ -118,14 +118,14 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                   child: buildTextField(
                     activeColor: ColorPallet.primaryBlue,
                     inactiveColor: Colors.grey,
-                    focusNode: teacherIdFocus,
+                    focusNode: teacherEmailFocus,
                     onChange: (value) {
                       setState(() {
                         teacherId = value;
                       });
                     },
-                    label: "Teacher ID",
-                    hint: "Enter your Teacher ID",
+                    label: "Teacher Email",
+                    hint: "Enter your Teacher Email",
                     icon: Icons.person_outline,
                   ),
                 ),

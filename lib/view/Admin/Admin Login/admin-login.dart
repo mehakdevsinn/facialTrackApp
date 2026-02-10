@@ -1,9 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-info.dart';
 import 'package:facialtrackapp/view/Admin/admin_root_screen.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
-import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -16,23 +14,23 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  final FocusNode studentIdFocus = FocusNode();
+  final FocusNode studentEmailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
   bool _obscureText = true;
-  String studentId = "";
+  String studentEmail = "";
   String password = "";
 
-  bool get isButtonEnabled => studentId.isNotEmpty && password.isNotEmpty;
+  bool get isButtonEnabled => studentEmail.isNotEmpty && password.isNotEmpty;
   @override
   void initState() {
     super.initState();
-    studentIdFocus.addListener(() => setState(() {}));
+    studentEmailFocus.addListener(() => setState(() {}));
     passwordFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    studentIdFocus.dispose();
+    studentEmailFocus.dispose();
     passwordFocus.dispose();
     super.dispose();
   }
@@ -118,15 +116,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
-                  label: "Admin ID",
-                  hint: "Enter your Admin ID",
+                  label: "Admin Email",
+                  hint: "Enter your Admin Email",
                   icon: Icons.person_outline,
                   activeColor: ColorPallet.primaryBlue,
                   inactiveColor: Colors.grey,
-                  focusNode: studentIdFocus,
+                  focusNode: studentEmailFocus,
                   onChange: (value) {
                     setState(() {
-                      studentId = value;
+                      studentEmail = value;
                     });
                   },
                 ),
@@ -163,30 +161,29 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsets.only(right: 15),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ForgotPasswordScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      "Forgot Password?",
-                      style: TextStyle(
-                        color: ColorPallet.primaryBlue,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
+              // Padding(
+              //   padding: const EdgeInsets.only(right: 15),
+              //   child: Align(
+              //     alignment: Alignment.centerRight,
+              //     child: TextButton(
+              //       onPressed: () {
+              //         Navigator.push(
+              //           context,
+              //           MaterialPageRoute(
+              //             builder: (context) => ForgotPasswordScreen(),
+              //           ),
+              //         );
+              //       },
+              //       child: const Text(
+              //         "Forgot Password?",
+              //         style: TextStyle(
+              //           color: ColorPallet.primaryBlue,
+              //           fontWeight: FontWeight.w700,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
               const SizedBox(height: 39),
 
               Padding(

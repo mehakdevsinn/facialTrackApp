@@ -11,7 +11,6 @@ class SemesterManagementScreen extends StatefulWidget {
 }
 
 class _SemesterManagementScreenState extends State<SemesterManagementScreen> {
-  // Dummy data for semesters
   final List<Map<String, dynamic>> _semesters = [
     {
       "name": "Spring 2026",
@@ -52,7 +51,6 @@ class _SemesterManagementScreenState extends State<SemesterManagementScreen> {
         if (semester != null && index != null) {
           _semesters[index] = result;
         } else {
-          // If implementing single active logic
           if (result['status'] == "Active") {
             for (var sem in _semesters) {
               if (sem['status'] == "Active") sem['status'] = "Completed";

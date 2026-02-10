@@ -1,4 +1,4 @@
-import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/logout_dialog_box_widget.dart';
+import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/logout_dialog_box_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 
@@ -21,7 +21,9 @@ class LogoutButtonWidget extends StatelessWidget {
           backgroundColor: ColorPallet.orange,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
       ),
     );

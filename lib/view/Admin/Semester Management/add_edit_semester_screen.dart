@@ -38,12 +38,10 @@ class _AddEditSemesterScreenState extends State<AddEditSemesterScreen> {
         : DateTime.now().add(const Duration(days: 120));
     status = widget.isEditing ? widget.semester!['status'] : "Upcoming";
 
-    // Default: Spring -> Evens, Fall -> Odds
     activeSemesters = widget.isEditing
         ? List<int>.from(widget.semester!['activeSemesters'] ?? [])
         : [2, 4, 6, 8];
 
-    // Initial sync if new
     if (!widget.isEditing) {
       updateSemestersBasedOnType(selectedType);
     }

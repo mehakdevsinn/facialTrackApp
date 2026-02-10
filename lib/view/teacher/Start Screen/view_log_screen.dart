@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/utils/widgets/export_pdf.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/edit_attendence_screen.dart';
-import 'package:facialtrackapp/widgets/export_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -59,23 +59,16 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
       "status": "Absent",
       "color": Colors.orange,
     },
-    // {
-    //   "name": "Fatima S.",
-    //   "time": "09:02 AM - 10:30 AM",
-    //   "status": "off",
-    //   "color": Colors.blueGrey,
-    // },
   ];
-  // String selectedDate = "2026-01-15";
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB), // Light greyish background
+        backgroundColor: const Color(0xFFF5F7FB),
         appBar: AppBar(
           foregroundColor: Colors.white,
-          backgroundColor: ColorPallet.primaryBlue, // Dark blue
+          backgroundColor: ColorPallet.primaryBlue,
           // leading: const Icon(Icons.arrow_back, color: Colors.white),
           title: const Text(
             "Today's Attendance Logs",
@@ -85,31 +78,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          // actions: [
-          //   IconButton(
-          //     icon: const Icon(Icons.calendar_month, color: Colors.white),
-          //     onPressed: () async {
-          //       DateTime? pickedDate = await showDatePicker(
-          //         context: context,
-          //         initialDate: DateTime.now(),
-          //         firstDate: DateTime(2020),
-          //         lastDate: DateTime(2030),
-          //       );
-
-          //       if (pickedDate != null) {
-          //         setState(() {
-          //           // 1. Filter Container ke liye (YYYY-MM-DD) update hoga
-          //           selectedDate =
-          //               "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-
-          //           // 2. Summary Section ke liye Month Name (December 10, 2025) update hoga
-          //           displayDate = DateFormat('MMMM d, y').format(pickedDate);
-          //         });
-          //       }
-          //     },
-          //   ),
-          //   SizedBox(width: 8),
-          // ],
         ),
         body: Column(
           children: [
@@ -145,11 +113,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
 
           Row(
             children: [
-              // Text(
-              //   "Select Subject",
-              //   style: TextStyle(fontWeight: FontWeight.bold),
-              // ),
-              // SizedBox(width: 15),
               Expanded(
                 child: _buildFunctionalDropdown(
                   "Subject",
@@ -162,80 +125,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
             ],
           ),
 
-          //  SizedBox(height: 15,),
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     const Row(
-          //       children: [
-          //         Icon(
-          //           Icons.face_retouching_natural,
-          //           color: Colors.green,
-          //           size: 20,
-          //         ),
-          //         SizedBox(width: 8),
-          //         Text(
-          //           "Facial Track",
-          //           style: TextStyle(
-          //             fontWeight: FontWeight.bold,
-          //             color: Color(0xFF1A237E),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          // Container(
-          //   padding: const EdgeInsets.symmetric(
-          //     horizontal: 10,
-          //     vertical: 6,
-          //   ),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white,
-          //     borderRadius: BorderRadius.circular(10),
-          //     boxShadow: [
-          //       BoxShadow(
-          //         color: Colors.black.withOpacity(0.1),
-          //         blurRadius: 4,
-          //         offset: const Offset(0, 2),
-          //       ),
-          //     ],
-          //   ),
-          //   child: Row(
-          //     mainAxisSize: MainAxisSize.min,
-          //     children: [
-          //       const Icon(
-          //         Icons.calendar_today_outlined,
-          //         size: 16,
-          //         color: Color(0xFF1A237E),
-          //       ),
-          //       const SizedBox(width: 8),
-          //       Column(
-          //         crossAxisAlignment: CrossAxisAlignment.start,
-          //         children: [
-          //           const Text(
-          //             "Filter",
-          //             style: TextStyle(
-          //               fontSize: 10,
-          //               color: Colors.grey,
-          //               fontWeight: FontWeight.bold,
-          //             ),
-          //           ),
-          //           // Ye Text ab variable se update hoga
-          //           Text(
-          //             selectedDate,
-          //             style: const TextStyle(
-          //               fontSize: 11,
-          //               color: Color(0xFF1A237E),
-          //               fontWeight: FontWeight.bold,
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          //   ],
-          // ),
-          // const SizedBox(height: 15),
           const SizedBox(height: 10),
           const Row(
             children: [
@@ -271,7 +160,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          // Summary Text
           Text(
             "$displayDate - Information Security - Semester 8",
             style: const TextStyle(color: Colors.grey, fontSize: 13),
@@ -304,7 +192,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              // Profile Initial
               CircleAvatar(
                 radius: 25,
                 backgroundColor: isOff ? Colors.grey : data['color'],
@@ -317,7 +204,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                 ),
               ),
               const SizedBox(width: 15),
-              // Name & Time
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,13 +223,11 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                   ],
                 ),
               ),
-              // Status, Edit Icon & Switch Section
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Row(
                     children: [
-                      // --- Edit Icon yahan shift ho gaya ---
                       IconButton(
                         icon: const Icon(
                           Icons.edit,
@@ -390,7 +274,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                               data['time'] = result['time'];
                               data['leaveReason'] = result['leaveReason'];
 
-                              // Status ko update karein (Absent se Leave ho jayega agar reason hai)
                               data['status'] = result['status'];
                             });
                           }
@@ -426,15 +309,13 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
     );
   }
 
-  // Status Badge Widget
   Widget _buildStatusBadge(String status) {
-    // Colors and Icons logic
     Color mainColor;
     Color bgColor;
     IconData icon;
 
     if (status == "Present") {
-      mainColor = const Color(0xFF4CAF50); // Green
+      mainColor = const Color(0xFF4CAF50);
       bgColor = const Color(0xFFE8F5E9);
       icon = Icons.check_box;
     } else if (status == "Leave") {
@@ -472,26 +353,26 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    Color bgColor = status == "Present"
-        ? Colors.green
-        : (status == "Absent" ? Colors.orange : Colors.deepOrangeAccent);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Text(
-        status,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
+  // Widget _buildStatusChip(String status) {
+  //   Color bgColor = status == "Present"
+  //       ? Colors.green
+  //       : (status == "Absent" ? Colors.orange : Colors.deepOrangeAccent);
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+  //     decoration: BoxDecoration(
+  //       color: bgColor,
+  //       borderRadius: BorderRadius.circular(5),
+  //     ),
+  //     child: Text(
+  //       status,
+  //       style: const TextStyle(
+  //         color: Colors.white,
+  //         fontSize: 10,
+  //         fontWeight: FontWeight.bold,
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildBottomActions() {
     return Container(
@@ -501,11 +382,10 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
         children: [
           ElevatedButton(
             onPressed: () {
-              // Dialog show karne ka function
               _showSuccessDialog(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: ColorPallet.primaryBlue, // Dark blue
+              backgroundColor: ColorPallet.primaryBlue,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
@@ -528,7 +408,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           const SizedBox(height: 5),
           OutlinedButton(
             onPressed: () {
-              // Apni screen ke variables yahan pass karein
               exportToPDF(displayDate, selectedDate, students);
             },
             style: OutlinedButton.styleFrom(
@@ -558,12 +437,11 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Dialog size content ke mutabiq
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Success Icon
                 const CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFFE8F5E9), // Light green
+                  backgroundColor: Color(0xFFE8F5E9),
                   child: Icon(
                     Icons.check_circle,
                     color: Colors.green,
@@ -571,7 +449,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Success Message
                 const Text(
                   "Success!",
                   style: TextStyle(
@@ -587,7 +464,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                   style: const TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 20),
-                // OK Button
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
@@ -622,7 +498,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        // Adding a thin blue border and a matching shadow
         border: Border.all(
           color: const Color(0xFF1A4B8F).withOpacity(0.2),
           width: 1.5,

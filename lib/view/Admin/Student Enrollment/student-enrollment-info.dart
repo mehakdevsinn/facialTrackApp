@@ -1,7 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Admin/Student%20Enrollment/student-enrollment-face.dart';
 import 'package:facialtrackapp/view/Student/Face%20Enrolment/student-face-enrolment.dart';
-import 'package:facialtrackapp/widgets/textfield_login.dart';
+import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:flutter/material.dart';
 
 class StudentEnrollmentScreen extends StatefulWidget {

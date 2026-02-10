@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/widgets/scheme_widgets.dart';
+import 'package:facialtrackapp/utils/widgets/scheme_widgets.dart';
 import 'package:flutter/material.dart';
 
 class SchemeOfStudyScreen extends StatefulWidget {
@@ -118,7 +118,6 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Current list based on selection and search
     final allCourses = coursesBySemester[selectedSemester] ?? [];
     final currentCourses = allCourses.where((course) {
       final title = course['title']!.toLowerCase();
@@ -145,7 +144,6 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
         ),
         body: Column(
           children: [
-            // Header Selection Section (Animated)
             TweenAnimationBuilder(
               duration: const Duration(milliseconds: 600),
               tween: Tween<double>(begin: 0, end: 1),
@@ -289,7 +287,6 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
                 ],
               ),
             ),
-            // Course List (Animated or Not Found)
             Expanded(
               child: currentCourses.isEmpty
                   ? Center(

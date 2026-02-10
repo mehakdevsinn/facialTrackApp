@@ -1,8 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Admin/admin_root_screen.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
-import 'package:facialtrackapp/widgets/textfield_login.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 

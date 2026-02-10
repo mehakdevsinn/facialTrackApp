@@ -1,8 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/utils/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Course Assignment/course_assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Manage Teachers/manage-teachers.dart';
 import 'package:facialtrackapp/view/Admin/Scheme of Study/scheme_of_study_screen.dart';
-import 'package:facialtrackapp/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Semester Management/semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
 import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dart';

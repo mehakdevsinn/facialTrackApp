@@ -15,7 +15,6 @@ class _TimeframeScreenState extends State<TimeframeScreen>
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
 
-  // Animation for the entry of elements
   late AnimationController _entryController;
 
   @override

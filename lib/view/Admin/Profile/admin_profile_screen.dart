@@ -1,6 +1,4 @@
-import 'package:facialtrackapp/view/Admin/Profile/admin_change_password_screen.dart';
-import 'package:facialtrackapp/view/Admin/Profile/admin_edit_profile_screen.dart';
-import 'package:facialtrackapp/widgets/teacher%20side%20profile%20screen%20widgets/logout_button.dart';
+import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/logout_button.dart';
 import 'package:flutter/material.dart';
 
 class AdminProfileScreen extends StatelessWidget {

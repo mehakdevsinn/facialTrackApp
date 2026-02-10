@@ -98,13 +98,11 @@ class _SelectionScreenState extends State<SelectionScreen> {
 
               const SizedBox(height: 25),
 
-              // --- Date Range Selection (Unique Design) ---
               _buildSectionHeader("Time Period", Icons.calendar_today_rounded),
               _buildDateTile(),
 
               const SizedBox(height: 50),
 
-              // --- Premium Continue Button ---
               _buildContinueButton(),
             ],
           ),

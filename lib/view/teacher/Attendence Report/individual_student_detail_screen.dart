@@ -6,11 +6,9 @@ import 'package:intl/intl.dart';
 
 class StudentDetailOptionsScreen extends StatelessWidget {
   final String studentName;
-  // --- ADD THESE TWO LINES ---
   final DateTime? startDate;
   final DateTime? endDate;
 
-  // --- UPDATE THE CONSTRUCTOR ---
   const StudentDetailOptionsScreen({
     super.key,
     required this.studentName,
@@ -89,14 +87,13 @@ class StudentDetailOptionsScreen extends StatelessWidget {
                 icon: Icons.calendar_view_day_rounded,
                 color: Colors.blue,
                 onTap: () {
-                  // --- YE NAVIGATOR ADD KAREIN ---
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => DayByDayReportScreen(
-                        studentName: studentName, // Jo class mein variable hai
-                        startDate: startDate, // Calendar se aya hua start date
-                        endDate: endDate, // Calendar se aya hua end date
+                        studentName: studentName,
+                        startDate: startDate,
+                        endDate: endDate,
                       ),
                     ),
                   );
@@ -112,7 +109,6 @@ class StudentDetailOptionsScreen extends StatelessWidget {
                 icon: Icons.pie_chart_rounded,
                 color: Colors.orange,
                 onTap: () {
-                  // --- NOW THESE WILL WORK ---
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -132,7 +128,6 @@ class StudentDetailOptionsScreen extends StatelessWidget {
     );
   }
 
-  // Your _buildOptionCard helper method...
   Widget _buildOptionCard({
     required BuildContext context,
     required String title,

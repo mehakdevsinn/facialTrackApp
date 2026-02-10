@@ -17,7 +17,6 @@ class DayByDayReportScreen extends StatelessWidget {
     this.endDate,
   });
 
-  // Updated Dummy Data with Leave & Reason
   final List<Map<String, dynamic>> attendanceData = [
     {
       "date": "2026-01-28",
@@ -122,7 +121,6 @@ class DayByDayReportScreen extends StatelessWidget {
       ),
     );
 
-    // Open Print Preview (allows saving as PDF)
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
@@ -228,7 +226,6 @@ class DayByDayReportScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // Reason Section (Sirf tab dikhayen jab status 'Leave' ho)
                         if (isLeave && record['reason'].isNotEmpty)
                           Container(
                             width: double.infinity,

@@ -44,10 +44,8 @@ class PasswordChangedScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               ),
 
-              // Spacer(),
               SizedBox(height: 60),
 
-              // 🔘 Button
               SizedBox(
                 width: double.infinity,
                 height: 52,

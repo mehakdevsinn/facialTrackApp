@@ -1,8 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/widgets/teacher%20side%20report%20screen%20widget/attendence_summary_card_widget.dart';
-import 'package:facialtrackapp/widgets/teacher%20side%20report%20screen%20widget/monthly_trend_chart_widget.dart';
-import 'package:facialtrackapp/widgets/teacher%20side%20report%20screen%20widget/performance_list_card_widget.dart';
-import 'package:facialtrackapp/widgets/teacher%20side%20report%20screen%20widget/report_dropdown_widget.dart';
+import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/attendence_summary_card_widget.dart';
+import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/monthly_trend_chart_widget.dart';
+import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/performance_list_card_widget.dart';
+import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/report_dropdown_widget.dart';
 import 'package:flutter/material.dart';
 
 class MonthlyAttendanceReport extends StatefulWidget {

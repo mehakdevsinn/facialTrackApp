@@ -2,7 +2,6 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_side_complain_screen.dart';
-import 'package:facialtrackapp/view/teacher/Dashborad/subject_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/select_date_range.dart';
 import 'package:facialtrackapp/view/teacher/Report/report_options_screen.dart';

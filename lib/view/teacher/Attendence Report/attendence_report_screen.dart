@@ -7,7 +7,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 class AttendanceReportScreen extends StatefulWidget {
-  // Add these parameters to the constructor
   final DateTime? startDate;
   final DateTime? endDate;
 
@@ -22,7 +21,6 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  // Dummy Student Data (Moved here for access in PDF)
   final List<Map<String, dynamic>> students = [
     {
       "name": "Mehak Fatima",
@@ -58,14 +56,13 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     super.dispose();
   }
 
-  // Helper function to format the date range string
   String _getRangeText() {
     if (widget.startDate != null && widget.endDate != null) {
       String start = DateFormat('dd MMM, yyyy').format(widget.startDate!);
       String end = DateFormat('dd MMM, yyyy').format(widget.endDate!);
       return "($start - $end)";
     }
-    return "(Full Academic Session)"; // Default if no dates passed
+    return "(Full Academic Session)";
   }
 
   Future<void> _generatePdf(BuildContext context) async {
@@ -214,12 +211,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
                       ? PdfColors.green
                       : (perc >= 75 ? PdfColors.blue : PdfColors.orange);
 
-                  return [
-                    s['name'],
-                    s['id'],
-                    s['perc'],
-                    statusStr, // Simple status text for PDF
-                  ];
+                  return [s['name'], s['id'], s['perc'], statusStr];
                 }).toList(),
               ),
 
@@ -323,8 +315,6 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     );
   }
 
-  // ... (Rest of your helper methods: _buildModernProgressCard, _buildStatusBadge, etc. remain same)
-
   Widget _buildModernProgressCard() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -415,7 +405,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: students.length, // Uses the class member now
+      itemCount: students.length,
       itemBuilder: (context, index) {
         return TweenAnimationBuilder(
           duration: Duration(milliseconds: 600 + (index * 200)),
@@ -442,8 +432,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen>
           MaterialPageRoute(
             builder: (context) => StudentDetailOptionsScreen(
               studentName: data['name'],
-              startDate:
-                  widget.startDate, // StatefulWidget ki dates pass ho rahi hain
+              startDate: widget.startDate,
               endDate: widget.endDate,
             ),
           ),

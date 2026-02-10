@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/widgets/scheme_widgets.dart';
+import 'package:facialtrackapp/utils/widgets/scheme_widgets.dart';
 import 'package:flutter/material.dart';
 
 class AddEditSubjectScreen extends StatefulWidget {

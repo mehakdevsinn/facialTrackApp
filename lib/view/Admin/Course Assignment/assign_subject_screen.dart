@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/widgets/course_assignment_widgets.dart';
+import 'package:facialtrackapp/utils/widgets/course_assignment_widgets.dart';
 import 'package:flutter/material.dart';
 
 class AssignSubjectScreen extends StatefulWidget {

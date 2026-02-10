@@ -5,13 +5,14 @@ class TeacherSideChangePasswordScreen extends StatefulWidget {
   const TeacherSideChangePasswordScreen({super.key});
 
   @override
-  State<TeacherSideChangePasswordScreen> createState() => _TeacherSideChangePasswordScreenState();
+  State<TeacherSideChangePasswordScreen> createState() =>
+      _TeacherSideChangePasswordScreenState();
 }
 
-class _TeacherSideChangePasswordScreenState extends State<TeacherSideChangePasswordScreen> {
+class _TeacherSideChangePasswordScreenState
+    extends State<TeacherSideChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers to get text values
   final TextEditingController _oldPassController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
@@ -34,8 +35,7 @@ class _TeacherSideChangePasswordScreenState extends State<TeacherSideChangePassw
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          automaticallyImplyLeading:
-              false, // Default back button ko khatam kiya
+          automaticallyImplyLeading: false,
           backgroundColor: ColorPallet.primaryBlue,
           foregroundColor: Colors.white,
           elevation: 0,
@@ -139,7 +139,6 @@ class _TeacherSideChangePasswordScreenState extends State<TeacherSideChangePassw
                     child: ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          // Agar validation pass ho gayi (matching successful)
                           _showSuccessDialog(context);
                         }
                       },
@@ -223,7 +222,6 @@ class _TeacherSideChangePasswordScreenState extends State<TeacherSideChangePassw
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label waisa hi rahega jaisa pehle tha
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
@@ -241,7 +239,6 @@ class _TeacherSideChangePasswordScreenState extends State<TeacherSideChangePassw
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
 
-            // Left side par lock icon add kiya image ke mutabiq
             prefixIcon: Icon(
               Icons.lock_outline,
               color: Colors.grey.shade400,
@@ -255,7 +252,6 @@ class _TeacherSideChangePasswordScreenState extends State<TeacherSideChangePassw
               vertical: 16,
             ),
 
-            // Border style change kiya (Square look ke liye radius 10-12 rakhein)
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Colors.grey.shade300),

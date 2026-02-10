@@ -86,14 +86,11 @@ class _FullReportScreenState extends State<FullReportScreen> {
 
   String searchQuery = "";
 
-  // PDF Generate aur Download karne ka function
   Future<void> _generatePDFReport(List<Map<String, dynamic>> data) async {
     final pdf = pw.Document();
 
-    // Standard font use kar rahe hain taake Unicode error na aaye
     final font = pw.Font.helvetica();
 
-    // PDF UI Layout
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -125,7 +122,6 @@ class _FullReportScreenState extends State<FullReportScreen> {
               pw.Divider(),
               pw.SizedBox(height: 20),
 
-              // Table for PDF
               pw.TableHelper.fromTextArray(
                 headerStyle: pw.TextStyle(
                   font: font,
@@ -147,7 +143,7 @@ class _FullReportScreenState extends State<FullReportScreen> {
                         item['name'].toString().replaceAll(
                           RegExp(r'[^\x00-\x7F]+'),
                           '',
-                        ), // Non-ASCII remove kar rahe hain
+                        ),
                         item['rollNo'].toString(),
                         item['total'].toString(),
                         item['present'].toString(),
@@ -163,9 +159,7 @@ class _FullReportScreenState extends State<FullReportScreen> {
       ),
     );
 
-    // Save and Display PDF
     try {
-      // Direct printing plugin use kar rahe hain kyunke path_provider kabhi kabhi restart maangta hai
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
         name: "Attendance_${widget.subject}.pdf",
@@ -240,7 +234,6 @@ class _FullReportScreenState extends State<FullReportScreen> {
         ),
         body: Column(
           children: [
-            // Search Bar
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
@@ -273,10 +266,8 @@ class _FullReportScreenState extends State<FullReportScreen> {
               ),
             ),
 
-            // Table Header
             _buildTableHeader(),
 
-            // List or Empty View
             Expanded(
               child: filteredStudents.isEmpty
                   ? Center(

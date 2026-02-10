@@ -31,7 +31,6 @@ class _StudentPercentageScreenState extends State<StudentPercentageScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    // Let's assume Mehak's percentage is 95% for this range
     _animation = Tween<double>(begin: 0, end: 0.95).animate(
       CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn),
     );
@@ -46,48 +45,24 @@ class _StudentPercentageScreenState extends State<StudentPercentageScreen>
 
   @override
   Widget build(BuildContext context) {
-    // String rangeText = widget.startDate != null
-    //     ? "${DateFormat('MMM d').format(widget.startDate!)} - ${DateFormat('MMM d').format(widget.endDate!)}"
-    //     : "Selected Range";
-
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFF),
-        // student_percenatge_screen.dart mein line 55 update karein:
         appBar: AppBar(
-          title: Text("${widget.studentName} Report"), // widget. add karein
+          title: Text("${widget.studentName} Report"),
           backgroundColor: ColorPallet.primaryBlue,
           foregroundColor: ColorPallet.white,
-          // ... baaki code same rahega
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              // --- Date Range Header ---
-              // Container(
-              //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              //   decoration: BoxDecoration(
-              //     color: ColorPallet.primaryBlue.withOpacity(0.1),
-              //     borderRadius: BorderRadius.circular(20),
-              //   ),
-              //   // child: Text(
-              //   //   rangeText,
-              //   //   style: TextStyle(
-              //   //     color: ColorPallet.primaryBlue,
-              //   //     fontWeight: FontWeight.bold,
-              //   //     fontSize: 13,
-              //   //   ),
-              //   // ),
-              // ),
               const SizedBox(height: 20),
 
-              // --- Animated Main Chart ---
               _buildBigPercentageChart(),
 
               const SizedBox(height: 40),
 
-              // --- Detailed Stats Breakdown ---
               Row(
                 children: [
                   _buildStatCard("Total Days", "20", Colors.blue),
@@ -106,7 +81,6 @@ class _StudentPercentageScreenState extends State<StudentPercentageScreen>
 
               const SizedBox(height: 40),
 
-              // --- Performance Remark ---
               _buildRemarkCard(),
             ],
           ),

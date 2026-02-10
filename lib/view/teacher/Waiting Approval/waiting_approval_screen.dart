@@ -7,8 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
 class TeacherWaitingApprovalScreen extends StatefulWidget {
-  final String userType; // 'Teacher' or 'Student'
-
+  final String userType;
   const TeacherWaitingApprovalScreen({super.key, this.userType = 'Teacher'});
 
   @override
@@ -23,14 +22,12 @@ class _TeacherWaitingApprovalScreenState
   @override
   void initState() {
     super.initState();
-    // Simulate admin approval delay
     Timer(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
           isApproved = true;
         });
 
-        // Short delay to show approved state then navigate
         Timer(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.pushAndRemoveUntil(
@@ -70,7 +67,7 @@ class _TeacherWaitingApprovalScreenState
                     width: 200,
                     child: Lottie.asset(
                       isApproved
-                          ? 'assets/animations/face-detect.json' // Replace with a success animation if you have one
+                          ? 'assets/animations/face-detect.json'
                           : 'assets/animations/face-detect.json',
                       repeat: true,
                       animate: true,

@@ -1,7 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import '../Teacher%20Login/login.dart';
-import 'package:facialtrackapp/widgets/textfield_login.dart';
 import '../Waiting%20Approval/waiting_approval_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -208,7 +208,6 @@ class _TeacherSignupScreenState extends State<TeacherSignupScreen> {
                                 setState(() {
                                   isLoading = true;
                                 });
-                                // Simulate signup delay
                                 Future.delayed(const Duration(seconds: 2), () {
                                   if (mounted) {
                                     Navigator.push(

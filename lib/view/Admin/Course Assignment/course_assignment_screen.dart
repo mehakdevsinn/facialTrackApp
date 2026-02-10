@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/assignment_data_service.dart';
-import 'package:facialtrackapp/widgets/course_assignment_widgets.dart';
+import 'package:facialtrackapp/utils/widgets/course_assignment_widgets.dart';
 import 'package:flutter/material.dart';
 
 class CourseAssignmentScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class CourseAssignmentScreen extends StatefulWidget {
 }
 
 class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
-  int currentStep = 1; // 1: Teacher, 2: Subject
+  int currentStep = 1;
   String? selectedTeacher;
   List<Map<String, dynamic>> assignedSubjects = [];
 
@@ -110,7 +110,6 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
                     "subjects": assignedSubjects,
                   };
 
-                  // Save to central service
                   AssignmentDataService.updateAssignment(result);
 
                   Navigator.pop(context, result);
@@ -155,7 +154,6 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
               onTap: () {
                 setState(() {
                   selectedTeacher = teacher['name'];
-                  // Fetch existing subjects for this teacher if any
                   final existing = AssignmentDataService.allAssignments
                       .firstWhere(
                         (a) => a['teacherName'] == selectedTeacher,

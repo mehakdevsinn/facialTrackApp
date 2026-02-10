@@ -12,12 +12,10 @@ class EditAttendanceScreen extends StatefulWidget {
 
 class _EditAttendanceScreenState extends State<EditAttendanceScreen>
     with SingleTickerProviderStateMixin {
-  // Animation ke liye mixin
-
   late TextEditingController entryController;
   late TextEditingController exitController;
   late TextEditingController durationController;
-late TextEditingController leaveReasonController; // New Controller
+  late TextEditingController leaveReasonController;
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
@@ -31,12 +29,19 @@ late TextEditingController leaveReasonController; // New Controller
     isAbsent = widget.studentData['status']?.toLowerCase() == 'absent';
 
     // 2. Initialize Controllers
-    entryController = TextEditingController(text: widget.studentData['entryTime'] ?? "09:00 AM");
-    exitController = TextEditingController(text: widget.studentData['exitTime'] ?? "10:30 AM");
-    durationController = TextEditingController(text: widget.studentData['time']);
-    leaveReasonController = TextEditingController(text: widget.studentData['leaveReason'] ?? "");
+    entryController = TextEditingController(
+      text: widget.studentData['entryTime'] ?? "09:00 AM",
+    );
+    exitController = TextEditingController(
+      text: widget.studentData['exitTime'] ?? "10:30 AM",
+    );
+    durationController = TextEditingController(
+      text: widget.studentData['time'],
+    );
+    leaveReasonController = TextEditingController(
+      text: widget.studentData['leaveReason'] ?? "",
+    );
 
-    // 3. FIX: Initialize Animation Setup (This part was likely missing/skipped)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -49,11 +54,11 @@ late TextEditingController leaveReasonController; // New Controller
 
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
-    _controller.forward(); // Start the animation
+    _controller.forward();
   }
+
   @override
   void dispose() {
-    // Always dispose controllers to prevent memory leaks
     entryController.dispose();
     exitController.dispose();
     durationController.dispose();
@@ -71,7 +76,7 @@ late TextEditingController leaveReasonController; // New Controller
           "Edit Attendance Logs",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        backgroundColor:  ColorPallet.primaryBlue,
+        backgroundColor: ColorPallet.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -84,7 +89,6 @@ late TextEditingController leaveReasonController; // New Controller
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Card for Student Name
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -148,31 +152,30 @@ late TextEditingController leaveReasonController; // New Controller
                 Hero(
                   tag: 'save_btn',
                   child: ElevatedButton(
-                   // EditAttendanceScreen ke andar Save button ka logic
-onPressed: () {
-  String finalStatus = widget.studentData['status'];
+                    onPressed: () {
+                      String finalStatus = widget.studentData['status'];
 
-  // Agar status absent tha aur user ne reason likh diya hai
-  if (isAbsent && leaveReasonController.text.trim().isNotEmpty) {
-    finalStatus = "Leave";
-  } else if (isAbsent && leaveReasonController.text.trim().isEmpty) {
-    finalStatus = "Absent";
-  }
+                      if (isAbsent &&
+                          leaveReasonController.text.trim().isNotEmpty) {
+                        finalStatus = "Leave";
+                      } else if (isAbsent &&
+                          leaveReasonController.text.trim().isEmpty) {
+                        finalStatus = "Absent";
+                      }
 
-  Navigator.pop(context, {
-    "entryTime": entryController.text,
-    "exitTime": exitController.text,
-    "time": "${entryController.text} - ${exitController.text}",
-    "leaveReason": leaveReasonController.text,
-    "status": finalStatus, // Naya status yahan se bhej rahe hain
-  });
-}, style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorPallet.primaryBlue, // Dark blue
+                      Navigator.pop(context, {
+                        "entryTime": entryController.text,
+                        "exitTime": exitController.text,
+                        "time":
+                            "${entryController.text} - ${exitController.text}",
+                        "leaveReason": leaveReasonController.text,
+                        "status": finalStatus,
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorPallet.primaryBlue,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(
-                        double.infinity,
-                        55,
-                      ), // Isse button FULL ho jayega
+                      minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -200,7 +203,6 @@ onPressed: () {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // TextField ke upar wala label
         Text(
           label,
           style: const TextStyle(
@@ -224,13 +226,11 @@ onPressed: () {
           ),
           child: TextField(
             controller: controller,
-            // Isse text icon ke sath center mein rahega
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: ColorPallet.primaryBlue, size: 22),
               hintText: "Enter $label",
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-              // Proper Border design
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade300),

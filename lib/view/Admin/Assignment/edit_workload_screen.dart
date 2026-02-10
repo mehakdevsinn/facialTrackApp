@@ -340,13 +340,11 @@ class _EditWorkloadScreenState extends State<EditWorkloadScreen> {
               "subjects": assignedSubjects,
             };
 
-            // Save to central memory
             AssignmentDataService.updateAssignment(
               updatedData,
               originalTeacherName: widget.teacherData['teacherName'],
             );
 
-            // Give visual feedback to the user
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
@@ -362,7 +360,6 @@ class _EditWorkloadScreenState extends State<EditWorkloadScreen> {
               ),
             );
 
-            // Small delay to let user see the message before closing
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) Navigator.pop(context, true);
             });

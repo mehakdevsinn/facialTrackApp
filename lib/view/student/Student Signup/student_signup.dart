@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import '../Student%20Login/login.dart';
 import 'package:facialtrackapp/widgets/textfield_login.dart';
@@ -15,38 +16,99 @@ class StudentSignupScreen extends StatefulWidget {
 }
 
 class _StudentSignupScreenState extends State<StudentSignupScreen> {
+  final FocusNode fullNameFocus = FocusNode();
   final FocusNode emailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
+  final FocusNode confirmPasswordFocus = FocusNode();
+  final FocusNode rollNoFocus = FocusNode();
+  final FocusNode departmentFocus = FocusNode();
+  final FocusNode sectionFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    fullNameFocus.addListener(() => setState(() {}));
     emailFocus.addListener(() => setState(() {}));
     passwordFocus.addListener(() => setState(() {}));
+    confirmPasswordFocus.addListener(() => setState(() {}));
+    rollNoFocus.addListener(() => setState(() {}));
+    departmentFocus.addListener(() => setState(() {}));
+    sectionFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
+    fullNameFocus.dispose();
     emailFocus.dispose();
     passwordFocus.dispose();
+    confirmPasswordFocus.dispose();
+    rollNoFocus.dispose();
+    departmentFocus.dispose();
+    sectionFocus.dispose();
     super.dispose();
   }
 
   bool _obscureText = true;
+  bool _obscureConfirmText = true;
+
+  String fullName = "";
   String email = "";
   String password = "";
+  String confirmPassword = "";
+  String rollNo = "";
+  String department = "";
+  String section = ""; // Optional
   String? selectedSemester;
 
   bool isLoading = false;
+
   bool get isButtonEnabled =>
-      email.isNotEmpty && password.isNotEmpty && selectedSemester != null;
+      fullName.isNotEmpty &&
+      email.isNotEmpty &&
+      password.isNotEmpty &&
+      confirmPassword.isNotEmpty &&
+      rollNo.isNotEmpty &&
+      department.isNotEmpty &&
+      selectedSemester != null;
 
   final List<String> semesters = [
+    "1st Semester",
     "2nd Semester",
+    "3rd Semester",
     "4th Semester",
+    "5th Semester",
     "6th Semester",
+    "7th Semester",
     "8th Semester",
   ];
+
+  void _handleSignup() async {
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Passwords do not match!")));
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    // Call Mock AuthService
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const StudentWaitingApprovalScreen(),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +126,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    height: 285,
+                    height: 289, // Reduced height to save space
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -100,81 +162,101 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                             ),
                           ),
                         ),
+                        // Reduced lottie for space
                         SizedBox(
-                          height: 150,
-                          width: 150,
+                          height: 140,
+                          width: 140,
                           child: Lottie.asset(
                             'assets/animations/face-detect.json',
                             repeat: true,
                             animate: true,
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 10),
                         const Text(
                           "Facial Track",
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 28,
+                            fontSize: 30,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 11),
                         const Text(
                           "Student Registration",
-                          style: TextStyle(color: Colors.white70, fontSize: 16),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            // fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                        const SizedBox(height: 11),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
+
+                  // Full Name
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: buildTextField(
+                      activeColor: ColorPallet.primaryBlue,
+                      inactiveColor: Colors.grey,
+                      focusNode: fullNameFocus,
+                      onChange: (value) => setState(() => fullName = value),
+                      label: "Full Name",
+                      hint: "Enter your full name",
+                      icon: Icons.person_outline,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Email
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: buildTextField(
                       activeColor: ColorPallet.primaryBlue,
                       inactiveColor: Colors.grey,
                       focusNode: emailFocus,
-                      onChange: (value) {
-                        setState(() {
-                          email = value;
-                        });
-                      },
+                      onChange: (value) => setState(() => email = value),
                       label: "Email Address",
                       hint: "Enter your email",
                       icon: Icons.email_outlined,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
+
+                  // Roll No
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: buildTextField(
                       activeColor: ColorPallet.primaryBlue,
                       inactiveColor: Colors.grey,
-                      focusNode: passwordFocus,
-                      onChange: (value) {
-                        setState(() {
-                          password = value;
-                        });
-                      },
-                      label: "Password",
-                      hint: "Create a password",
-                      icon: Icons.lock_outline,
-                      obscureText: _obscureText,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureText
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: ColorPallet.grey,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscureText = !_obscureText);
-                        },
-                      ),
+                      focusNode: rollNoFocus,
+                      onChange: (value) => setState(() => rollNo = value),
+                      label: "Roll No / Reg ID",
+                      hint: "e.g. 2021-CS-123",
+                      icon: Icons.badge_outlined,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
+
+                  // Department
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: buildTextField(
+                      activeColor: ColorPallet.primaryBlue,
+                      inactiveColor: Colors.grey,
+                      focusNode: departmentFocus,
+                      onChange: (value) => setState(() => department = value),
+                      label: "Department",
+                      hint: "e.g. Computer Science",
+                      icon: Icons.apartment_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
                   // Semester Dropdown
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -221,11 +303,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                                   ? ColorPallet.primaryBlue
                                   : Colors.grey,
                             ),
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 16,
-                            ),
-                            dropdownColor: Colors.white,
                             items: semesters.map((String semester) {
                               return DropdownMenuItem<String>(
                                 value: semester,
@@ -235,17 +312,86 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                                 ),
                               );
                             }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                selectedSemester = newValue;
-                              });
-                            },
+                            onChanged: (val) =>
+                                setState(() => selectedSemester = val),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 15),
+
+                  // Section (Optional)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: buildTextField(
+                      activeColor: ColorPallet.primaryBlue,
+                      inactiveColor: Colors.grey,
+                      focusNode: sectionFocus,
+                      onChange: (value) => setState(() => section = value),
+                      label: "Section (Optional)",
+                      hint: "e.g. A",
+                      icon: Icons.class_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Password
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: buildTextField(
+                      activeColor: ColorPallet.primaryBlue,
+                      inactiveColor: Colors.grey,
+                      focusNode: passwordFocus,
+                      onChange: (value) => setState(() => password = value),
+                      label: "Password",
+                      hint: "Create password",
+                      icon: Icons.lock_outline,
+                      obscureText: _obscureText,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: ColorPallet.grey,
+                        ),
+                        onPressed: () =>
+                            setState(() => _obscureText = !_obscureText),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Confirm Password
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25),
+                    child: buildTextField(
+                      activeColor: ColorPallet.primaryBlue,
+                      inactiveColor: Colors.grey,
+                      focusNode: confirmPasswordFocus,
+                      onChange: (value) =>
+                          setState(() => confirmPassword = value),
+                      label: "Confirm Password",
+                      hint: "Repeat password",
+                      icon: Icons.lock_outline,
+                      obscureText: _obscureConfirmText,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: ColorPallet.grey,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscureConfirmText = !_obscureConfirmText,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Sign Up Button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: SizedBox(
@@ -262,23 +408,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                           elevation: 3,
                         ),
                         onPressed: isButtonEnabled && !isLoading
-                            ? () {
-                                setState(() {
-                                  isLoading = true;
-                                });
-                                // Simulate signup delay
-                                Future.delayed(const Duration(seconds: 2), () {
-                                  if (mounted) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const StudentWaitingApprovalScreen(),
-                                      ),
-                                    );
-                                  }
-                                });
-                              }
+                            ? _handleSignup
                             : null,
                         child: isLoading
                             ? const SizedBox(

@@ -7,7 +7,8 @@ class FaceVerificationPrompt extends StatelessWidget {
 
   const FaceVerificationPrompt({
     super.key,
-    this.isDeadlineExpired = false, // Mock default; pass true to test expired state
+    this.isDeadlineExpired =
+        false, // Mock default; pass true to test expired state
   });
 
   @override
@@ -20,7 +21,7 @@ class FaceVerificationPrompt extends StatelessWidget {
         title: const Text("Verify Your Face"),
         backgroundColor: primaryBlue,
         centerTitle: true,
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -29,11 +30,7 @@ class FaceVerificationPrompt extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Spacer(),
-            Icon(
-              Icons.face_retouching_natural,
-              size: 100,
-              color: primaryBlue,
-            ),
+            Icon(Icons.face_retouching_natural, size: 100, color: primaryBlue),
             const SizedBox(height: 30),
             Text(
               "Face Verification Required",
@@ -46,8 +43,11 @@ class FaceVerificationPrompt extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             if (isDeadlineExpired) ...[
-               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.red[50],
                   borderRadius: BorderRadius.circular(12),
@@ -79,7 +79,9 @@ class FaceVerificationPrompt extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const StudentFace()),
+                    MaterialPageRoute(
+                      builder: (context) => const StudentFaceEnrolements(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -98,20 +100,18 @@ class FaceVerificationPrompt extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                   // Navigate to Dashboard or relevant screen
-                   // For now, simple pop or placeholder
-                   Navigator.pop(context); 
+                  // Navigate to Dashboard or relevant screen
+                  // For now, simple pop or placeholder
+                  Navigator.pop(context);
                 },
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey,
-                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.grey),
                 child: const Text("Not now"),
               ),
             ] else ...[
-               ElevatedButton(
+              ElevatedButton(
                 onPressed: () {
                   // Contact admin action or just close
-                   Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],

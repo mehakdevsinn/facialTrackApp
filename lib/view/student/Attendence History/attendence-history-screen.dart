@@ -1,6 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Student/Attendence%20History/attendence-detail-screen.dart';
+import 'package:facialtrackapp/view/Student/Complaint/attendance_complaint_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 final List<Map<String, dynamic>> attendanceList = [
   {
@@ -9,6 +11,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": "09:02 AM",
     "exit": "10:30 AM",
     "subject": "Computer Science",
+    "teacher": "Dr. Smith",
     "present": true,
   },
   {
@@ -17,6 +20,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": "08:55 AM",
     "exit": "11:45 AM",
     "subject": "Mathematics",
+    "teacher": "Prof. Johnson",
     "present": true,
   },
   {
@@ -25,6 +29,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Physics",
+    "teacher": "Dr. Emily",
     "present": false,
   },
   {
@@ -33,6 +38,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Physics",
+    "teacher": "Dr. Emily",
     "present": false,
   },
   {
@@ -41,6 +47,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Physics",
+    "teacher": "Dr. Emily",
     "present": false,
   },
   {
@@ -49,6 +56,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Physics",
+    "teacher": "Dr. Emily",
     "present": false,
   },
   {
@@ -57,6 +65,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Physics",
+    "teacher": "Dr. Emily",
     "present": false,
   },
   {
@@ -65,6 +74,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Chemistry",
+    "teacher": "Prof. Brown",
     "present": false,
   },
   {
@@ -73,6 +83,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Physics",
+    "teacher": "Dr. Emily",
     "present": false,
   },
   {
@@ -81,6 +92,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Mathematics",
+    "teacher": "Prof. Johnson",
     "present": false,
   },
   {
@@ -89,6 +101,7 @@ final List<Map<String, dynamic>> attendanceList = [
     "entry": null,
     "exit": null,
     "subject": "Chemistry",
+    "teacher": "Prof. Brown",
     "present": false,
   },
 ];
@@ -153,10 +166,12 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
             "Attendance History",
             style: TextStyle(color: Colors.white),
           ),
-          actions: const [
-            // Icon(Icons.filter_alt_outlined, color: Colors.white),
-            // SizedBox(width: 16),
-          ],
+
+          // actions: const [
+          //   // Icon(Icons.filter_alt_outlined, color: Colors.white),
+          //   // SizedBox(width: 16),
+          // ],
+          automaticallyImplyLeading: false,
         ),
 
         body: Column(
@@ -249,6 +264,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     entry: item["entry"],
                     exit: item["exit"],
                     subject: item["subject"],
+                    teacher: item["teacher"],
                     present: item["present"],
                   );
                 },
@@ -317,6 +333,7 @@ class AttendanceCard extends StatelessWidget {
   final String? entry;
   final String? exit;
   final String? subject;
+  final String? teacher;
   final bool present;
 
   const AttendanceCard({
@@ -326,6 +343,7 @@ class AttendanceCard extends StatelessWidget {
     this.entry,
     this.exit,
     this.subject,
+    this.teacher,
     required this.present,
   });
 
@@ -413,39 +431,88 @@ class AttendanceCard extends StatelessWidget {
               const SizedBox(height: 6),
             ],
             _infoRow(Icons.book, subject ?? ""),
+            if (teacher != null) ...[
+              const SizedBox(height: 6),
+              _infoRow(Icons.person, teacher!),
+            ],
 
             const SizedBox(height: 5),
 
-            Divider(),
+            const Divider(),
             const SizedBox(height: 7),
 
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AttendanceDetailScreen(
-                        date: date,
-                        day: day,
-                        entry: entry,
-                        exit: exit,
-                        subject: subject ?? "",
-                        present: present,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Report Issue Action
+                GestureDetector(
+                  onTap: () {
+                    // Navigate to AttendanceComplaintScreen
+                    // Parse date string "MMM dd, yyyy" to DateTime
+                    DateTime parsedDate = DateTime.now();
+                    try {
+                      parsedDate = DateFormat("MMM dd, yyyy").parse(date);
+                    } catch (e) {
+                      print("Error parsing date: $e");
+                    }
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AttendanceComplaintScreen(
+                          courseName: subject ?? "Unknown",
+                          teacherName: teacher ?? "Unknown",
+                          date: parsedDate,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: Text(
-                  "View Details",
-                  style: TextStyle(
-                    color: ColorPallet.primaryBlue,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.report_problem_outlined,
+                        size: 14,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "Report Issue",
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AttendanceDetailScreen(
+                          date: date,
+                          day: day,
+                          entry: entry,
+                          exit: exit,
+                          subject: subject ?? "",
+                          present: present,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "View Details",
+                    style: TextStyle(
+                      color: ColorPallet.primaryBlue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

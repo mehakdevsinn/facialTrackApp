@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
-import 'package:facialtrackapp/view/Teacher/Forgot%20Password/forgot-password-screen.dart';
+import 'package:facialtrackapp/view/teacher/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

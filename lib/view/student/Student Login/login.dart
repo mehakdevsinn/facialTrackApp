@@ -1,10 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
-import 'package:facialtrackapp/view/Student/Face%20Enrolment/student-face-enrolment.dart';
-import 'package:facialtrackapp/view/Student/Forgot%20Password/forgot-password-screen.dart';
-import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
+import 'package:facialtrackapp/view/student/Forgot%20Password/forgot-password-screen.dart';
+import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';

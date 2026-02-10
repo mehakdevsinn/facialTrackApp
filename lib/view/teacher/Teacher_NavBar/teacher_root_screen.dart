@@ -1,9 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/teacher/Report/montly_report_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:facialtrackapp/view/Teacher/Dashborad/teacher_dashboard_screen.dart';
-import 'package:facialtrackapp/view/Teacher/Profile/teacher_profile_screen.dart';
-import 'package:facialtrackapp/view/Teacher/Start Screen/start_screen.dart';
+import 'package:facialtrackapp/view/teacher/Dashborad/teacher_dashboard_screen.dart';
+import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
+import 'package:facialtrackapp/view/teacher/Start Screen/start_screen.dart';
 
 class TeacherRootScreen extends StatefulWidget {
   const TeacherRootScreen({super.key});

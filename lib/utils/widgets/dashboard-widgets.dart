@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Student/Subjects/subject-detail.dart';
+import 'package:facialtrackapp/view/student/Subjects/subject-detail.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 

@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/view/Admin/Admin%20Login/admin-login.dart';
-import 'package:facialtrackapp/view/Student/Student%20NavBar/student-root_screen.dart';
-import 'package:facialtrackapp/view/Student/Student%20Login/login.dart'
+import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
+import 'package:facialtrackapp/view/student/Student%20Login/login.dart'
     hide StudentLoginScreen;
 import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
 import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';

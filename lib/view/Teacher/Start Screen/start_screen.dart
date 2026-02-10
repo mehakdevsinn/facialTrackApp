@@ -1,5 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Teacher/Start%20Screen/live_session_screen.dart';
+import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:flutter/material.dart';
 
 class StartSessionScreen extends StatefulWidget {

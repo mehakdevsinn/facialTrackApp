@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Student/Complaint/my_complaints_screen.dart';
-import 'package:facialtrackapp/view/Student/Complaint/technical_complaint_screen.dart';
+import 'package:facialtrackapp/view/student/Complaint/my_complaints_screen.dart';
+import 'package:facialtrackapp/view/student/Complaint/technical_complaint_screen.dart';
 import 'package:flutter/material.dart';
 
 class ComplaintScreen extends StatelessWidget {

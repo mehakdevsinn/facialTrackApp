@@ -1,5 +1,4 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:flutter/material.dart';
 

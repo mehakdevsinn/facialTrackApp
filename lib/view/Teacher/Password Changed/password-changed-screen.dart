@@ -1,4 +1,4 @@
-import 'package:facialtrackapp/view/Teacher/Teacher%20Login/login.dart';
+import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';
 import 'package:flutter/material.dart';
 
 class PasswordChangedScreen extends StatelessWidget {

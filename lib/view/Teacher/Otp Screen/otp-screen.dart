@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Teacher/Reset%20Password/reset-password-screen.dart';
+import 'package:facialtrackapp/view/teacher/Reset%20Password/reset-password-screen.dart';
 import 'package:flutter/material.dart';
 
 class OtpVerificationScreen extends StatefulWidget {

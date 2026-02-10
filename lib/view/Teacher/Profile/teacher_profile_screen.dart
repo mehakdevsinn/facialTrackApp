@@ -3,7 +3,7 @@ import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%2
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/overview_card_widget.dart';
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/profile_screen_header_widget.dart';
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/subject_card_widget.dart';
-import 'package:facialtrackapp/view/Teacher/Password%20Changed/change_password_inside_teacher_profile.dart';
+import 'package:facialtrackapp/view/teacher/Password%20Changed/change_password_inside_teacher_profile.dart';
 import 'package:facialtrackapp/view/teacher/Password%20Changed/change_password_inside_teacher_profile.dart'
     hide TeacherSideChangePasswordScreen;
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_report_issue_screen.dart';

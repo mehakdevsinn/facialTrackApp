@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Student/Attendence%20History/attendence-detail-screen.dart';
-import 'package:facialtrackapp/view/Student/Complaint/attendance_complaint_screen.dart';
+import 'package:facialtrackapp/view/student/Attendence%20History/attendence-detail-screen.dart';
+import 'package:facialtrackapp/view/student/Complaint/attendance_complaint_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

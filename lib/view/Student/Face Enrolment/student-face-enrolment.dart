@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'dart:io';
-
+import 'package:camera/camera.dart';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'package:facialtrackapp/view/student/Face Enrolment/enrollment-result-screen.dart';
+import 'package:facialtrackapp/view/Student/Face Enrolment/enrollment-result-screen.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class StudentFaceEnrolements extends StatefulWidget {
@@ -18,43 +16,44 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
     with SingleTickerProviderStateMixin {
   CameraController? _controller;
   bool _isBusy = false;
-  bool _isCaptured = false; // Current step captured state
+  bool _canProceed = false;
   bool _isSubmitting = false;
-  bool _isPoseMatching = false; // To show green guide
-  String _feedbackMessage = ""; // Corrective instruction for the user
-
-  XFile? _currentCapturedImage;
-  List<XFile> _capturedImages = [];
-
-  // Steps configuration
-  final List<Map<String, dynamic>> steps = [
-    {'label': 'Straight', 'instruction': 'Look straight at the camera'},
-    {'label': 'Left', 'instruction': 'Turn head left'},
-    {'label': 'Right', 'instruction': 'Turn head right'},
-    {'label': 'Up', 'instruction': 'Tilt head up'},
-    {'label': 'Down', 'instruction': 'Tilt head down'},
-  ];
-
   int currentStep = 0;
+  late AnimationController _scanController;
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(enableTracking: true, enableLandmarks: true),
   );
 
+  final List<Map<String, dynamic>> steps = [
+    {'label': 'Straight', 'icon': Icons.face},
+    {'label': 'Left', 'icon': Icons.turn_left},
+    {'label': 'Right', 'icon': Icons.turn_right},
+    {'label': 'Up', 'icon': Icons.arrow_upward},
+    {'label': 'Down', 'icon': Icons.arrow_downward},
+  ];
+
+  // Store captured images for each step.
+  // Map key will be the step index, value is the XFile (image).
+  final Map<int, XFile?> _capturedImages = {};
+
+  // Theme Colors based on your Login Screen image
   final Color primaryBlue = ColorPallet.primaryBlue;
-  final Color scaffoldBg = Colors.grey[50]!;
+  final Color scaffoldBg = Colors.grey[100]!;
 
   @override
   void initState() {
     super.initState();
     _initializeCamera();
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
   }
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     CameraDescription? front;
-
-    // Find front camera
     try {
       front = cameras.firstWhere(
         (c) => c.lensDirection == CameraLensDirection.front,
@@ -70,16 +69,15 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
       ResolutionPreset.medium,
       enableAudio: false,
     );
-
     await _controller!.initialize();
     if (mounted) {
+      _controller!.startImageStream(_processCameraImage);
       setState(() {});
-      await _controller!.startImageStream(_processCameraImage);
     }
   }
 
   void _processCameraImage(CameraImage image) async {
-    if (_isBusy || _isCaptured || _isSubmitting) return;
+    if (_isBusy) return;
     _isBusy = true;
 
     final inputImage = _inputImageFromCameraImage(image);
@@ -93,119 +91,61 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
 
       if (faces.isNotEmpty) {
         final face = faces.first;
-        _checkPoseAndAutoCapture(face);
+        double headY = face.headEulerAngleY ?? 0; // Left/Right
+        double headX = face.headEulerAngleX ?? 0; // Up/Down
+
+        bool detected = false;
+
+        // Detection Logic based on current step
+        switch (currentStep) {
+          case 0: // Straight
+            if (headY.abs() < 10 && headX.abs() < 10) detected = true;
+            break;
+          case 1: // Left (User turns face left, Euler Y is positive)
+            if (headY > 20) detected = true;
+            break;
+          case 2: // Right (User turns face right, Euler Y is negative)
+            if (headY < -20) detected = true;
+            break;
+          case 3: // Up
+            if (headX > 15) detected = true;
+            break;
+          case 4: // Down
+            if (headX < -15) detected = true;
+            break;
+        }
+
+        if (detected != _canProceed) {
+          if (mounted) {
+            setState(() {
+              _canProceed = detected;
+            });
+          }
+        }
       } else {
-        if (_isPoseMatching && mounted) {
-          setState(() => _isPoseMatching = false);
+        if (_canProceed) {
+          if (mounted) {
+            setState(() {
+              _canProceed = false;
+            });
+          }
         }
       }
     } catch (e) {
-      print("Face detection error: $e");
-    } finally {
-      if (mounted) _isBusy = false;
-    }
-  }
-
-  void _checkPoseAndAutoCapture(Face face) async {
-    double headY = face.headEulerAngleY ?? 0; // Left/Right (Yaw)
-    double headX = face.headEulerAngleX ?? 0; // Up/Down (Pitch)
-
-    // Debugging: Print angles to console to help troubleshooting
-    print(
-      "Head Angles -> Yaw: ${headY.toStringAsFixed(2)}, Pitch: ${headX.toStringAsFixed(2)}",
-    );
-
-    bool poseOk = false;
-
-    // Adjusted Thresholds for easier/smoother detection
-    // Note: Android ML Kit Euler Y: negative is Right, positive is Left (usually).
-    // Let's assume standard: Y+ = Left, Y- = Right. X+ = Up, X- = Down.
-    // Verify with testing, but usually:
-    // Head turns Left -> Y increases (> 10)
-    // Head turns Right -> Y decreases (< -10)
-    // Head tilts Up -> X increases (> 10)
-    // Head tilts Down -> X decreases (< -10)
-
-    String message = "";
-
-    switch (currentStep) {
-      case 0: // Straight
-        if (headY.abs() < 15 && headX.abs() < 15) {
-          poseOk = true;
-          message = "Perfect! Hold still...";
-        } else {
-          if (headY > 15)
-            message = "Turn Head Right";
-          else if (headY < -15)
-            message = "Turn Head Left";
-          else if (headX > 15)
-            message = "Look Down";
-          else if (headX < -15)
-            message = "Look Up";
-          else
-            message = "Look Straight";
-        }
-        break;
-      case 1: // Left (User turns head Left -> Y increases positive)
-        if (headY > 25) {
-          poseOk = true;
-          message = "Perfect! Hold still...";
-        } else {
-          message = "Turn Head Left";
-        }
-        break;
-      case 2: // Right (User turns head Right -> Y decreases negative)
-        if (headY < -25) {
-          poseOk = true;
-          message = "Perfect! Hold still...";
-        } else {
-          message = "Turn Head Right";
-        }
-        break;
-      case 3: // Up (User looks Up -> X increases positive)
-        if (headX > 15) {
-          poseOk = true;
-          message = "Perfect! Hold still...";
-        } else {
-          message = "Look Up";
-        }
-        break;
-      case 4: // Down (User looks Down -> X decreases negative)
-        if (headX < -15) {
-          poseOk = true;
-          message = "Perfect! Hold still...";
-        } else {
-          message = "Look Down";
-        }
-        break;
+      debugPrint("Error: $e");
     }
 
-    // Update UI state with feedback
-    if (mounted) {
-      setState(() {
-        _isPoseMatching = poseOk;
-        _feedbackMessage = message;
-      });
-    }
-
-    if (poseOk) {
-      // Optional: Add a small delay/stability check here if needed
-      // For now, capture immediately
-      await _capturePhoto();
-    }
+    _isBusy = false;
   }
 
   InputImage? _inputImageFromCameraImage(CameraImage image) {
-    if (_controller == null || _controller!.description == null) return null;
-
+    if (_controller == null) return null;
     final sensorOrientation = _controller!.description.sensorOrientation;
     final inputImageFormat = InputImageFormatValue.fromRawValue(
       image.format.raw,
     );
     if (inputImageFormat == null) return null;
-
     final plane = image.planes.first;
-
     return InputImage.fromBytes(
       bytes: plane.bytes,
       metadata: InputImageMetadata(
@@ -219,58 +159,42 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
     );
   }
 
-  Future<void> _capturePhoto() async {
-    if (_isCaptured ||
-        _isSubmitting ||
-        _controller == null ||
-        !_controller!.value.isInitialized)
-      return;
-
-    _isCaptured = true;
+  Future<void> _captureAndNextStep() async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
 
     try {
+      // Pause stream to capture
       await _controller!.stopImageStream();
-      final xFile = await _controller!.takePicture();
+
+      // Capture the image
+      XFile image = await _controller!.takePicture();
 
       if (mounted) {
         setState(() {
-          _currentCapturedImage = xFile;
-          // Reset pose matching so guide goes back to neutral/white for review
-          _isPoseMatching = false;
+          _capturedImages[currentStep] = image;
         });
+      }
+
+      if (currentStep < steps.length - 1) {
+        setState(() {
+          currentStep++;
+          _canProceed = false;
+        });
+        // Resume stream for next step
+        await _controller!.startImageStream(_processCameraImage);
+      } else {
+        _showSuccess();
       }
     } catch (e) {
-      print("Capture failed: $e");
-      if (mounted) {
-        setState(() {
-          _isCaptured = false;
-        });
+      debugPrint("Error capturing image: $e");
+      // Attempt to restart stream if something failed
+      try {
         await _controller!.startImageStream(_processCameraImage);
-      }
+      } catch (_) {}
     }
   }
 
-  Future<void> _confirmAndNext() async {
-    if (_currentCapturedImage == null) return;
-
-    setState(() {
-      _capturedImages.add(_currentCapturedImage!);
-      _isCaptured = false;
-      _currentCapturedImage = null;
-      _isPoseMatching = false;
-    });
-
-    if (currentStep < steps.length - 1) {
-      setState(() {
-        currentStep++;
-      });
-      await _controller!.startImageStream(_processCameraImage);
-    } else {
-      _finalizeEnrollment();
-    }
-  }
-
-  Future<void> _finalizeEnrollment() async {
+  void _showSuccess() async {
     setState(() {
       _isSubmitting = true;
     });
@@ -290,31 +214,30 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
     }
   }
 
-  void _manualCapture() {
-    // Optional: Warn if pose is not matching?
-    // For now, allow fallback capture.
-    _capturePhoto();
-  }
-
   @override
   void dispose() {
     _controller?.dispose();
+    _scanController.dispose();
     _faceDetector.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    int totalSteps = steps.length;
-    double progress = (currentStep + (_isCaptured ? 1 : 0)) / totalSteps;
-
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-        title: const Text("Student Enrollment"),
-        backgroundColor: primaryBlue,
-        centerTitle: true,
+        backgroundColor: ColorPallet.primaryBlue,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Student Enrollment",
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
       ),
       body: _isSubmitting
           ? Center(
@@ -324,268 +247,295 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
                   CircularProgressIndicator(color: primaryBlue),
                   const SizedBox(height: 20),
                   const Text(
-                    "Submitting...",
+                    "Verifying...",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             )
-          : Column(
-              children: [
-                // 1. Progress Section
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          : SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 7),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 22),
+                      child: Text(
+                        "Face Enrollment",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 22),
+                      child: const Text(
+                        "Position your face within the frame",
+                        style: TextStyle(color: Colors.black54, fontSize: 13),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Camera Frame with Corner Brackets
+                    Center(
+                      child: Stack(
+                        alignment: Alignment.center,
                         children: [
-                          Text(
-                            "Image ${currentStep + 1} of $totalSteps",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
-                              fontSize: 14,
+                          Container(
+                            width: 280,
+                            height: 280,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 20,
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(30),
+                              child:
+                                  (_controller != null &&
+                                      _controller!.value.isInitialized)
+                                  ? CameraPreview(_controller!)
+                                  : Container(
+                                      color: Colors.grey[400],
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 50,
+                                        color: Colors.blueGrey,
+                                      ),
+                                    ),
                             ),
                           ),
-                          Text(
-                            "${(progress * 100).toInt()}%",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: primaryBlue,
-                              fontSize: 14,
+
+                          // Blue Scan Animation Line
+                          AnimatedBuilder(
+                            animation: _scanController,
+                            builder: (context, child) => Positioned(
+                              top: 40 + (_scanController.value * 200),
+                              child: Container(
+                                width: 220,
+                                height: 2,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      primaryBlue,
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Corner Brackets inside the Stack
+                          SizedBox(
+                            width: 310,
+                            height: 310,
+                            child: CustomPaint(
+                              painter: LightCornerPainter(primaryBlue),
+                            ),
+                          ),
+
+                          // Label for Current Step
+                          Positioned(
+                            bottom: 20,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                "Look ${steps[currentStep]['label']}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.grey[200],
-                        color: primaryBlue,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 2. Camera Preview with Face Guide
-                Expanded(
-                  child: Container(
-                    color: Colors.black,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (_controller?.value.isInitialized == true)
-                          _isCaptured && _currentCapturedImage != null
-                              ? Image.file(
-                                  File(_currentCapturedImage!.path),
-                                  fit: BoxFit.cover,
-                                )
-                              : CameraPreview(_controller!)
-                        else
-                          const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          ),
-
-                        // Face Guide Overlay
-                        if (!_isCaptured)
-                          CustomPaint(
-                            painter: FaceGuidePainter(
-                              isPoseMatching: _isPoseMatching,
-                              borderColor: _isPoseMatching
-                                  ? Colors.greenAccent
-                                  : Colors.white,
-                            ),
-                          ),
-
-                        // Feedback Text Overlay (Top Center of Camera)
-                        if (!_isCaptured && _isPoseMatching)
-                          Positioned(
-                            top: 20,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  "Perfect!",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
                     ),
-                  ),
-                ),
 
-                // 3. Bottom Control Board
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        steps[currentStep]['instruction'],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Step ${currentStep + 1}: ${steps[currentStep]['label']}",
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
+                    const SizedBox(height: 30),
 
-                      const SizedBox(height: 20),
+                    // Step Progress
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(steps.length, (index) {
+                        bool isActive = index == currentStep;
+                        bool hasImage = _capturedImages.containsKey(index);
 
-                      if (_capturedImages.isNotEmpty)
-                        SizedBox(
-                          height: 70,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _capturedImages.length,
-                            separatorBuilder: (c, i) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                              return Container(
-                                width: 60,
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 40,
+                                width: 40,
                                 decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: primaryBlue,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  image: DecorationImage(
-                                    image: FileImage(
-                                      File(_capturedImages[index].path),
+                                  color: isActive ? primaryBlue : Colors.white,
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(10),
+                                  ), // Squared/rounded for image
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
                                     ),
-                                    fit: BoxFit.cover,
-                                  ),
+                                  ],
+                                  border: isActive
+                                      ? Border.all(color: primaryBlue, width: 2)
+                                      : null,
                                 ),
-                                child: const Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 20,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                      if (_capturedImages.isNotEmpty)
-                        const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: _isCaptured
-                            ? ElevatedButton(
-                                onPressed: _confirmAndNext,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryBlue,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: Text(
-                                  currentStep == steps.length - 1
-                                      ? "Submit"
-                                      : "Next",
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              )
-                            : ElevatedButton.icon(
-                                onPressed: _manualCapture,
-                                icon: const Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                ),
-                                label: const Text(
-                                  "Capture",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryBlue,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                child: hasImage
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          File(_capturedImages[index]!.path),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Icon(
+                                          isActive
+                                              ? steps[index]['icon']
+                                              : steps[index]['icon'],
+                                          color: isActive
+                                              ? Colors.white
+                                              : Colors.grey[400],
+                                          size: 20,
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                steps[index]['label'],
+                                style: TextStyle(
+                                  color: isActive
+                                      ? primaryBlue
+                                      : Colors.black54,
+                                  fontSize: 10,
+                                  fontWeight: isActive
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                               ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+
+                    const SizedBox(height: 11),
+
+                    // Main Blue Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
                       ),
-                    ],
-                  ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: _captureAndNextStep,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorPallet.primaryBlue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            "Capture",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Instruction Note
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 20,
+                        left: 30,
+                        right: 30,
+                        top: 9,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "For best result , student ensure background is clear, remove glasses and mask during scan",
+                          style: TextStyle(color: Colors.black, fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
     );
   }
 }
 
-class FaceGuidePainter extends CustomPainter {
-  final bool isPoseMatching;
-  final Color borderColor;
-
-  FaceGuidePainter({
-    this.isPoseMatching = false,
-    this.borderColor = Colors.white,
-  });
+class LightCornerPainter extends CustomPainter {
+  final Color color;
+  LightCornerPainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = borderColor.withOpacity(0.8)
+      ..color = color
+      ..strokeWidth = 4
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isPoseMatching ? 5.0 : 3.0; // Thicker if matching
-
-    final rect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height / 2),
-      width: size.width * 0.75, // Slightly wider
-      height: size.height * 0.55,
+      ..strokeCap = StrokeCap.round;
+    double l = 30;
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, l)
+        ..lineTo(0, 0)
+        ..lineTo(l, 0),
+      paint,
     );
-
-    canvas.drawOval(rect, paint);
-
-    final bgPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addOval(rect)
-      ..fillType = PathFillType.evenOdd;
-
-    canvas.drawPath(bgPath, Paint()..color = Colors.black.withOpacity(0.4));
+    canvas.drawPath(
+      Path()
+        ..moveTo(size.width - l, 0)
+        ..lineTo(size.width, 0)
+        ..lineTo(size.width, l),
+      paint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, size.height - l)
+        ..lineTo(0, size.height)
+        ..lineTo(l, size.height),
+      paint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(size.width - l, size.height)
+        ..lineTo(size.width, size.height)
+        ..lineTo(size.width, size.height - l),
+      paint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant FaceGuidePainter oldDelegate) {
-    return oldDelegate.isPoseMatching != isPoseMatching ||
-        oldDelegate.borderColor != borderColor;
-  }
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

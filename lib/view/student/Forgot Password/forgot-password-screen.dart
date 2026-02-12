@@ -1,6 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
-import 'package:facialtrackapp/view/student/Otp%20Screen/otp-screen.dart';
+import 'package:facialtrackapp/view/Student/Otp%20Screen/otp-screen.dart';
 import 'package:flutter/material.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => OtpVerificationScreen(),
+                              builder: (context) => OtpScreen(),
                             ),
                           );
                         }

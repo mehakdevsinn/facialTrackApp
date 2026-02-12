@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/view/Student/Student%20Waiting%20Approval/student_waiting_approval_screen.dart';
 import 'package:facialtrackapp/view/student/Reset%20Password/reset-password-screen.dart';
 import 'package:flutter/material.dart';
 
-class OtpScreen extends StatefulWidget {
-  const OtpScreen({Key? key}) : super(key: key);
+class OtpVerificationScreen extends StatefulWidget {
+  const OtpVerificationScreen({Key? key}) : super(key: key);
 
   @override
-  State<OtpScreen> createState() => _OtpScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen> {
+class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   bool isButtonEnabled = false;
 
   late List<FocusNode> focusNodes;
@@ -177,7 +178,8 @@ class _OtpScreenState extends State<OtpScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ResetPasswordScreen(),
+                              builder: (context) =>
+                                  StudentWaitingApprovalScreen(),
                             ),
                           );
                         }

@@ -3,6 +3,7 @@ import 'package:facialtrackapp/utils/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Course Assignment/course_assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Manage Teachers/manage-teachers.dart';
 import 'package:facialtrackapp/view/Admin/Scheme of Study/scheme_of_study_screen.dart';
+import 'package:facialtrackapp/view/Admin/Semester%20Management/individual_semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Semester Management/semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
 import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dart';
@@ -231,11 +232,28 @@ class AdminDashboardScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SemesterManagementScreen(),
+                        builder: (context) =>
+                            const IndividualSemesterManagementScreen(),
                       ),
                     );
                   },
                 ),
+                // _buildMenuItem(
+                //   context,
+                //   icon: Icons.calendar_today_rounded,
+                //   color: Colors.indigo,
+                //   title: 'Individual Term Management',
+                //   subtitle: 'Create individual semesters per session',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) =>
+                //             const IndividualSemesterManagementScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 _buildMenuItem(
                   context,
                   icon: Icons.how_to_reg_rounded,

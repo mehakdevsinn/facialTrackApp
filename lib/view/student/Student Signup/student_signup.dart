@@ -2,7 +2,7 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
-import 'package:facialtrackapp/view/Student/Otp%20Screen/otp-verification.dart';
+import 'package:facialtrackapp/view/student/Otp%20Screen/otp-verification.dart';
 import '../Student%20Login/login.dart';
 import '../Student%20Waiting%20Approval/student_waiting_approval_screen.dart';
 import 'package:flutter/material.dart';

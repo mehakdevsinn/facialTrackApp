@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/view/Student/Student%20Waiting%20Approval/student_waiting_approval_screen.dart';
-import 'package:facialtrackapp/view/student/Reset%20Password/reset-password-screen.dart';
+import 'package:facialtrackapp/view/teacher/Reset%20Password/reset-password-screen.dart';
 import 'package:flutter/material.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -99,12 +98,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        // backgroundColor: Colors.white,
-        backgroundColor: Colors.grey[100],
-
-        body: Padding(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,8 +175,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  StudentWaitingApprovalScreen(),
+                              builder: (context) => ResetPasswordScreen(),
                             ),
                           );
                         }

@@ -234,7 +234,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                       inactiveColor: Colors.grey,
                       focusNode: rollNoFocus,
                       onChange: (value) => setState(() => rollNo = value),
-                      label: "Roll No / Reg ID",
+                      label: "Roll No ",
                       hint: "e.g. 2021-CS-123",
                       icon: Icons.badge_outlined,
                     ),

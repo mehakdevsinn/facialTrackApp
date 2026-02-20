@@ -11,6 +11,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool isLoading = false;
 
   final FocusNode newpasswordFocus = FocusNode();
   String password = "";
@@ -20,6 +21,32 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscureText = true;
 
   bool get isButtonEnabled => password.isNotEmpty && confirmpassword.isNotEmpty;
+
+  void _handleResetPassword() async {
+    if (password != confirmpassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Passwords do not match!")));
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    // Call Mock AuthService
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PasswordChangedScreen()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -169,12 +196,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: ElevatedButton(
                   onPressed: isButtonEnabled
                       ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PasswordChangedScreen(),
-                            ),
-                          );
+                          _handleResetPassword();
                         }
                       : SizedBox.shrink,
                   style: ElevatedButton.styleFrom(

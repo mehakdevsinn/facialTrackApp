@@ -28,11 +28,25 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     passwordFocus.addListener(() => setState(() {}));
   }
 
+  bool isPasswordValid = false;
+
   @override
   void dispose() {
     studentEmailFocus.dispose();
     passwordFocus.dispose();
     super.dispose();
+  }
+
+  bool validatePassword(String value) {
+    if (value.length < 8) return false;
+
+    if (!RegExp(r'[A-Z]').hasMatch(value)) return false;
+
+    if (!RegExp(r'[0-9]').hasMatch(value)) return false;
+
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) return false;
+
+    return true;
   }
 
   @override
@@ -141,6 +155,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   onChange: (value) {
                     setState(() {
                       password = value;
+                      isPasswordValid = validatePassword(value);
                     });
                   },
                   label: "Password",
@@ -160,7 +175,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   ),
                 ),
               ),
-
+              if (!isPasswordValid && password.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25),
+                  child: Text(
+                    "Password must be at least 8 characters and include uppercase, number & special character",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
               // Padding(
               //   padding: const EdgeInsets.only(right: 15),
               //   child: Align(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import '../Student%20Login/login.dart';
+import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
@@ -16,31 +17,68 @@ class StudentWaitingApprovalScreen extends StatefulWidget {
 class _StudentWaitingApprovalScreenState
     extends State<StudentWaitingApprovalScreen> {
   bool isApproved = false;
+  bool isRejected = false;
+  bool isPolling = true;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
-    // Simulate admin approval delay
-    Timer(const Duration(seconds: 4), () {
-      if (mounted) {
+    _startPolling();
+  }
+
+  void _startPolling() {
+    // Poll immediately once, then every 5 seconds
+    _checkApprovalStatus();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _checkApprovalStatus();
+    });
+  }
+
+  Future<void> _checkApprovalStatus() async {
+    try {
+      final user = await ApiService.instance.getMe();
+
+      if (!mounted) return;
+
+      if (user.isApproved) {
+        _pollingTimer?.cancel();
         setState(() {
           isApproved = true;
+          isPolling = false;
         });
 
-        // Short delay to show approved state then navigate
-        Timer(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const StudentLoginScreen(),
-              ),
-              (route) => false,
-            );
-          }
+        // Show approved state for 2 seconds, then navigate to login
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const StudentLoginScreen(),
+            ),
+            (route) => false,
+          );
+        }
+      } else if (user.isRejected) {
+        _pollingTimer?.cancel();
+        setState(() {
+          isRejected = true;
+          isPolling = false;
         });
       }
-    });
+      // If still pending, do nothing — timer will fire again in 5s
+    } on AuthException {
+      // Token may have expired — stop polling silently
+      _pollingTimer?.cancel();
+    } catch (_) {
+      // Network error — keep polling, it will retry in 5 seconds
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -53,93 +91,111 @@ class _StudentWaitingApprovalScreenState
       child: SafeArea(
         child: Scaffold(
           backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  SizedBox(
-                    height: 200,
-                    width: 200,
-                    child: Lottie.asset(
-                      isApproved
-                          ? 'assets/animations/face-detect.json'
-                          : 'assets/animations/face-detect.json',
-                      repeat: true,
-                      animate: true,
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: Lottie.asset(
+                    'assets/animations/face-detect.json',
+                    repeat: true,
+                    animate: true,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Text(
+                  isRejected
+                      ? 'Account Rejected'
+                      : isApproved
+                          ? 'Approved!'
+                          : 'Registration Successful!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isRejected
+                        ? Colors.red
+                        : isApproved
+                            ? ColorPallet.softGreen
+                            : ColorPallet.primaryBlue,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  isRejected
+                      ? 'Your account has been rejected by the administrator. Please contact support for more information.'
+                      : isApproved
+                          ? 'Your account has been approved. Redirecting to login...'
+                          : 'Your account is pending admin approval. We\'ll notify you automatically when it\'s approved.',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 40),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: ColorPallet.lightGray,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: isRejected
+                          ? Colors.red.withOpacity(0.5)
+                          : isApproved
+                              ? ColorPallet.softGreen.withOpacity(0.5)
+                              : ColorPallet.primaryBlue.withOpacity(0.3),
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  Text(
-                    isApproved ? "Approved!" : "Registration Successful!",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: isApproved
-                          ? ColorPallet.softGreen
-                          : ColorPallet.primaryBlue,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    isApproved
-                        ? "Your account has been approved. Redirecting to login..."
-                        : "Your account is pending admin approval. Please wait for the administrator to approve your request.",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: ColorPallet.lightGray,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: isApproved
-                            ? ColorPallet.softGreen.withOpacity(0.5)
-                            : ColorPallet.primaryBlue.withOpacity(0.3),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isRejected
+                            ? Icons.cancel_outlined
+                            : isApproved
+                                ? Icons.check_circle_outline
+                                : Icons.info_outline,
+                        color: isRejected
+                            ? Colors.red
+                            : isApproved
+                                ? ColorPallet.softGreen
+                                : ColorPallet.primaryBlue,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isApproved
-                              ? Icons.check_circle_outline
-                              : Icons.info_outline,
-                          color: isApproved
-                              ? ColorPallet.softGreen
-                              : ColorPallet.primaryBlue,
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Text(
-                            isApproved
-                                ? "Approval granted! You can now access your student portal."
-                                : "Once approved, you will be able to log in to your student portal.",
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 14,
-                            ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Text(
+                          isRejected
+                              ? 'Your registration was not approved. Please contact the administrator.'
+                              : isApproved
+                                  ? 'Approval granted! You can now access your student portal.'
+                                  : 'Checking approval status every 5 seconds...',
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  if (!isApproved)
-                    const CircularProgressIndicator(
-                      color: ColorPallet.primaryBlue,
-                    ),
-                  const SizedBox(height: 30),
+                ),
+                const Spacer(),
+                if (isPolling && !isApproved && !isRejected) ...[
+                  const CircularProgressIndicator(
+                    color: ColorPallet.primaryBlue,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Checking every 5 seconds...',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                  ),
                 ],
-              ),
+                const SizedBox(height: 30),
+              ],
             ),
           ),
         ),

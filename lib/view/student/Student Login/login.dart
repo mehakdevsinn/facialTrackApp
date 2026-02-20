@@ -1,4 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/models/user_model.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
@@ -16,34 +18,88 @@ class StudentLoginScreen extends StatefulWidget {
 }
 
 class _StudentLoginScreenState extends State<StudentLoginScreen> {
-  final FocusNode studentIdFocus = FocusNode();
+  final FocusNode emailFocus = FocusNode();
   final FocusNode passwordFocus = FocusNode();
   bool _obscureText = true;
-  String studentId = "";
-  String password = "";
+  bool isLoading = false;
+  String email = '';
+  String password = '';
 
-  bool get isButtonEnabled => studentId.isNotEmpty && password.isNotEmpty;
+  bool get isButtonEnabled => email.isNotEmpty && password.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
-    studentIdFocus.addListener(() => setState(() {}));
+    emailFocus.addListener(() => setState(() {}));
     passwordFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    studentIdFocus.dispose();
+    emailFocus.dispose();
     passwordFocus.dispose();
     super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _handleLogin() async {
+    setState(() => isLoading = true);
+
+    try {
+      final data = await ApiService.instance.login(
+        email: email,
+        password: password,
+      );
+
+      final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+
+      if (!mounted) return;
+
+      // Route based on role
+      if (user.isStudent) {
+        // For students: check face_verified to decide where to go
+        // If face not enrolled yet → go to face enrolment
+        // If face enrolled → go to dashboard
+        if (!user.faceVerified) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => StudentFaceEnrolements()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const StudentRootScreen()),
+            (route) => false,
+          );
+        }
+      }
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: Colors.white,
         backgroundColor: Colors.grey[100],
-
         body: SingleChildScrollView(
           child: Column(
             children: [
@@ -72,9 +128,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           ),
                         );
                       },
-
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 20, top: 15),
+                      child: const Padding(
+                        padding: EdgeInsets.only(left: 20, top: 15),
                         child: Row(
                           children: [
                             Icon(Icons.arrow_back, color: ColorPallet.white),
@@ -91,10 +146,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                         animate: true,
                       ),
                     ),
-
-                    SizedBox(height: 15),
-                    Text(
-                      "Facial Track",
+                    const SizedBox(height: 15),
+                    const Text(
+                      'Facial Track',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
@@ -102,51 +156,44 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    SizedBox(height: 6),
-                    Text(
-                      "Student Attendance Portal",
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Student Attendance Portal',
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
-
-                    SizedBox(height: 11),
+                    const SizedBox(height: 11),
                   ],
                 ),
               ),
 
               const SizedBox(height: 40),
 
+              // Email Field
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
-                  label: "Student ID",
-                  hint: "Enter your Student ID",
-                  icon: Icons.person_outline,
+                  label: 'Email Address',
+                  hint: 'Enter your email',
+                  icon: Icons.email_outlined,
                   activeColor: ColorPallet.primaryBlue,
                   inactiveColor: Colors.grey,
-                  focusNode: studentIdFocus,
-                  onChange: (value) {
-                    setState(() {
-                      studentId = value;
-                    });
-                  },
+                  focusNode: emailFocus,
+                  onChange: (value) => setState(() => email = value),
                 ),
               ),
 
               const SizedBox(height: 20),
 
+              // Password Field
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: buildTextField(
                   activeColor: ColorPallet.primaryBlue,
                   inactiveColor: Colors.grey,
                   focusNode: passwordFocus,
-                  onChange: (value) {
-                    setState(() {
-                      password = value;
-                    });
-                  },
-                  label: "Password",
-                  hint: "Enter your password",
+                  onChange: (value) => setState(() => password = value),
+                  label: 'Password',
+                  hint: 'Enter your password',
                   icon: Icons.lock_outline,
                   obscureText: _obscureText,
                   suffixIcon: IconButton(
@@ -156,13 +203,13 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           : Icons.visibility_outlined,
                       color: ColorPallet.grey,
                     ),
-                    onPressed: () {
-                      setState(() => _obscureText = !_obscureText);
-                    },
+                    onPressed: () =>
+                        setState(() => _obscureText = !_obscureText),
                   ),
                 ),
               ),
 
+              // Forgot Password (disabled until backend adds route)
               Padding(
                 padding: const EdgeInsets.only(right: 15),
                 child: Align(
@@ -177,7 +224,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       );
                     },
                     child: const Text(
-                      "Forgot Password?",
+                      'Forgot Password?',
                       style: TextStyle(
                         color: ColorPallet.primaryBlue,
                         fontWeight: FontWeight.w700,
@@ -187,8 +234,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 ),
               ),
 
-              const SizedBox(height: 39),
+              const SizedBox(height: 20),
 
+              // Login Button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: SizedBox(
@@ -204,25 +252,25 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       ),
                       elevation: 3,
                     ),
-                    onPressed: isButtonEnabled
-                        ? () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StudentFaceEnrolements(),
-                                // const StudentRootScreen(),
-                              ),
-                            );
-                          }
-                        : SizedBox.shrink,
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    onPressed:
+                        (isButtonEnabled && !isLoading) ? _handleLogin : null,
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -246,7 +294,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       );
                     },
                     child: const Text(
-                      "Sign Up",
+                      'Sign Up',
                       style: TextStyle(
                         color: ColorPallet.primaryBlue,
                         fontWeight: FontWeight.bold,

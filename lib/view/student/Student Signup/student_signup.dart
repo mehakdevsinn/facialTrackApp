@@ -1,10 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
-
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Otp%20Screen/otp-verification.dart';
 import '../Student%20Login/login.dart';
-import '../Student%20Waiting%20Approval/student_waiting_approval_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
@@ -83,29 +82,58 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
     "8th Semester",
   ];
 
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   void _handleSignup() async {
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Passwords do not match!")));
+      _showError('Passwords do not match!');
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
+    if (password.length < 8) {
+      _showError('Password must be at least 8 characters.');
+      return;
+    }
 
-    // Call Mock AuthService
+    setState(() => isLoading = true);
 
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OtpVerificationScreen()),
+    try {
+      await ApiService.instance.register(
+        email: email,
+        password: password,
+        fullName: fullName,
+        role: 'student',
+        rollNumber: rollNo,
+        department: department,
+        semester: selectedSemester!,
+        section: section,
       );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(email: email),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 

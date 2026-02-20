@@ -1,10 +1,7 @@
 import 'package:facialtrackapp/view/Admin/Admin%20Login/admin-login.dart';
-import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
-import 'package:facialtrackapp/view/student/Student%20Login/login.dart'
-    hide StudentLoginScreen;
+import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
 import 'package:facialtrackapp/view/teacher/Teacher%20Login/login.dart';
-import 'package:facialtrackapp/view/teacher/Teacher%20Signup/signup.dart';
 import 'package:flutter/material.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -13,8 +10,6 @@ class RoleSelectionScreen extends StatefulWidget {
   @override
   State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
 }
-// ... existing imports
-// Import admin login screen here (e.g., import 'package:facialtrackapp/view/admin/Admin%20Login/login.dart';)
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   bool _isTeacherPressed = false;

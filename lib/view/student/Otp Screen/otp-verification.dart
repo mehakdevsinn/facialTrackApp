@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/models/user_model.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:facialtrackapp/view/student/Student%20Waiting%20Approval/student_waiting_approval_screen.dart';
-import 'package:facialtrackapp/view/student/Reset%20Password/reset-password-screen.dart';
 import 'package:flutter/material.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
-  const OtpVerificationScreen({Key? key}) : super(key: key);
+  final String email;
+  const OtpVerificationScreen({Key? key, required this.email})
+      : super(key: key);
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -13,37 +16,37 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   bool isButtonEnabled = false;
+  bool isLoading = false;
 
   late List<FocusNode> focusNodes;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   startTimer();
+  final List<TextEditingController> otpControllers = List.generate(
+    4,
+    (_) => TextEditingController(),
+  );
 
-  //   focusNodes = List.generate(4, (index) => FocusNode());
-  // }
+  Timer? _timer;
+  int _start = 600; // 10 minutes = 600 seconds
+
   @override
   void initState() {
     super.initState();
     startTimer();
-
     focusNodes = List.generate(4, (index) => FocusNode());
-
     for (var controller in otpControllers) {
-      controller.addListener(checkIfAllFieldsFilled);
+      controller.addListener(_checkIfAllFieldsFilled);
+    }
+    // Rebuild on focus change so border color updates
+    for (var node in focusNodes) {
+      node.addListener(() => setState(() {}));
     }
   }
 
-  void checkIfAllFieldsFilled() {
-    bool allFilled = otpControllers.every(
-      (ctrl) => ctrl.text.trim().isNotEmpty,
-    );
-
+  void _checkIfAllFieldsFilled() {
+    bool allFilled =
+        otpControllers.every((ctrl) => ctrl.text.trim().isNotEmpty);
     if (allFilled != isButtonEnabled) {
-      setState(() {
-        isButtonEnabled = allFilled;
-      });
+      setState(() => isButtonEnabled = allFilled);
     }
   }
 
@@ -59,51 +62,113 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
-  final List<TextEditingController> otpControllers = List.generate(
-    4,
-    (_) => TextEditingController(),
-  );
-
-  Timer? _timer;
-  int _start = 50;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   startTimer();
-  // }
-
   void startTimer() {
-    _start = 50;
+    _start = 600;
     _timer?.cancel();
-
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        if (_start > 0) {
-          _start--;
-        } else {
-          _timer?.cancel();
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (_start > 0) {
+            _start--;
+          } else {
+            _timer?.cancel();
+          }
+        });
+      }
     });
   }
 
-  // @override
-  // void dispose() {
-  //   _timer?.cancel();
-  //   for (var controller in otpControllers) {
-  //     controller.dispose();
-  //   }
-  //   super.dispose();
-  // }
+  String get _timerDisplay {
+    int minutes = _start ~/ 60;
+    int seconds = _start % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _handleVerify() async {
+    final otp = otpControllers.map((c) => c.text.trim()).join();
+    setState(() => isLoading = true);
+
+    try {
+      final data = await ApiService.instance.verifyOtp(
+        email: widget.email,
+        otpCode: otp,
+      );
+
+      final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+
+      if (mounted) {
+        if (user.isStudent && user.isPending) {
+          // Student: still needs admin approval → show waiting screen
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const StudentWaitingApprovalScreen(),
+            ),
+            (route) => false,
+          );
+        } else {
+          // Teacher/Admin: auto-approved — navigate to their dashboard
+          // (This path is not taken in current flow as they don't go through signup)
+          Navigator.pop(context);
+        }
+      }
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _handleResend() async {
+    try {
+      await ApiService.instance.resendOtp(email: widget.email);
+      _showSuccess('A new OTP has been sent to your email.');
+      startTimer();
+      // Clear OTP fields
+      for (var ctrl in otpControllers) {
+        ctrl.clear();
+      }
+      setState(() => isButtonEnabled = false);
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Failed to resend OTP. Please try again.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: Colors.white,
         backgroundColor: Colors.grey[100],
-
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
@@ -118,7 +183,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   color: Color.fromARGB(255, 77, 77, 77),
                 ),
               ),
-
               const SizedBox(height: 36),
 
               // Icon Box
@@ -134,57 +198,41 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   color: ColorPallet.primaryBlue,
                 ),
               ),
-
               const SizedBox(height: 24),
 
               const Text(
-                "OTP Verification",
+                'OTP Verification',
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
-
               const SizedBox(height: 8),
 
-              const Text(
-                "Enter the verification code we just sent on your\nemail address.",
-                style: TextStyle(fontSize: 16, color: Colors.black54),
+              Text(
+                'Enter the 4-digit code we sent to\n${widget.email}',
+                style: const TextStyle(fontSize: 15, color: Colors.black54),
               ),
-
               const SizedBox(height: 32),
 
               // OTP Boxes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                // children: List.generate(4, (index) {
-                //   return _otpTextField(otpControllers[index], context);
-                // }),
                 children: List.generate(4, (index) {
                   return _otpTextField(
                     otpControllers[index],
                     focusNodes[index],
-                    index == 0, // first one autoFocus
+                    index == 0,
+                    index,
                   );
                 }),
               ),
-
               const SizedBox(height: 32),
 
+              // Verify Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: isButtonEnabled
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  StudentWaitingApprovalScreen(),
-                            ),
-                          );
-                        }
-                      : SizedBox.shrink,
-
+                  onPressed:
+                      (isButtonEnabled && !isLoading) ? _handleVerify : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isButtonEnabled
                         ? ColorPallet.primaryBlue
@@ -193,35 +241,52 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-
-                  child: const Text(
-                    "Verify",
-                    style: TextStyle(fontSize: 18, color: ColorPallet.white),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text(
+                          'Verify',
+                          style:
+                              TextStyle(fontSize: 18, color: ColorPallet.white),
+                        ),
                 ),
               ),
+              const SizedBox(height: 20),
 
-              const SizedBox(height: 16),
-
+              // Timer / Resend
               Center(
-                child: Text(
-                  _start > 0
-                      ? "Didn’t receive code? Resend in 00:${_start.toString().padLeft(2, '0')}"
-                      : "Didn't receive code? Resend now",
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
+                child: _start > 0
+                    ? Text(
+                        'OTP expires in $_timerDisplay',
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.grey.shade600),
+                      )
+                    : Column(
+                        children: [
+                          Text(
+                            'OTP has expired.',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.red.shade400),
+                          ),
+                          TextButton(
+                            onPressed: _handleResend,
+                            child: const Text(
+                              'Resend OTP',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-
-              if (_start == 0)
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      startTimer();
-                      // TODO: resend OTP logic
-                    },
-                    child: const Text("Resend", style: TextStyle(fontSize: 16)),
-                  ),
-                ),
             ],
           ),
         ),
@@ -233,6 +298,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     TextEditingController controller,
     FocusNode focusNode,
     bool autoFocus,
+    int index,
   ) {
     return Container(
       width: 60,
@@ -242,11 +308,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         boxShadow: [
           BoxShadow(
             color: focusNode.hasFocus
-                ? const Color.fromARGB(255, 184, 173, 237).withOpacity(
-                    0.9,
-                  ) // focused shadow
-                : Colors.white, // normal shadow
-            spreadRadius: focusNode.hasFocus ? 2 : 2,
+                ? const Color.fromARGB(255, 184, 173, 237).withOpacity(0.9)
+                : Colors.white,
+            spreadRadius: 2,
             blurRadius: focusNode.hasFocus ? 12 : 8,
             offset: const Offset(0, 4),
           ),
@@ -261,7 +325,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         maxLength: 1,
         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
-          counterText: "",
+          counterText: '',
           filled: true,
           fillColor: const Color.fromARGB(255, 212, 211, 211),
           enabledBorder: OutlineInputBorder(
@@ -270,43 +334,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(
-              color: ColorPallet.primaryBlue,
-              width: 2.5,
-            ),
+            borderSide:
+                const BorderSide(color: ColorPallet.primaryBlue, width: 2.5),
           ),
         ),
         onChanged: (value) {
-          if (value.length == 1) {
-            focusNode.nextFocus();
-          } else if (value.isEmpty) {
-            focusNode.previousFocus();
+          if (value.length == 1 && index < 3) {
+            FocusScope.of(context).requestFocus(focusNodes[index + 1]);
+          } else if (value.isEmpty && index > 0) {
+            FocusScope.of(context).requestFocus(focusNodes[index - 1]);
           }
         },
       ),
     );
   }
-
-  // Widget _otpTextField(TextEditingController controller, BuildContext context) {
-  //   return SizedBox(
-  //     height: 60,
-  //     width: 60,
-  //     child: TextField(
-  //       controller: controller,
-  //       keyboardType: TextInputType.number,
-  //       textAlign: TextAlign.center,
-  //       maxLength: 1,
-  //       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-  //       decoration: InputDecoration(
-  //         counterText: "",
-  //         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-  //       ),
-  //       onChanged: (value) {
-  //         if (value.length == 1) {
-  //           FocusScope.of(context).nextFocus();
-  //         }
-  //       },
-  //     ),
-  //   );
-  // }
 }

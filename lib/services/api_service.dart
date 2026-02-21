@@ -171,6 +171,18 @@ class ApiService {
   }
 
   // ─────────────────────────────────────────────
+  // Resend OTP — Forgot Password flow
+  // POST /api/v1/auth/resend-reset-otp
+  // ─────────────────────────────────────────────
+  Future<void> resendResetOtp({required String email}) async {
+    try {
+      await _dio.post('$_authBase/resend-reset-otp', data: {'email': email});
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─────────────────────────────────────────────
   // 6. FORGOT PASSWORD — Request OTP
   // POST /api/v1/auth/forgot-password
   // ─────────────────────────────────────────────

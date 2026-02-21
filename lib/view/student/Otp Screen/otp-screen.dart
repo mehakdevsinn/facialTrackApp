@@ -145,7 +145,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
   Future<void> _handleResend() async {
     try {
-      await ApiService.instance.resendOtp(email: widget.email);
+      await ApiService.instance.resendResetOtp(email: widget.email);
       _showSuccess('A new code has been sent to ${widget.email}.');
       _startResendCooldown();
       for (var ctrl in otpControllers) {

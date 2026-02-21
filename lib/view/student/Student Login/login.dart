@@ -209,7 +209,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 ),
               ),
 
-              // Forgot Password (disabled until backend adds route)
+              // Forgot Password
               Padding(
                 padding: const EdgeInsets.only(right: 15),
                 child: Align(
@@ -219,7 +219,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ForgotPasswordScreen(),
+                          builder: (context) => ForgotPasswordScreen(
+                            loginScreen: const StudentLoginScreen(),
+                          ),
                         ),
                       );
                     },

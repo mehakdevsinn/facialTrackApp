@@ -3,6 +3,7 @@ import 'package:facialtrackapp/models/user_model.dart';
 import 'package:facialtrackapp/services/api_service.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:facialtrackapp/view/student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -195,17 +196,26 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                 ),
               ),
 
-              // Forgot Password — greyed out until backend adds route
+              // Forgot Password
               Padding(
                 padding: const EdgeInsets.only(right: 15, top: 4),
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: null, // no backend route yet
-                    child: Text(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordScreen(
+                            loginScreen: const TeacherLoginScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: Colors.grey.shade400,
+                        color: ColorPallet.primaryBlue,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

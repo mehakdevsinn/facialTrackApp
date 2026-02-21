@@ -171,6 +171,56 @@ class ApiService {
   }
 
   // ─────────────────────────────────────────────
+  // 6. FORGOT PASSWORD — Request OTP
+  // POST /api/v1/auth/forgot-password
+  // ─────────────────────────────────────────────
+  Future<void> forgotPassword({required String email}) async {
+    try {
+      await _dio.post('$_authBase/forgot-password', data: {'email': email});
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 7. VERIFY RESET OTP — Validate OTP (does NOT consume it)
+  // POST /api/v1/auth/verify-reset-otp
+  // ─────────────────────────────────────────────
+  Future<void> verifyResetOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    try {
+      await _dio.post('$_authBase/verify-reset-otp', data: {
+        'email': email,
+        'otp_code': otpCode,
+      });
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 8. RESET PASSWORD — Set new password (consumes OTP)
+  // POST /api/v1/auth/reset-password
+  // ─────────────────────────────────────────────
+  Future<void> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.post('$_authBase/reset-password', data: {
+        'email': email,
+        'otp_code': otpCode,
+        'new_password': newPassword,
+      });
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─────────────────────────────────────────────
   // 4. LOGIN (unified for Student, Teacher, Admin)
   // POST /api/v1/auth/login
   // ─────────────────────────────────────────────

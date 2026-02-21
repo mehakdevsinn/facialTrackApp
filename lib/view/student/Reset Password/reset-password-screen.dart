@@ -1,39 +1,187 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
-import 'package:facialtrackapp/view/student/Password%20Changed/password-changed-screen.dart';
 import 'package:flutter/material.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
+  final String email;
+  final String otpCode;
+  final Widget loginScreen;
+
+  const ResetPasswordScreen({
+    Key? key,
+    required this.email,
+    required this.otpCode,
+    required this.loginScreen,
+  }) : super(key: key);
+
   @override
-  _ResetPasswordScreenState createState() => _ResetPasswordScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool isLoading = false;
 
-  final FocusNode newpasswordFocus = FocusNode();
-  String password = "";
+  final FocusNode newPasswordFocus = FocusNode();
+  final FocusNode confirmPasswordFocus = FocusNode();
+  String password = '';
+  String confirmPassword = '';
 
-  final FocusNode confirmpasswordFocus = FocusNode();
-  String confirmpassword = "";
-  bool _obscureText = true;
+  bool get isButtonEnabled => password.isNotEmpty && confirmPassword.isNotEmpty;
 
-  bool get isButtonEnabled => password.isNotEmpty && confirmpassword.isNotEmpty;
+  @override
+  void initState() {
+    super.initState();
+    newPasswordFocus.addListener(() => setState(() {}));
+    confirmPasswordFocus.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    newPasswordFocus.dispose();
+    confirmPasswordFocus.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _handleReset() async {
+    if (password != confirmPassword) {
+      _showError('Passwords do not match.');
+      return;
+    }
+    if (password.length < 8) {
+      _showError('Password must be at least 8 characters.');
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      await ApiService.instance.resetPassword(
+        email: widget.email,
+        otpCode: widget.otpCode,
+        newPassword: password,
+      );
+
+      if (mounted) {
+        // Show success dialog then navigate back to login
+        _showSuccessDialog();
+      }
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  void _showSuccessDialog() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: anim1.value,
+          child: Opacity(
+            opacity: anim1.value,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 35,
+                    backgroundColor: ColorPallet.softGreen.withOpacity(0.12),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: ColorPallet.softGreen,
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Password Reset!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Your password has been reset successfully. Please log in with your new password.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorPallet.primaryBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      onPressed: () {
+                        // Clear entire stack and go to the role's login screen
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => widget.loginScreen,
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      child: const Text(
+                        'Back to Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: Colors.white,
         backgroundColor: Colors.grey[100],
-
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: const Icon(
@@ -57,126 +205,68 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
 
-              SizedBox(height: 24),
-              Text(
-                "New Password",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "Your new password must be unique from those previously used.",
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
-              SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-              // // New Password
-              // TextFormField(
-              //   obscureText: _obscureNew,
-              //   decoration: InputDecoration(
-              //     labelText: "New Password",
-              //     border: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(12),
-              //     ),
-              //     suffixIcon: IconButton(
-              //       icon: Icon(
-              //         _obscureNew ? Icons.visibility_off : Icons.visibility,
-              //       ),
-              //       onPressed: () {
-              //         setState(() {
-              //           _obscureNew = !_obscureNew;
-              //         });
-              //       },
-              //     ),
-              //   ),
-              // ),
+              const Text(
+                'Create New Password',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Your new password must be at least 8 characters\nand different from previously used passwords.',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+              const SizedBox(height: 32),
+
+              // New Password
               buildTextField(
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureNew ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
                   ),
-                  onPressed: () {
-                    setState(() => _obscureNew = !_obscureNew);
-                  },
+                  onPressed: () => setState(() => _obscureNew = !_obscureNew),
                 ),
-
                 obscureText: _obscureNew,
-                label: "Password",
-                hint: "Enter your New Password ",
+                label: 'New Password',
+                hint: 'Enter your new password',
                 icon: Icons.lock_outline,
                 activeColor: ColorPallet.primaryBlue,
                 inactiveColor: Colors.grey,
-                focusNode: newpasswordFocus,
-
-                onChange: (value) {
-                  setState(() {
-                    // _obscureNew = !_obscureNew;
-                    password = value;
-                  });
-                },
+                focusNode: newPasswordFocus,
+                onChange: (value) => setState(() => password = value),
               ),
 
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
+
+              // Confirm Password
               buildTextField(
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
                   ),
-                  onPressed: () {
-                    setState(() => _obscureConfirm = !_obscureConfirm);
-                  },
+                  onPressed: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
                 ),
-
                 obscureText: _obscureConfirm,
-                label: "Confirm Password",
-                hint: "Enter your Confirm Password ",
+                label: 'Confirm Password',
+                hint: 'Re-enter your new password',
                 icon: Icons.lock_outline,
                 activeColor: ColorPallet.primaryBlue,
                 inactiveColor: Colors.grey,
-                focusNode: confirmpasswordFocus,
-                onChange: (value) {
-                  setState(() {
-                    // _obscureConfirm = !_obscureConfirm;
-                    confirmpassword = value;
-                  });
-                },
+                focusNode: confirmPasswordFocus,
+                onChange: (value) => setState(() => confirmPassword = value),
               ),
-              // // Confirm Password
-              // TextFormField(
-              //   obscureText: _obscureConfirm,
-              //   decoration: InputDecoration(
-              //     labelText: "Confirm Password",
-              //     border: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(12),
-              //     ),
-              //     suffixIcon: IconButton(
-              //       icon: Icon(
-              //         _obscureConfirm ? Icons.visibility_off : Icons.visibility,
-              //       ),
-              //       onPressed: () {
-              //         setState(() {
-              //           _obscureConfirm = !_obscureConfirm;
-              //         });
-              //       },
-              //     ),
-              //   ),
-              // ),
-              SizedBox(height: 40),
 
-              // Button
+              const SizedBox(height: 40),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: isButtonEnabled
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PasswordChangedScreen(),
-                            ),
-                          );
-                        }
-                      : SizedBox.shrink,
+                  onPressed:
+                      (isButtonEnabled && !isLoading) ? _handleReset : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isButtonEnabled
                         ? ColorPallet.primaryBlue
@@ -185,14 +275,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text(
-                    "Reset Password",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: ColorPallet.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text(
+                          'Save New Password',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: ColorPallet.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],

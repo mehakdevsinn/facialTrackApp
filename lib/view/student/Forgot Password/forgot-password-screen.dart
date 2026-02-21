@@ -1,30 +1,83 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/student/Otp%20Screen/otp-screen.dart';
 import 'package:flutter/material.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  ForgotPasswordScreen({Key? key}) : super(key: key);
+  /// The login screen to return to after a successful password reset.
+  /// Pass the widget of the caller's login screen (e.g. StudentLoginScreen()).
+  final Widget loginScreen;
+
+  const ForgotPasswordScreen({Key? key, required this.loginScreen})
+      : super(key: key);
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final TextEditingController emailController = TextEditingController();
+  final FocusNode emailFocus = FocusNode();
+  String email = '';
+  bool isLoading = false;
 
-  final FocusNode passwordFocus = FocusNode();
-  String password = "";
+  bool get isButtonEnabled => email.isNotEmpty;
 
-  bool get isButtonEnabled => password.isNotEmpty;
+  @override
+  void initState() {
+    super.initState();
+    emailFocus.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    emailFocus.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _handleSendOtp() async {
+    setState(() => isLoading = true);
+    try {
+      await ApiService.instance.forgotPassword(email: email);
+      // Backend always returns 200 even if email doesn't exist (security)
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ForgotPasswordOtpScreen(
+              email: email,
+              loginScreen: widget.loginScreen,
+            ),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: Colors.white,
         backgroundColor: Colors.grey[100],
-
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
@@ -40,7 +93,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
               Container(
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 232, 241, 248),
@@ -53,57 +105,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   color: ColorPallet.primaryBlue,
                 ),
               ),
-
               const SizedBox(height: 24),
-
               const Text(
-                "Forgot Password?",
+                'Forgot Password?',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
-
               const SizedBox(height: 8),
-
               const Text(
-                "Don’t worry! It happens. Please enter the email\naddress linked to your account.",
-                style: TextStyle(fontSize: 16, color: ColorPallet.grey),
+                "Don't worry! Enter the email address linked to\nyour account and we'll send you a reset code.",
+                style: TextStyle(fontSize: 15, color: ColorPallet.grey),
               ),
-
               const SizedBox(height: 32),
-
               buildTextField(
-                label: "Email",
-                hint: "Enter your Email ",
+                label: 'Email Address',
+                hint: 'Enter your registered email',
                 icon: Icons.email_outlined,
                 activeColor: ColorPallet.primaryBlue,
                 inactiveColor: Colors.grey,
-                focusNode: passwordFocus,
-                onChange: (value) {
-                  setState(() {
-                    password = value;
-                  });
-                },
+                focusNode: emailFocus,
+                onChange: (value) => setState(() => email = value.trim()),
               ),
-
               const SizedBox(height: 32),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: isButtonEnabled
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OtpScreen(),
-                            ),
-                          );
-                        }
-                      : SizedBox.shrink,
+                  onPressed:
+                      (isButtonEnabled && !isLoading) ? _handleSendOtp : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isButtonEnabled
                         ? ColorPallet.primaryBlue
@@ -112,14 +144,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    "Send Code",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: ColorPallet.white,
-                    ),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text(
+                          'Send Reset Code',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: ColorPallet.white,
+                          ),
+                        ),
                 ),
               ),
             ],

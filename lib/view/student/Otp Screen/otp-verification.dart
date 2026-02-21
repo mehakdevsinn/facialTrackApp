@@ -25,18 +25,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     (_) => TextEditingController(),
   );
 
-  Timer? _timer;
-  int _start = 600; // 10 minutes = 600 seconds
+  Timer? _resendTimer;
+  int _resendCooldown = 60;
+  bool _canResend = false;
 
   @override
   void initState() {
     super.initState();
-    startTimer();
+    _startResendCooldown();
     focusNodes = List.generate(4, (index) => FocusNode());
     for (var controller in otpControllers) {
       controller.addListener(_checkIfAllFieldsFilled);
     }
-    // Rebuild on focus change so border color updates
     for (var node in focusNodes) {
       node.addListener(() => setState(() {}));
     }
@@ -52,7 +52,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _resendTimer?.cancel();
     for (var controller in otpControllers) {
       controller.dispose();
     }
@@ -62,26 +62,22 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
-  void startTimer() {
-    _start = 600;
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  void _startResendCooldown() {
+    _resendCooldown = 60;
+    _canResend = false;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          if (_start > 0) {
-            _start--;
+          if (_resendCooldown > 0) {
+            _resendCooldown--;
           } else {
-            _timer?.cancel();
+            _canResend = true;
+            _resendTimer?.cancel();
           }
         });
       }
     });
-  }
-
-  String get _timerDisplay {
-    int minutes = _start ~/ 60;
-    int seconds = _start % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   void _showError(String message) {
@@ -151,8 +147,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     try {
       await ApiService.instance.resendOtp(email: widget.email);
       _showSuccess('A new OTP has been sent to your email.');
-      startTimer();
-      // Clear OTP fields
+      _startResendCooldown();
       for (var ctrl in otpControllers) {
         ctrl.clear();
       }
@@ -257,34 +252,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Timer / Resend
+              // Resend button with 60-second cooldown
               Center(
-                child: _start > 0
-                    ? Text(
-                        'OTP expires in $_timerDisplay',
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.grey.shade600),
+                child: _canResend
+                    ? TextButton.icon(
+                        onPressed: _handleResend,
+                        icon: const Icon(Icons.refresh,
+                            size: 18, color: ColorPallet.primaryBlue),
+                        label: const Text(
+                          'Resend Email',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: ColorPallet.primaryBlue,
+                          ),
+                        ),
                       )
-                    : Column(
-                        children: [
-                          Text(
-                            'OTP has expired.',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.red.shade400),
-                          ),
-                          TextButton(
-                            onPressed: _handleResend,
-                            child: const Text(
-                              'Resend OTP',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                    : Text(
+                        'Resend email in ${_resendCooldown}s',
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.grey.shade500),
                       ),
               ),
             ],

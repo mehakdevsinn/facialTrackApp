@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:flutter/material.dart';
 
 class ChangePasswordScreenStudentProfile extends StatefulWidget {
@@ -21,6 +22,7 @@ class _ChangePasswordScreenStudentProfileState
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -53,7 +55,6 @@ class _ChangePasswordScreenStudentProfileState
             children: [
               const Text(
                 "Change Password",
-
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -106,8 +107,8 @@ class _ChangePasswordScreenStudentProfileState
                   toggleVisibility: () =>
                       setState(() => _obscureNew = !_obscureNew),
                   validator: (value) {
-                    if (value == null || value.length < 6)
-                      return "Password must be at least 6 characters";
+                    if (value == null || value.length < 8)
+                      return "Password must be at least 8 characters";
                     return null;
                   },
                 ),
@@ -139,12 +140,13 @@ class _ChangePasswordScreenStudentProfileState
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Agar validation pass ho gayi (matching successful)
-                          _showSuccessDialog(context);
-                        }
-                      },
+                      onPressed: _isLoading
+                          ? null
+                          : () async {
+                              if (_formKey.currentState!.validate()) {
+                                await _handleChangePassword();
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorPallet.primaryBlue,
                         shape: RoundedRectangleBorder(
@@ -153,14 +155,23 @@ class _ChangePasswordScreenStudentProfileState
                         elevation: 5,
                         shadowColor: ColorPallet.primaryBlue.withOpacity(0.4),
                       ),
-                      child: const Text(
-                        "Update Password",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Text(
+                              "Update Password",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -170,6 +181,50 @@ class _ChangePasswordScreenStudentProfileState
         ),
       ),
     );
+  }
+
+  Future<void> _handleChangePassword() async {
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.instance.changePassword(
+        oldPassword: _oldPassController.text,
+        newPassword: _newPassController.text,
+      );
+      // Clear all fields on success
+      _oldPassController.clear();
+      _newPassController.clear();
+      _confirmPassController.clear();
+      _formKey.currentState?.reset(); // clear validation errors
+      if (mounted) _showSuccessDialog(context);
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Something went wrong. Please try again.'),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   // Success Popup Logic
@@ -185,7 +240,6 @@ class _ChangePasswordScreenStudentProfileState
               backgroundColor: Color(0xFFE8F5E9), // Light green
               child: Icon(Icons.check_circle, color: Colors.green, size: 40),
             ),
-
             const SizedBox(height: 20),
             const Text(
               "Success!",

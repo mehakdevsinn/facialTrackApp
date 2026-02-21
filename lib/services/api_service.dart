@@ -288,4 +288,26 @@ class ApiService {
   Future<void> logout() async {
     await StorageService.clearAll();
   }
+
+  // ─────────────────────────────────────────────
+  // 9. CHANGE PASSWORD (authenticated)
+  // POST /api/v1/auth/change-password
+  // ─────────────────────────────────────────────
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.post(
+        '$_authBase/change-password',
+        data: {
+          'old_password': oldPassword,
+          'new_password': newPassword,
+        },
+        options: await _authHeader(),
+      );
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }

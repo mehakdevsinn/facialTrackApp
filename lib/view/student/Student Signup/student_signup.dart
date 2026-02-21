@@ -21,7 +21,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   final FocusNode passwordFocus = FocusNode();
   final FocusNode confirmPasswordFocus = FocusNode();
   final FocusNode rollNoFocus = FocusNode();
-  final FocusNode departmentFocus = FocusNode();
   final FocusNode sectionFocus = FocusNode();
 
   @override
@@ -32,7 +31,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
     passwordFocus.addListener(() => setState(() {}));
     confirmPasswordFocus.addListener(() => setState(() {}));
     rollNoFocus.addListener(() => setState(() {}));
-    departmentFocus.addListener(() => setState(() {}));
     sectionFocus.addListener(() => setState(() {}));
   }
 
@@ -43,7 +41,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
     passwordFocus.dispose();
     confirmPasswordFocus.dispose();
     rollNoFocus.dispose();
-    departmentFocus.dispose();
     sectionFocus.dispose();
     super.dispose();
   }
@@ -56,7 +53,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   String password = "";
   String confirmPassword = "";
   String rollNo = "";
-  String department = "";
   String section = ""; // Optional
   String? selectedSemester;
 
@@ -68,7 +64,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
       password.isNotEmpty &&
       confirmPassword.isNotEmpty &&
       rollNo.isNotEmpty &&
-      department.isNotEmpty &&
       selectedSemester != null;
 
   final List<String> semesters = [
@@ -115,7 +110,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
         fullName: fullName,
         role: 'student',
         rollNumber: rollNo,
-        department: department,
         semester: selectedSemester!,
         section: section,
       );
@@ -262,24 +256,9 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                       inactiveColor: Colors.grey,
                       focusNode: rollNoFocus,
                       onChange: (value) => setState(() => rollNo = value),
-                      label: "Roll No / Reg ID",
+                      label: "Roll No",
                       hint: "e.g. 2021-CS-123",
                       icon: Icons.badge_outlined,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Department
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: buildTextField(
-                      activeColor: ColorPallet.primaryBlue,
-                      inactiveColor: Colors.grey,
-                      focusNode: departmentFocus,
-                      onChange: (value) => setState(() => department = value),
-                      label: "Department",
-                      hint: "e.g. Computer Science",
-                      icon: Icons.apartment_outlined,
                     ),
                   ),
                   const SizedBox(height: 15),

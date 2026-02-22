@@ -310,4 +310,60 @@ class ApiService {
       throw _handleError(e);
     }
   }
+
+  // ─────────────────────────────────────────────
+  // 10. LIST ALL TEACHERS (Admin)
+  // GET /api/v1/admin/teachers/
+  // ─────────────────────────────────────────────
+  Future<List<UserModel>> getAllTeachers() async {
+    try {
+      final response = await _dio.get(
+        '/api/v1/admin/teachers/',
+        options: await _authHeader(),
+      );
+      final List data = response.data as List;
+      return data
+          .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 11. CREATE TEACHER (Admin)
+  // POST /api/v1/admin/teachers/
+  // ─────────────────────────────────────────────
+  Future<UserModel> createTeacher({
+    required String email,
+    required String fullName,
+    String? phoneNumber,
+    String? designation,
+    String? qualification,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {
+        'email': email,
+        'full_name': fullName,
+      };
+      if (phoneNumber != null && phoneNumber.isNotEmpty) {
+        body['phone_number'] = phoneNumber;
+      }
+      if (designation != null && designation.isNotEmpty) {
+        body['designation'] = designation;
+      }
+      if (qualification != null && qualification.isNotEmpty) {
+        body['qualification'] = qualification;
+      }
+
+      final response = await _dio.post(
+        '/api/v1/admin/teachers/',
+        data: body,
+        options: await _authHeader(),
+      );
+      return UserModel.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }

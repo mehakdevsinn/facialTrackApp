@@ -10,6 +10,9 @@ class UserModel {
   final String? department;
   final String? semester;
   final String? section;
+  final String? phoneNumber;
+  final String? designation;
+  final String? qualification;
 
   UserModel({
     required this.id,
@@ -23,6 +26,9 @@ class UserModel {
     this.department,
     this.semester,
     this.section,
+    this.phoneNumber,
+    this.designation,
+    this.qualification,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +44,9 @@ class UserModel {
       department: json['department'],
       semester: json['semester'],
       section: json['section'],
+      phoneNumber: json['phone_number'],
+      designation: json['designation'],
+      qualification: json['qualification'],
     );
   }
 

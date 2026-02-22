@@ -1,325 +1,7 @@
-// import 'package:facialtrackapp/constants/color_pallet.dart';
-// import 'package:flutter/material.dart';
-
-// // 1. Create a Teacher model to handle data easily
-// class Teacher {
-//   final String name, dept, email, initials, status;
-//   final Color statusColor;
-
-//   Teacher({
-//     required this.name,
-//     required this.dept,
-//     required this.email,
-//     required this.initials,
-//     required this.status,
-//     required this.statusColor,
-//   });
-// }
-
-// class ManageTeachersScreen extends StatefulWidget {
-//   const ManageTeachersScreen({super.key});
-
-//   @override
-//   State<ManageTeachersScreen> createState() => _ManageTeachersScreenState();
-// }
-
-// class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
-//   // Full list of teachers
-//   final List<Teacher> allTeachers = [
-//     Teacher(
-//       name: "Dr. Sarah Ahmed",
-//       dept: "Computer Science",
-//       email: "sarah.a@uni.edu",
-//       initials: "DS",
-//       status: "Active",
-//       statusColor: Colors.green,
-//     ),
-//     Teacher(
-//       name: "Prof. Usman Khan",
-//       dept: "Software Engineering",
-//       email: "usman.k@uni.edu",
-//       initials: "PU",
-//       status: "Active",
-//       statusColor: Colors.green,
-//     ),
-//     Teacher(
-//       name: "Engr. Maria Ali",
-//       dept: "Information Tech",
-//       email: "maria.a@uni.edu",
-//       initials: "EM",
-//       status: "On Leave",
-//       statusColor: Colors.orange,
-//     ),
-//   ];
-
-//   // List that will be displayed (filtered)
-//   List<Teacher> displayedTeachers = [];
-//   final TextEditingController _searchController = TextEditingController();
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     displayedTeachers = allTeachers; // Initial state shows everyone
-//   }
-
-//   // Logic for searching
-//   void _runFilter(String enteredKeyword) {
-//     List<Teacher> results = [];
-//     if (enteredKeyword.isEmpty) {
-//       results = allTeachers;
-//     } else {
-//       results = allTeachers
-//           .where(
-//             (teacher) =>
-//                 teacher.name.toLowerCase().contains(
-//                   enteredKeyword.toLowerCase(),
-//                 ) ||
-//                 teacher.dept.toLowerCase().contains(
-//                   enteredKeyword.toLowerCase(),
-//                 ),
-//           )
-//           .toList();
-//     }
-
-//     setState(() {
-//       displayedTeachers = results;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.grey[100],
-//       body: Column(
-//         children: [
-//           _buildHeader(context),
-//           Expanded(
-//             child: displayedTeachers.isNotEmpty
-//                 ? ListView.builder(
-//                     padding: const EdgeInsets.symmetric(
-//                       horizontal: 16,
-//                       vertical: 20,
-//                     ),
-//                     itemCount: displayedTeachers.length,
-//                     itemBuilder: (context, index) {
-//                       final teacher = displayedTeachers[index];
-//                       return TeacherCard(teacher: teacher);
-//                     },
-//                   )
-//                 : const Center(child: Text("No teachers found.")),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildHeader(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30),
-//       decoration: const BoxDecoration(
-//         gradient: LinearGradient(
-//           colors: [
-//             ColorPallet.primaryBlue,
-//             //  Color(0xFF5C6BC0)
-//             ColorPallet.primaryBlue,
-//           ],
-//           begin: Alignment.topLeft,
-//           end: Alignment.bottomRight,
-//         ),
-//         borderRadius: BorderRadius.only(
-//           bottomLeft: Radius.circular(30),
-//           bottomRight: Radius.circular(30),
-//         ),
-//       ),
-//       child: Column(
-//         children: [
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-//               const Text(
-//                 "Manage Teachers",
-//                 style: TextStyle(
-//                   color: Colors.white,
-//                   fontSize: 20,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               ElevatedButton.icon(
-//                 onPressed: () {},
-//                 icon: const Icon(
-//                   Icons.person_add_alt_1,
-//                   size: 18,
-//                   color: ColorPallet.primaryBlue,
-//                 ),
-//                 label: const Text(
-//                   "Add New",
-//                   style: TextStyle(color: ColorPallet.primaryBlue),
-//                 ),
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.white,
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(12),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(height: 25),
-//           TextField(
-//             controller: _searchController,
-//             onChanged: (value) =>
-//                 _runFilter(value), // Triggers filter on every keystroke
-//             cursorColor: Colors.white,
-//             style: const TextStyle(color: Colors.white),
-//             decoration: InputDecoration(
-//               filled: true,
-//               fillColor: Colors.white.withOpacity(0.2),
-//               prefixIcon: const Icon(Icons.search, color: Colors.white70),
-//               suffixIcon: _searchController.text.isNotEmpty
-//                   ? IconButton(
-//                       icon: const Icon(Icons.clear, color: Colors.white70),
-//                       onPressed: () {
-//                         _searchController.clear();
-//                         _runFilter('');
-//                       },
-//                     )
-//                   : null,
-//               hintText: "Search by name or department...",
-//               hintStyle: const TextStyle(color: Colors.white70),
-//               border: OutlineInputBorder(
-//                 borderRadius: BorderRadius.circular(15),
-//                 borderSide: BorderSide.none,
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class TeacherCard extends StatelessWidget {
-//   final Teacher teacher;
-
-//   const TeacherCard({super.key, required this.teacher});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 16),
-//       padding: const EdgeInsets.all(16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(20),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.04),
-//             blurRadius: 10,
-//             offset: const Offset(0, 4),
-//           ),
-//         ],
-//       ),
-//       child: Row(
-//         children: [
-//           CircleAvatar(
-//             radius: 28,
-//             backgroundColor: const Color(0xFFE8EAF6),
-//             child: Text(
-//               teacher.initials,
-//               style: const TextStyle(
-//                 color: Color(0xFF3F51B5),
-//                 fontWeight: FontWeight.bold,
-//               ),
-//             ),
-//           ),
-//           const SizedBox(width: 16),
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   teacher.name,
-//                   style: const TextStyle(
-//                     fontWeight: FontWeight.bold,
-//                     fontSize: 16,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 4),
-//                 Row(
-//                   children: [
-//                     const Icon(Icons.business, size: 14, color: Colors.grey),
-//                     const SizedBox(width: 4),
-//                     Text(
-//                       teacher.dept,
-//                       style: const TextStyle(color: Colors.grey, fontSize: 13),
-//                     ),
-//                   ],
-//                 ),
-//                 Row(
-//                   children: [
-//                     const Icon(
-//                       Icons.email_outlined,
-//                       size: 14,
-//                       color: Colors.grey,
-//                     ),
-//                     const SizedBox(width: 4),
-//                     Text(
-//                       teacher.email,
-//                       style: const TextStyle(color: Colors.grey, fontSize: 13),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Column(
-//             crossAxisAlignment: CrossAxisAlignment.end,
-//             children: [
-//               Container(
-//                 padding: const EdgeInsets.symmetric(
-//                   horizontal: 10,
-//                   vertical: 4,
-//                 ),
-//                 decoration: BoxDecoration(
-//                   color: teacher.statusColor.withOpacity(0.1),
-//                   borderRadius: BorderRadius.circular(8),
-//                 ),
-//                 child: Text(
-//                   teacher.status,
-//                   style: TextStyle(
-//                     color: teacher.statusColor,
-//                     fontSize: 11,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(height: 10),
-//               const Icon(Icons.more_vert, color: Colors.grey),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/models/user_model.dart';
+import 'package:facialtrackapp/services/api_service.dart';
 import 'package:flutter/material.dart';
-
-class Teacher {
-  final String name, dept, email, initials, status;
-  final Color statusColor;
-
-  Teacher({
-    required this.name,
-    required this.dept,
-    required this.email,
-    required this.initials,
-    required this.status,
-    required this.statusColor,
-  });
-}
 
 class ManageTeachersScreen extends StatefulWidget {
   const ManageTeachersScreen({super.key});
@@ -329,246 +11,311 @@ class ManageTeachersScreen extends StatefulWidget {
 }
 
 class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
-  // Initial Data
-  final List<Teacher> allTeachers = [
-    Teacher(
-      name: "Dr. Sarah Ahmed",
-      dept: "Computer Science",
-      email: "sarah.a@uni.edu",
-      initials: "DS",
-      status: "Active",
-      statusColor: Colors.green,
-    ),
-    Teacher(
-      name: "Prof. Usman Khan",
-      dept: "Software Engineering",
-      email: "usman.k@uni.edu",
-      initials: "PU",
-      status: "Active",
-      statusColor: Colors.green,
-    ),
-    Teacher(
-      name: "Engr. Maria Ali",
-      dept: "Information Tech",
-      email: "maria.a@uni.edu",
-      initials: "EM",
-      status: "On Leave",
-      statusColor: Colors.orange,
-    ),
-  ];
+  List<UserModel> _allTeachers = [];
+  List<UserModel> _displayedTeachers = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  List<Teacher> displayedTeachers = [];
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    displayedTeachers = List.from(allTeachers);
+    _fetchTeachers();
   }
 
-  void _runFilter(String enteredKeyword) {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchTeachers() async {
     setState(() {
-      displayedTeachers = allTeachers
-          .where(
-            (t) =>
-                t.name.toLowerCase().contains(enteredKeyword.toLowerCase()) ||
-                t.dept.toLowerCase().contains(enteredKeyword.toLowerCase()),
-          )
-          .toList();
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final teachers = await ApiService.instance.getAllTeachers();
+      if (mounted) {
+        setState(() {
+          _allTeachers = teachers;
+          _displayedTeachers = List.from(teachers);
+          _isLoading = false;
+        });
+      }
+    } on AuthException catch (e) {
+      if (mounted)
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.message;
+        });
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Failed to load teachers.';
+        });
+    }
+  }
+
+  void _runFilter(String keyword) {
+    setState(() {
+      _displayedTeachers = keyword.isEmpty
+          ? List.from(_allTeachers)
+          : _allTeachers
+              .where((t) =>
+                  t.fullName.toLowerCase().contains(keyword.toLowerCase()) ||
+                  (t.designation ?? '')
+                      .toLowerCase()
+                      .contains(keyword.toLowerCase()) ||
+                  t.email.toLowerCase().contains(keyword.toLowerCase()))
+              .toList();
     });
   }
 
-  // --- THE NEW DIALOG FUNCTION ---
   void _showAddTeacherSheet() {
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final deptController = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final designationCtrl = TextEditingController();
+    final qualificationCtrl = TextEditingController();
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Allows keyboard to push the sheet up
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-          top: 20,
-          left: 20,
-          right: 20,
-          bottom:
-              MediaQuery.of(context).viewInsets.bottom + 20, // Keyboard padding
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Add New Teacher",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildLabel("FULL NAME"),
-              _buildTextField(
-                nameController,
-                "Dr. John Doe",
-                Icons.person_outline,
-              ),
-              const SizedBox(height: 15),
-              _buildLabel("EMAIL ADDRESS"),
-              _buildTextField(
-                emailController,
-                "john.doe@university.edu",
-                Icons.email_outlined,
-              ),
-              const SizedBox(height: 15),
-              _buildLabel("DEPARTMENT"),
-              _buildTextField(
-                deptController,
-                "Computer Science",
-                Icons.business_outlined,
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    if (nameController.text.isNotEmpty &&
-                        emailController.text.isNotEmpty) {
-                      _addNewTeacher(
-                        nameController.text,
-                        deptController.text,
-                        emailController.text,
-                      );
-                      Navigator.pop(context); // Close sheet
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Teacher Added Successfully!"),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    "Register Teacher",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorPallet.primaryBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Container(
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sheet handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-              ),
-            ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Add New Teacher',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'A secure password will be auto-generated and emailed to the teacher.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                ),
+                const SizedBox(height: 20),
+
+                _buildLabel('FULL NAME *'),
+                _buildTextField(nameCtrl, 'Dr. John Doe', Icons.person_outline),
+                const SizedBox(height: 14),
+
+                _buildLabel('EMAIL ADDRESS *'),
+                _buildTextField(
+                    emailCtrl, 'john.doe@university.edu', Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress),
+                const SizedBox(height: 14),
+
+                _buildLabel('PHONE NUMBER'),
+                _buildTextField(phoneCtrl, '0300-1234567', Icons.phone_outlined,
+                    keyboardType: TextInputType.phone),
+                const SizedBox(height: 14),
+
+                _buildLabel('DESIGNATION'),
+                _buildTextField(
+                    designationCtrl, 'Associate Professor', Icons.work_outline),
+                const SizedBox(height: 14),
+
+                _buildLabel('QUALIFICATION'),
+                _buildTextField(qualificationCtrl, 'PhD Computer Science',
+                    Icons.school_outlined),
+                const SizedBox(height: 28),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton.icon(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            if (nameCtrl.text.trim().isEmpty ||
+                                emailCtrl.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                      'Name and Email are required.'),
+                                  backgroundColor: Colors.red.shade600,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  margin: const EdgeInsets.all(16),
+                                ),
+                              );
+                              return;
+                            }
+                            setSheetState(() => isSubmitting = true);
+                            try {
+                              await ApiService.instance.createTeacher(
+                                fullName: nameCtrl.text.trim(),
+                                email: emailCtrl.text.trim(),
+                                phoneNumber: phoneCtrl.text.trim(),
+                                designation: designationCtrl.text.trim(),
+                                qualification: qualificationCtrl.text.trim(),
+                              );
+                              if (mounted) {
+                                Navigator.pop(sheetContext);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                        'Teacher created! Login credentials have been emailed.'),
+                                    backgroundColor: Colors.green.shade600,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.all(16),
+                                  ),
+                                );
+                                _fetchTeachers(); // refresh list
+                              }
+                            } on AuthException catch (e) {
+                              setSheetState(() => isSubmitting = false);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.message),
+                                    backgroundColor: Colors.red.shade600,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.all(16),
+                                  ),
+                                );
+                              }
+                            } catch (_) {
+                              setSheetState(() => isSubmitting = false);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                        'Something went wrong. Please try again.'),
+                                    backgroundColor: Colors.red.shade600,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.all(16),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    icon: isSubmitting
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : const Icon(Icons.check_circle_outline,
+                            color: Colors.white),
+                    label: Text(
+                      isSubmitting ? 'Creating...' : 'Register Teacher',
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorPallet.primaryBlue,
+                      disabledBackgroundColor:
+                          ColorPallet.primaryBlue.withOpacity(0.7),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  void _addNewTeacher(String name, String dept, String email) {
-    String initials = name
-        .trim()
-        .split(' ')
-        .map((e) => e[0])
-        .take(2)
-        .join()
-        .toUpperCase();
-
-    final newTeacher = Teacher(
-      name: name,
-      dept: dept,
-      email: email,
-      initials: initials,
-      status: "Active",
-      statusColor: Colors.green,
-    );
-
-    setState(() {
-      allTeachers.insert(0, newTeacher); // Add to main list
-      displayedTeachers = List.from(allTeachers); // Update search list
-    });
-  }
-
   Widget _buildLabel(String label) => Padding(
-    padding: const EdgeInsets.only(bottom: 8.0),
-    child: Text(
-      label,
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.bold,
-        color: Colors.grey,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(label,
+            style: const TextStyle(
+                fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+      );
 
   Widget _buildTextField(
     TextEditingController controller,
     String hint,
-    IconData icon,
-  ) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.grey[50],
-        prefixIcon: Icon(icon, color: Colors.grey, size: 20),
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) =>
+      TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.grey[50],
+          prefixIcon: Icon(icon, color: Colors.grey, size: 20),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: displayedTeachers.isNotEmpty
-                ? ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 20,
-                    ),
-                    itemCount: displayedTeachers.length,
-                    itemBuilder: (context, index) =>
-                        TeacherCard(teacher: displayedTeachers[index]),
-                  )
-                : const Center(child: Text("No teachers found.")),
-          ),
-        ],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        body: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(child: _buildBody()),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30),
+      padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 30),
       decoration: const BoxDecoration(
         color: ColorPallet.primaryBlue,
         borderRadius: BorderRadius.only(
@@ -581,39 +328,34 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child:
+                    const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              ),
               const Text(
-                "Manage Teachers",
+                'Manage Teachers',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
-                onPressed: _showAddTeacherSheet, // Triggering the dialog
-                icon: const Icon(
-                  Icons.person_add_alt_1,
-                  size: 16,
-                  color: ColorPallet.primaryBlue,
-                ),
-                label: const Text(
-                  "Add New",
-                  style: TextStyle(
-                    color: ColorPallet.primaryBlue,
-                    fontSize: 12,
-                  ),
-                ),
+                onPressed: _showAddTeacherSheet,
+                icon: const Icon(Icons.person_add_alt_1,
+                    size: 16, color: ColorPallet.primaryBlue),
+                label: const Text('Add New',
+                    style: TextStyle(
+                        color: ColorPallet.primaryBlue, fontSize: 12)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                      borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           TextField(
             controller: _searchController,
             onChanged: _runFilter,
@@ -622,7 +364,7 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
               filled: true,
               fillColor: Colors.white.withOpacity(0.2),
               prefixIcon: const Icon(Icons.search, color: Colors.white70),
-              hintText: "Search by name...",
+              hintText: 'Search by name, email or designation...',
               hintStyle: const TextStyle(color: Colors.white70),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -634,12 +376,81 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
       ),
     );
   }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: ColorPallet.primaryBlue),
+      );
+    }
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red.shade300, size: 48),
+            const SizedBox(height: 12),
+            Text(_errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _fetchTeachers,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorPallet.primaryBlue,
+                  foregroundColor: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_displayedTeachers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.group_off_outlined,
+                color: Colors.grey.shade300, size: 64),
+            const SizedBox(height: 12),
+            Text(
+              _searchController.text.isEmpty
+                  ? 'No teachers found.\nTap "Add New" to create one.'
+                  : 'No results for "${_searchController.text}".',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      color: ColorPallet.primaryBlue,
+      onRefresh: _fetchTeachers,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        itemCount: _displayedTeachers.length,
+        itemBuilder: (context, index) =>
+            _TeacherCard(teacher: _displayedTeachers[index]),
+      ),
+    );
+  }
 }
 
-// TeacherCard remains the same as your provided code
-class TeacherCard extends StatelessWidget {
-  final Teacher teacher;
-  const TeacherCard({super.key, required this.teacher});
+// ─── Teacher Card ────────────────────────────────────────────────────────────
+class _TeacherCard extends StatelessWidget {
+  final UserModel teacher;
+  const _TeacherCard({required this.teacher});
+
+  String get _initials {
+    final parts = teacher.fullName.trim().split(' ');
+    return parts
+        .map((p) => p.isNotEmpty ? p[0] : '')
+        .take(2)
+        .join()
+        .toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -663,11 +474,9 @@ class TeacherCard extends StatelessWidget {
             radius: 25,
             backgroundColor: const Color(0xFFE8EAF6),
             child: Text(
-              teacher.initials,
+              _initials,
               style: const TextStyle(
-                color: ColorPallet.primaryBlue,
-                fontWeight: FontWeight.bold,
-              ),
+                  color: ColorPallet.primaryBlue, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 15),
@@ -675,37 +484,20 @@ class TeacherCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  teacher.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  teacher.dept,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                Text(
-                  teacher.email,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
+                Text(teacher.fullName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15)),
+                if (teacher.designation != null &&
+                    teacher.designation!.isNotEmpty)
+                  Text(teacher.designation!,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(teacher.email,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                if (teacher.phoneNumber != null &&
+                    teacher.phoneNumber!.isNotEmpty)
+                  Text(teacher.phoneNumber!,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: teacher.statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Text(
-              teacher.status,
-              style: TextStyle(
-                color: teacher.statusColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         ],

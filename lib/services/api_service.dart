@@ -17,7 +17,7 @@ class ApiService {
 
   late final Dio _dio;
 
-  static const String _baseUrl = 'http://127.0.0.1:8000';
+  static const String _baseUrl = 'https://facialtrackapp.site';
   static const String _authBase = '/api/v1/auth';
 
   factory ApiService() => instance;

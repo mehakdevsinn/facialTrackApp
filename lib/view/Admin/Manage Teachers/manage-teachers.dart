@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/models/user_model.dart';
 import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/view/Admin/Manage%20Teachers/teacher_detail_screen.dart';
 import 'package:flutter/material.dart';
 
 class ManageTeachersScreen extends StatefulWidget {
@@ -330,8 +331,8 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child:
-                    const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                child: const Icon(Icons.arrow_back_ios,
+                    color: Colors.white, size: 20),
               ),
               const Text(
                 'Manage Teachers',
@@ -431,8 +432,22 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         itemCount: _displayedTeachers.length,
-        itemBuilder: (context, index) =>
-            _TeacherCard(teacher: _displayedTeachers[index]),
+        itemBuilder: (context, index) {
+          final teacher = _displayedTeachers[index];
+          return GestureDetector(
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TeacherDetailScreen(teacher: teacher),
+                ),
+              );
+              // Refresh list in case the admin edited details
+              _fetchTeachers();
+            },
+            child: _TeacherCard(teacher: teacher),
+          );
+        },
       ),
     );
   }
@@ -456,7 +471,7 @@ class _TeacherCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -471,12 +486,14 @@ class _TeacherCard extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            radius: 25,
+            radius: 28,
             backgroundColor: const Color(0xFFE8EAF6),
             child: Text(
               _initials,
               style: const TextStyle(
-                  color: ColorPallet.primaryBlue, fontWeight: FontWeight.bold),
+                  color: ColorPallet.primaryBlue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16),
             ),
           ),
           const SizedBox(width: 15),
@@ -484,22 +501,22 @@ class _TeacherCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(teacher.fullName,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
-                if (teacher.designation != null &&
-                    teacher.designation!.isNotEmpty)
-                  Text(teacher.designation!,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                Text(teacher.email,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                if (teacher.phoneNumber != null &&
-                    teacher.phoneNumber!.isNotEmpty)
-                  Text(teacher.phoneNumber!,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  teacher.fullName,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  teacher.designation?.isNotEmpty == true
+                      ? teacher.designation!
+                      : 'Teacher',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                ),
               ],
             ),
           ),
+          Icon(Icons.chevron_right, color: Colors.grey.shade400),
         ],
       ),
     );

@@ -366,4 +366,34 @@ class ApiService {
       throw _handleError(e);
     }
   }
+
+  // ─────────────────────────────────────────────
+  // 12. UPDATE TEACHER (Admin)
+  // PUT /api/v1/admin/teachers/{teacher_id}
+  // ─────────────────────────────────────────────
+  Future<UserModel> updateTeacher({
+    required String teacherId,
+    String? fullName,
+    String? phoneNumber,
+    String? designation,
+    String? qualification,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {};
+      if (fullName != null && fullName.isNotEmpty) body['full_name'] = fullName;
+      if (phoneNumber != null)
+        body['phone_number'] = phoneNumber; // allow clearing
+      if (designation != null) body['designation'] = designation;
+      if (qualification != null) body['qualification'] = qualification;
+
+      final response = await _dio.put(
+        '/api/v1/admin/teachers/$teacherId',
+        data: body,
+        options: await _authHeader(),
+      );
+      return UserModel.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }

@@ -1,4 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_side_complain_screen.dart';
@@ -8,6 +10,7 @@ import 'package:facialtrackapp/view/teacher/Report/report_options_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/start_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -75,9 +78,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         backgroundImage: AssetImage('assets/logo.png'),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Dr. Saima Kamran',
-                        style: TextStyle(
+                      Text(
+                        context.watch<AuthProvider>().currentUser?.fullName ??
+                            'Teacher',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                         ),
@@ -129,11 +133,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     // padding: EdgeInsets.zero,
                     children: [
-                      const Text(
-                        'Welcome, Dr Saima Kamran',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      Consumer<AuthProvider>(
+                        builder: (context, auth, _) => Text(
+                          'Welcome, ${auth.currentUser?.fullName ?? 'Teacher'}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -268,8 +274,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const TeacherReportOptionsScreen(
-                                        showBackButton: true,
-                                      ),
+                                    showBackButton: true,
+                                  ),
                                 ),
                               );
                             },
@@ -574,7 +580,8 @@ void _showLogoutDialog(BuildContext context) {
     barrierLabel: '',
     transitionDuration: const Duration(milliseconds: 300), // Animation ki speed
     pageBuilder: (context, anim1, anim2) {
-      return const SizedBox.shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
+      return const SizedBox
+          .shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
     },
     transitionBuilder: (context, anim1, anim2, child) {
       // Scale and Opacity Animation
@@ -643,15 +650,19 @@ void _showLogoutDialog(BuildContext context) {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        onPressed: () {
-                          // Sab kuch clear karke RoleSelectionScreen par jump
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RoleSelectionScreen(),
-                            ),
-                            (route) => false,
-                          );
+                        onPressed: () async {
+                          final auth = context.read<AuthProvider>();
+                          context.read<TeacherProvider>().clear();
+                          await auth.logout();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RoleSelectionScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
                         },
                         child: const Text(
                           "Yes",

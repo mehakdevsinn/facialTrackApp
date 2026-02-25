@@ -1,9 +1,11 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/utils/widgets/dashboard-widgets.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   // final Function(int) onTabChange;
@@ -45,7 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
-
                     const Positioned(
                       top: 20,
                       left: 20,
@@ -58,7 +59,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
-
                     Positioned(
                       top: 20,
                       right: 5,
@@ -117,9 +117,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    'Mr. Anderson',
-                                    style: TextStyle(
+                                  Text(
+                                    context
+                                            .watch<AuthProvider>()
+                                            .currentUser
+                                            ?.fullName ??
+                                        'Student',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -179,7 +183,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-
                     Positioned(
                       top: 90,
                       left: 20,
@@ -189,15 +192,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-
               SizedBox(height: 10),
               Transform.translate(
                 offset: const Offset(0, -60),
                 child: overallAttendanceCard(),
               ),
-
               const SizedBox(height: 16),
-
               Transform.translate(
                 offset: const Offset(0, -60),
                 child: subjectsSection(context),
@@ -218,7 +218,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         milliseconds: 300,
       ), // Animation ki speed
       pageBuilder: (context, anim1, anim2) {
-        return const SizedBox.shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
+        return const SizedBox
+            .shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
       },
       transitionBuilder: (context, anim1, anim2, child) {
         // Scale and Opacity Animation
@@ -291,16 +292,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          onPressed: () {
-                            // Sab kuch clear karke RoleSelectionScreen par jump
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const RoleSelectionScreen(),
-                              ),
-                              (route) => false,
-                            );
+                          onPressed: () async {
+                            final auth = context.read<AuthProvider>();
+                            context.read<StudentProvider>().clear();
+                            await auth.logout();
+                            if (context.mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const RoleSelectionScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            }
                           },
                           child: const Text(
                             "Yes",
@@ -327,7 +331,8 @@ void _showLogoutDialog(BuildContext context) {
     barrierLabel: '',
     transitionDuration: const Duration(milliseconds: 300), // Animation ki speed
     pageBuilder: (context, anim1, anim2) {
-      return const SizedBox.shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
+      return const SizedBox
+          .shrink(); // pageBuilder lazmi hota hai par hum transitionsBuilder use karenge
     },
     transitionBuilder: (context, anim1, anim2, child) {
       // Scale and Opacity Animation

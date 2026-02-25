@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class TeacherSideChangePasswordScreen extends StatefulWidget {
   const TeacherSideChangePasswordScreen({super.key});
@@ -181,45 +182,30 @@ class _TeacherSideChangePasswordScreenState
   }
 
   Future<void> _handleChangePassword() async {
-    setState(() => _isLoading = true);
-    try {
-      await ApiService.instance.changePassword(
-        oldPassword: _oldPassController.text,
-        newPassword: _newPassController.text,
-      );
+    final auth = context.read<AuthProvider>();
+    final success = await auth.changePassword(
+      oldPassword: _oldPassController.text,
+      newPassword: _newPassController.text,
+    );
+    if (!mounted) return;
+    if (success) {
       _oldPassController.clear();
       _newPassController.clear();
       _confirmPassController.clear();
-      _formKey.currentState?.reset(); // clear validation errors
-      if (mounted) _showSuccessDialog(context);
-    } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Something went wrong. Please try again.'),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      _formKey.currentState?.reset();
+      _showSuccessDialog(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              auth.errorMessage ?? 'Something went wrong. Please try again.'),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     }
   }
 

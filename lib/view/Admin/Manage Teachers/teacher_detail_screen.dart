@@ -1,7 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/models/user_model.dart';
-import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class TeacherDetailScreen extends StatefulWidget {
   final UserModel teacher;
@@ -66,32 +67,36 @@ class _TeacherDetailScreenState extends State<TeacherDetailScreen> {
       return;
     }
     setState(() => _isSaving = true);
-    try {
-      final updated = await ApiService.instance.updateTeacher(
-        teacherId: _teacher.id,
-        fullName: _nameCtrl.text.trim(),
-        phoneNumber: _phoneCtrl.text.trim(),
-        designation: _designationCtrl.text.trim(),
-        qualification: _qualificationCtrl.text.trim(),
+
+    final admin = context.read<AdminProvider>();
+    final success = await admin.updateTeacher(
+      teacherId: _teacher.id,
+      fullName: _nameCtrl.text.trim(),
+      phoneNumber: _phoneCtrl.text.trim(),
+      designation: _designationCtrl.text.trim(),
+      qualification: _qualificationCtrl.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      // Find the updated model from the provider's list
+      final updated = admin.teachers.firstWhere(
+        (t) => t.id == _teacher.id,
+        orElse: () => _teacher,
       );
-      if (mounted) {
-        setState(() {
-          _teacher = updated;
-          _isEditing = false;
-          _isSaving = false;
-        });
-        _showSnackBar('Teacher details updated successfully.', isError: false);
-      }
-    } on AuthException catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        _showSnackBar(e.message, isError: true);
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        _showSnackBar('Something went wrong. Please try again.', isError: true);
-      }
+      setState(() {
+        _teacher = updated;
+        _isEditing = false;
+        _isSaving = false;
+      });
+      _showSnackBar('Teacher details updated successfully.', isError: false);
+    } else {
+      setState(() => _isSaving = false);
+      _showSnackBar(
+        admin.errorMessage ?? 'Something went wrong. Please try again.',
+        isError: true,
+      );
     }
   }
 

@@ -1,4 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/utils/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Course Assignment/course_assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Manage Teachers/manage-teachers.dart';
@@ -10,6 +12,7 @@ import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dar
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
 import 'package:facialtrackapp/view/Role Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -56,31 +59,38 @@ class AdminDashboardScreen extends StatelessWidget {
                   color: Colors.white24,
                   borderRadius: BorderRadius.circular(30),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     CircleAvatar(
                       radius: 12,
                       backgroundColor: Colors.white,
                       child: Text(
-                        'AD',
-                        style: TextStyle(
+                        (context.watch<AuthProvider>().currentUser?.fullName ??
+                                'AD')
+                            .split(' ')
+                            .map((w) => w.isNotEmpty ? w[0] : '')
+                            .take(2)
+                            .join()
+                            .toUpperCase(),
+                        style: const TextStyle(
                           color: ColorPallet.primaryBlue,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
-                      'Admin Panel',
-                      style: TextStyle(
+                      context.watch<AuthProvider>().currentUser?.fullName ??
+                          'Admin',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                       ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(
+                    const SizedBox(width: 4),
+                    const Icon(
                       Icons.keyboard_arrow_down,
                       color: Colors.white,
                       size: 18,
@@ -457,14 +467,19 @@ void _showLogoutDialog(BuildContext context) {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        onPressed: () {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RoleSelectionScreen(),
-                            ),
-                            (route) => false,
-                          );
+                        onPressed: () async {
+                          final auth = context.read<AuthProvider>();
+                          context.read<AdminProvider>().clear();
+                          await auth.logout();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RoleSelectionScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
                         },
                         child: const Text(
                           "Yes",

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/models/user_model.dart';
-import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/view/student/Student%20Waiting%20Approval/student_waiting_approval_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -16,7 +16,6 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   bool isButtonEnabled = false;
-  bool isLoading = false;
 
   late List<FocusNode> focusNodes;
 
@@ -108,178 +107,161 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Future<void> _handleVerify() async {
     final otp = otpControllers.map((c) => c.text.trim()).join();
-    setState(() => isLoading = true);
+    final auth = context.read<AuthProvider>();
+    final success = await auth.verifyOtp(email: widget.email, otpCode: otp);
 
-    try {
-      final data = await ApiService.instance.verifyOtp(
-        email: widget.email,
-        otpCode: otp,
-      );
+    if (!mounted) return;
 
-      final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
-
-      if (mounted) {
-        if (user.isStudent && user.isPending) {
-          // Student: still needs admin approval → show waiting screen
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const StudentWaitingApprovalScreen(),
-            ),
-            (route) => false,
-          );
-        } else {
-          // Teacher/Admin: auto-approved — navigate to their dashboard
-          // (This path is not taken in current flow as they don't go through signup)
-          Navigator.pop(context);
-        }
+    if (success) {
+      final user = auth.currentUser;
+      if (user != null && user.isStudent && user.isPending) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const StudentWaitingApprovalScreen(),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.pop(context);
       }
-    } on AuthException catch (e) {
-      _showError(e.message);
-    } catch (_) {
-      _showError('Something went wrong. Please try again.');
-    } finally {
-      if (mounted) setState(() => isLoading = false);
+    } else {
+      _showError(
+          auth.errorMessage ?? 'Something went wrong. Please try again.');
     }
   }
 
   Future<void> _handleResend() async {
-    try {
-      await ApiService.instance.resendOtp(email: widget.email);
+    final auth = context.read<AuthProvider>();
+    final success = await auth.resendOtp(email: widget.email);
+
+    if (!mounted) return;
+    if (success) {
       _showSuccess('A new OTP has been sent to your email.');
       _startResendCooldown();
       for (var ctrl in otpControllers) {
         ctrl.clear();
       }
       setState(() => isButtonEnabled = false);
-    } on AuthException catch (e) {
-      _showError(e.message);
-    } catch (_) {
-      _showError('Failed to resend OTP. Please try again.');
+    } else {
+      _showError(
+          auth.errorMessage ?? 'Failed to resend OTP. Please try again.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 28,
-                  color: Color.fromARGB(255, 77, 77, 77),
-                ),
-              ),
-              const SizedBox(height: 36),
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.grey[100],
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(Icons.arrow_back,
+                        size: 28, color: Color.fromARGB(255, 77, 77, 77)),
+                  ),
+                  const SizedBox(height: 36),
 
-              // Icon Box
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 232, 241, 248),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: const Icon(
-                  Icons.shield_outlined,
-                  size: 32,
-                  color: ColorPallet.primaryBlue,
-                ),
-              ),
-              const SizedBox(height: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 232, 241, 248),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: const Icon(Icons.shield_outlined,
+                        size: 32, color: ColorPallet.primaryBlue),
+                  ),
+                  const SizedBox(height: 24),
 
-              const Text(
-                'OTP Verification',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
+                  const Text(
+                    'OTP Verification',
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
 
-              Text(
-                'Enter the 4-digit code we sent to\n${widget.email}',
-                style: const TextStyle(fontSize: 15, color: Colors.black54),
-              ),
-              const SizedBox(height: 32),
+                  Text(
+                    'Enter the 4-digit code we sent to\n${widget.email}',
+                    style: const TextStyle(fontSize: 15, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 32),
 
-              // OTP Boxes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(4, (index) {
-                  return _otpTextField(
-                    otpControllers[index],
-                    focusNodes[index],
-                    index == 0,
-                    index,
-                  );
-                }),
-              ),
-              const SizedBox(height: 32),
+                  // OTP Boxes
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(4, (index) {
+                      return _otpTextField(
+                        otpControllers[index],
+                        focusNodes[index],
+                        index == 0,
+                        index,
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 32),
 
-              // Verify Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed:
-                      (isButtonEnabled && !isLoading) ? _handleVerify : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isButtonEnabled
-                        ? ColorPallet.primaryBlue
-                        : Colors.grey.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                  // Verify Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: (isButtonEnabled && !auth.isLoading)
+                          ? _handleVerify
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isButtonEnabled
+                            ? ColorPallet.primaryBlue
+                            : Colors.grey.shade400,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: auth.isLoading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2.5),
+                            )
+                          : const Text('Verify',
+                              style: TextStyle(
+                                  fontSize: 18, color: ColorPallet.white)),
                     ),
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : const Text(
-                          'Verify',
-                          style:
-                              TextStyle(fontSize: 18, color: ColorPallet.white),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-              // Resend button with 60-second cooldown
-              Center(
-                child: _canResend
-                    ? TextButton.icon(
-                        onPressed: _handleResend,
-                        icon: const Icon(Icons.refresh,
-                            size: 18, color: ColorPallet.primaryBlue),
-                        label: const Text(
-                          'Resend Email',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: ColorPallet.primaryBlue,
+                  Center(
+                    child: _canResend
+                        ? TextButton.icon(
+                            onPressed: _handleResend,
+                            icon: const Icon(Icons.refresh,
+                                size: 18, color: ColorPallet.primaryBlue),
+                            label: const Text(
+                              'Resend Email',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: ColorPallet.primaryBlue,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Resend email in ${_resendCooldown}s',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade500),
                           ),
-                        ),
-                      )
-                    : Text(
-                        'Resend email in ${_resendCooldown}s',
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.grey.shade500),
-                      ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LogoutDialog {
   static void show(BuildContext context) {
@@ -21,7 +24,8 @@ class LogoutDialog {
               backgroundColor: Colors.white.withOpacity(0.95),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
-                side: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
+                side:
+                    BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
               ),
               content: Container(
                 padding: const EdgeInsets.only(top: 10),
@@ -43,7 +47,10 @@ class LogoutDialog {
                     const SizedBox(height: 20),
                     const Text(
                       "Ready to Leave?",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 10),
                     const Text(
@@ -59,7 +66,9 @@ class LogoutDialog {
                             onPressed: () => Navigator.pop(context),
                             child: const Text(
                               "Not yet",
-                              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -92,20 +101,26 @@ class LogoutDialog {
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {
-          Navigator.pop(context);
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
-            (route) => false,
-          );
+        onPressed: () async {
+          Navigator.pop(context); // close dialog first
+          final auth = context.read<AuthProvider>();
+          context.read<TeacherProvider>().clear();
+          await auth.logout();
+          if (context.mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+              (route) => false,
+            );
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorPallet.orange,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 12),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
         child: const Text("Yes, Logout"),
       ),

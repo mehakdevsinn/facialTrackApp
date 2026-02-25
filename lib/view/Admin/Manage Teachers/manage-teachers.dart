@@ -1,8 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/models/user_model.dart';
-import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/view/Admin/Manage%20Teachers/teacher_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ManageTeachersScreen extends StatefulWidget {
   const ManageTeachersScreen({super.key});
@@ -12,17 +13,21 @@ class ManageTeachersScreen extends StatefulWidget {
 }
 
 class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
-  List<UserModel> _allTeachers = [];
+  // Local filtered list — derived from provider data
   List<UserModel> _displayedTeachers = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _fetchTeachers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final admin = context.read<AdminProvider>();
+      // Always refresh on first open so the list is fresh
+      admin.fetchTeachers().then((_) {
+        _displayedTeachers = List.from(admin.teachers);
+        if (mounted) setState(() {});
+      });
+    });
   }
 
   @override
@@ -31,40 +36,12 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchTeachers() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final teachers = await ApiService.instance.getAllTeachers();
-      if (mounted) {
-        setState(() {
-          _allTeachers = teachers;
-          _displayedTeachers = List.from(teachers);
-          _isLoading = false;
-        });
-      }
-    } on AuthException catch (e) {
-      if (mounted)
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.message;
-        });
-    } catch (_) {
-      if (mounted)
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Failed to load teachers.';
-        });
-    }
-  }
-
   void _runFilter(String keyword) {
+    final all = context.read<AdminProvider>().teachers;
     setState(() {
       _displayedTeachers = keyword.isEmpty
-          ? List.from(_allTeachers)
-          : _allTeachers
+          ? List.from(all)
+          : all
               .where((t) =>
                   t.fullName.toLowerCase().contains(keyword.toLowerCase()) ||
                   (t.designation ?? '')
@@ -81,7 +58,6 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
     final phoneCtrl = TextEditingController();
     final designationCtrl = TextEditingController();
     final qualificationCtrl = TextEditingController();
-    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
@@ -160,41 +136,46 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                     Icons.school_outlined),
                 const SizedBox(height: 28),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton.icon(
-                    onPressed: isSubmitting
-                        ? null
-                        : () async {
-                            if (nameCtrl.text.trim().isEmpty ||
-                                emailCtrl.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                      'Name and Email are required.'),
-                                  backgroundColor: Colors.red.shade600,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                  margin: const EdgeInsets.all(16),
-                                ),
-                              );
-                              return;
-                            }
-                            setSheetState(() => isSubmitting = true);
-                            try {
-                              await ApiService.instance.createTeacher(
-                                fullName: nameCtrl.text.trim(),
-                                email: emailCtrl.text.trim(),
-                                phoneNumber: phoneCtrl.text.trim(),
-                                designation: designationCtrl.text.trim(),
-                                qualification: qualificationCtrl.text.trim(),
-                              );
-                              if (mounted) {
-                                Navigator.pop(sheetContext);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                Consumer<AdminProvider>(
+                  builder: (ctx, admin, _) {
+                    final isSubmitting = admin.isLoading;
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton.icon(
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                if (nameCtrl.text.trim().isEmpty ||
+                                    emailCtrl.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: const Text(
+                                        'Name and Email are required.'),
+                                    backgroundColor: Colors.red.shade600,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.all(16),
+                                  ));
+                                  return;
+                                }
+
+                                final success = await admin.createTeacher(
+                                  fullName: nameCtrl.text.trim(),
+                                  email: emailCtrl.text.trim(),
+                                  phoneNumber: phoneCtrl.text.trim(),
+                                  designation: designationCtrl.text.trim(),
+                                  qualification: qualificationCtrl.text.trim(),
+                                );
+
+                                if (!mounted) return;
+
+                                if (success) {
+                                  Navigator.pop(sheetContext);
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
                                     content: const Text(
                                         'Teacher created! Login credentials have been emailed.'),
                                     backgroundColor: Colors.green.shade600,
@@ -203,31 +184,16 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                                         borderRadius:
                                             BorderRadius.circular(10)),
                                     margin: const EdgeInsets.all(16),
-                                  ),
-                                );
-                                _fetchTeachers(); // refresh list
-                              }
-                            } on AuthException catch (e) {
-                              setSheetState(() => isSubmitting = false);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    backgroundColor: Colors.red.shade600,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    margin: const EdgeInsets.all(16),
-                                  ),
-                                );
-                              }
-                            } catch (_) {
-                              setSheetState(() => isSubmitting = false);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
+                                  ));
+                                  // Sync local display list
+                                  setState(() {
+                                    _displayedTeachers =
+                                        List.from(admin.teachers);
+                                  });
+                                } else {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(admin.errorMessage ??
                                         'Something went wrong. Please try again.'),
                                     backgroundColor: Colors.red.shade600,
                                     behavior: SnackBarBehavior.floating,
@@ -235,32 +201,33 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                                         borderRadius:
                                             BorderRadius.circular(10)),
                                     margin: const EdgeInsets.all(16),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                    icon: isSubmitting
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2.5),
-                          )
-                        : const Icon(Icons.check_circle_outline,
-                            color: Colors.white),
-                    label: Text(
-                      isSubmitting ? 'Creating...' : 'Register Teacher',
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorPallet.primaryBlue,
-                      disabledBackgroundColor:
-                          ColorPallet.primaryBlue.withOpacity(0.7),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                    ),
-                  ),
+                                  ));
+                                }
+                              },
+                        icon: isSubmitting
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2.5),
+                              )
+                            : const Icon(Icons.check_circle_outline,
+                                color: Colors.white),
+                        label: Text(
+                          isSubmitting ? 'Creating...' : 'Register Teacher',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorPallet.primaryBlue,
+                          disabledBackgroundColor:
+                              ColorPallet.primaryBlue.withOpacity(0.7),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -379,81 +346,101 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: ColorPallet.primaryBlue),
-      );
-    }
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, color: Colors.red.shade300, size: 48),
-            const SizedBox(height: 12),
-            Text(_errorMessage!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _fetchTeachers,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorPallet.primaryBlue,
-                  foregroundColor: Colors.white),
-            ),
-          ],
-        ),
-      );
-    }
-    if (_displayedTeachers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.group_off_outlined,
-                color: Colors.grey.shade300, size: 64),
-            const SizedBox(height: 12),
-            Text(
-              _searchController.text.isEmpty
-                  ? 'No teachers found.\nTap "Add New" to create one.'
-                  : 'No results for "${_searchController.text}".',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500),
-            ),
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      color: ColorPallet.primaryBlue,
-      onRefresh: _fetchTeachers,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        itemCount: _displayedTeachers.length,
-        itemBuilder: (context, index) {
-          final teacher = _displayedTeachers[index];
-          return GestureDetector(
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => TeacherDetailScreen(teacher: teacher),
-                ),
-              );
-              // Refresh list in case the admin edited details
-              _fetchTeachers();
-            },
-            child: _TeacherCard(teacher: teacher),
+    return Consumer<AdminProvider>(
+      builder: (context, admin, _) {
+        if (admin.isTeachersLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: ColorPallet.primaryBlue),
           );
-        },
-      ),
+        }
+        if (admin.errorMessage != null) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, color: Colors.red.shade300, size: 48),
+                const SizedBox(height: 12),
+                Text(admin.errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600)),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => admin.fetchTeachers().then((_) {
+                    setState(() {
+                      _displayedTeachers = List.from(admin.teachers);
+                    });
+                  }),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorPallet.primaryBlue,
+                      foregroundColor: Colors.white),
+                ),
+              ],
+            ),
+          );
+        }
+        final list = _searchController.text.isEmpty
+            ? admin.teachers
+            : _displayedTeachers;
+        if (list.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.group_off_outlined,
+                    color: Colors.grey.shade300, size: 64),
+                const SizedBox(height: 12),
+                Text(
+                  _searchController.text.isEmpty
+                      ? 'No teachers found.\nTap "Add New" to create one.'
+                      : 'No results for "${_searchController.text}".',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade500),
+                ),
+              ],
+            ),
+          );
+        }
+        return RefreshIndicator(
+          color: ColorPallet.primaryBlue,
+          onRefresh: () => admin.fetchTeachers().then((_) {
+            setState(() {
+              _displayedTeachers = List.from(admin.teachers);
+            });
+          }),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            itemCount: list.length,
+            itemBuilder: (context, index) {
+              final teacher = list[index];
+              return GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TeacherDetailScreen(teacher: teacher),
+                    ),
+                  );
+                  // Refresh list in case admin edited details
+                  await admin.fetchTeachers();
+                  if (mounted) {
+                    setState(() {
+                      _displayedTeachers = List.from(admin.teachers);
+                    });
+                  }
+                },
+                child: _TeacherCard(teacher: teacher),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
 
-// ─── Teacher Card ────────────────────────────────────────────────────────────
+// ─── Teacher Card ─────────────────────────────────────────────────────────────
 class _TeacherCard extends StatelessWidget {
   final UserModel teacher;
   const _TeacherCard({required this.teacher});

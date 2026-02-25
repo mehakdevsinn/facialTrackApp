@@ -266,6 +266,8 @@
 // }
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/utils/widgets/dashboard-widgets.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Complaint/complaint-screen.dart';
@@ -275,6 +277,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
 
 Future<void> _generateAndDownloadPDF() async {
   final pdf = pw.Document();
@@ -323,6 +326,18 @@ class StudentProfileScreen extends StatefulWidget {
 }
 
 class _StudentProfileScreenState extends State<StudentProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the profile if not already loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final student = context.read<StudentProvider>();
+      if (student.studentProfile == null && !student.isLoading) {
+        student.fetchProfile();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -433,11 +448,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-
                               linearGradient: attendanceGradient(
                                 attendancePercent,
                               ),
-
                               backgroundColor: Colors.grey.shade200,
                               circularStrokeCap: CircularStrokeCap.round,
                             ),
@@ -567,18 +580,16 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                       "18/20",
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-
                                         fontSize:
                                             MediaQuery.of(context).size.width <=
-                                                400
-                                            ? 11
-                                            : 12,
+                                                    400
+                                                ? 11
+                                                : 12,
                                       ),
                                     ),
                                   ],
                                 ),
                                 _verticalDivider(),
-
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -612,9 +623,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                           " Mathematics",
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-
-                                            fontSize:
-                                                MediaQuery.of(
+                                            fontSize: MediaQuery.of(
                                                       context,
                                                     ).size.width <=
                                                     400
@@ -804,36 +813,49 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           child: Column(
             children: [
               const SizedBox(height: 70), // Space for the floating image
-              Text(
-                "Ahmad Hassan",
-                style: TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+              Consumer<StudentProvider>(
+                builder: (context, student, _) {
+                  final profile = student.studentProfile;
+                  return Column(
+                    children: [
+                      Text(
+                        profile?.fullName ?? 'Loading...',
+                        style: const TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        profile?.rollNumber != null
+                            ? 'Roll No: ${profile!.rollNumber}'
+                            : 'Roll No: —',
+                        style: TextStyle(
+                            color: Colors.grey.shade600, fontSize: 17),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Text(
+                            profile?.semester != null
+                                ? '${profile!.semester}'
+                                : 'Semester —',
+                            style: TextStyle(
+                                color: Colors.grey.shade800, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
               ),
-
-              const SizedBox(height: 4),
-              Text(
-                "ID: STU-2024-1234",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 17),
-              ),
-
-              const SizedBox(height: 4),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Text(
-                    "Computer Science - Semester 5",
-                    style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -870,7 +892,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       child: Column(
         children: [
           _infoRow(Icons.medical_information_outlined, "Personal Information"),
-
           SizedBox(height: 20),
           Divider(),
           _infoRow(Icons.email, "ahmad.hassan@university.edu"),
@@ -920,34 +941,38 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   }
 
   Widget _infoCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 3,
-            // offset: const Offset(2, 2),
+    return Consumer<StudentProvider>(
+      builder: (context, student, _) {
+        final profile = student.studentProfile;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 3,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _infoRow(Icons.medical_information_outlined, "Personal Information"),
-          SizedBox(height: 10),
-
-          Divider(),
-          SizedBox(height: 10),
-          _infoRow(Icons.email, "ahmad.hassan@university.edu"),
-          const SizedBox(height: 8),
-          _infoRow(Icons.phone, "+92 300 1234567"),
-          const SizedBox(height: 8),
-          _infoRow(Icons.calendar_today, "Enrolled: September 2023"),
-        ],
-      ),
+          child: Column(
+            children: [
+              _infoRow(
+                  Icons.medical_information_outlined, 'Personal Information'),
+              const SizedBox(height: 10),
+              const Divider(),
+              const SizedBox(height: 10),
+              _infoRow(Icons.email, profile?.email ?? '—'),
+              const SizedBox(height: 8),
+              _infoRow(Icons.numbers_outlined, profile?.rollNumber ?? '—'),
+              const SizedBox(height: 8),
+              _infoRow(Icons.school_outlined, profile?.semester ?? '—'),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1275,16 +1300,21 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                               ],
                             ),
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 Navigator.pop(context);
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RoleSelectionScreen(),
-                                  ),
-                                  (route) => false,
-                                );
+                                final auth = context.read<AuthProvider>();
+                                context.read<StudentProvider>().clear();
+                                await auth.logout();
+                                if (context.mounted) {
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const RoleSelectionScreen(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: ColorPallet.orange,

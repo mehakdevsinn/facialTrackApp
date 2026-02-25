@@ -1,11 +1,17 @@
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/logout_button.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Use AuthProvider.currentUser for the admin's real info
+    final user = context.watch<AuthProvider>().currentUser;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[100],
@@ -47,7 +53,7 @@ class AdminProfileScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // 2. White Card Section (for alignment overlap)
+                  // 2. White Card Section
                   Container(
                     margin: const EdgeInsets.only(top: 160),
                     width: double.infinity,
@@ -61,15 +67,15 @@ class AdminProfileScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         const SizedBox(height: 70),
-                        const Text(
-                          "Administrator",
-                          style: TextStyle(
+                        Text(
+                          user?.fullName ?? 'Administrator',
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          "ID: ADM-001",
+                          user?.email ?? '—',
                           style: TextStyle(
                             color: Colors.grey.shade500,
                             fontSize: 14,
@@ -93,134 +99,32 @@ class AdminProfileScreen extends StatelessWidget {
                               _buildInfoCard(
                                 icon: Icons.email_outlined,
                                 label: "Email",
-                                value: "admin@facialtrack.com",
+                                value: user?.email ?? '—',
                                 color: Colors.blue,
                               ),
                               _buildInfoCard(
                                 icon: Icons.phone_outlined,
                                 label: "Phone",
-                                value: "+92 300 1234567",
+                                value: user?.phoneNumber ?? '—',
                                 color: Colors.green,
                               ),
                               _buildInfoCard(
                                 icon: Icons.badge_outlined,
-                                label: "Employee ID",
-                                value: "ADM-2024-001",
+                                label: "Role",
+                                value: user?.role.toUpperCase() ?? 'ADMIN',
                                 color: Colors.purple,
                               ),
                               _buildInfoCard(
                                 icon: Icons.business_outlined,
                                 label: "Department",
-                                value: "Administration",
+                                value: user?.department ?? 'Administration',
                                 color: Colors.orange,
                               ),
-                              // const SizedBox(height: 20),
-                              // Container(
-                              //   padding: const EdgeInsets.all(20),
-                              //   decoration: BoxDecoration(
-                              //     color: Colors.white,
-                              //     borderRadius: BorderRadius.circular(20),
-                              //     boxShadow: [
-                              //       BoxShadow(
-                              //         color: Colors.black.withOpacity(0.05),
-                              //         blurRadius: 10,
-                              //         offset: const Offset(0, 5),
-                              //       ),
-                              //     ],
-                              //   ),
-                              // child: Column(
-                              //   crossAxisAlignment: CrossAxisAlignment.start,
-                              //   children: [
-                              //     const Text(
-                              //       "Account Settings",
-                              //       style: TextStyle(
-                              //         fontSize: 18,
-                              //         fontWeight: FontWeight.bold,
-                              //       ),
-                              //     ),
-                              //     const SizedBox(height: 15),
-                              // Edit Profile Tile
-                              // ListTile(
-                              //   contentPadding: EdgeInsets.zero,
-                              //   leading: Container(
-                              //     padding: const EdgeInsets.all(8),
-                              //     decoration: BoxDecoration(
-                              //       color: Colors.blue.withOpacity(0.1),
-                              //       borderRadius: BorderRadius.circular(
-                              //         8,
-                              //       ),
-                              //     ),
-                              //     child: const Icon(
-                              //       Icons.person_outline,
-                              //       color: Colors.blue,
-                              //     ),
-                              //   ),
-                              //   title: const Text(
-                              //     "Edit Profile",
-                              //     style: TextStyle(
-                              //       fontWeight: FontWeight.w500,
-                              //     ),
-                              //   ),
-                              //   trailing: const Icon(
-                              //     Icons.chevron_right,
-                              //     color: Colors.grey,
-                              //   ),
-                              //   onTap: () {
-                              //     Navigator.push(
-                              //       context,
-                              //       MaterialPageRoute(
-                              //         builder: (context) =>
-                              //             const AdminEditProfileScreen(),
-                              //       ),
-                              //     );
-                              //   },
-                              // ),
-                              // Divider(
-                              //   height: 20,
-                              //   thickness: 1,
-                              //   color: Colors.grey.withOpacity(0.1),
-                              // ),
-                              // Change Password Tile (Teacher Style)
-                              // ListTile(
-                              //   contentPadding: EdgeInsets.zero,
-                              //   leading: Container(
-                              //     padding: const EdgeInsets.all(8),
-                              //     decoration: BoxDecoration(
-                              //       color: Colors.orange.withOpacity(0.1),
-                              //       borderRadius: BorderRadius.circular(
-                              //         8,
-                              //       ),
-                              //     ),
-                              //     child: const Icon(
-                              //       Icons.lock_outline,
-                              //       color: Colors.orange,
-                              //     ),
-                              //   ),
-                              //   title: const Text(
-                              //     "Change Password",
-                              //     style: TextStyle(
-                              //       fontWeight: FontWeight.w500,
-                              //     ),
-                              //   ),
-                              //   trailing: const Icon(
-                              //     Icons.chevron_right,
-                              //     color: Colors.grey,
-                              //   ),
-                              //   onTap: () {
-                              //     Navigator.push(
-                              //       context,
-                              //       MaterialPageRoute(
-                              //         builder: (context) =>
-                              //             const AdminChangePasswordScreen(),
-                              //       ),
-                              //     );
-                              //   },
-                              // ),
-                              //     ],
-                              //   ),
-                              // ),
                               const SizedBox(height: 30),
-                              const LogoutButtonWidget(),
+                              Consumer<AdminProvider>(
+                                builder: (ctx, admin, _) =>
+                                    const LogoutButtonWidget(),
+                              ),
                               const SizedBox(height: 40),
                             ],
                           ),

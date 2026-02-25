@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/services/api_service.dart';
+import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 
 class StudentWaitingApprovalScreen extends StatefulWidget {
   const StudentWaitingApprovalScreen({super.key});
@@ -36,43 +37,40 @@ class _StudentWaitingApprovalScreenState
   }
 
   Future<void> _checkApprovalStatus() async {
-    try {
-      final user = await ApiService.instance.getMe();
+    final student = context.read<StudentProvider>();
+    final user = await student.checkApprovalStatus();
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (user.isApproved) {
-        _pollingTimer?.cancel();
-        setState(() {
-          isApproved = true;
-          isPolling = false;
-        });
-
-        // Show approved state for 2 seconds, then navigate to login
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const StudentLoginScreen(),
-            ),
-            (route) => false,
-          );
-        }
-      } else if (user.isRejected) {
-        _pollingTimer?.cancel();
-        setState(() {
-          isRejected = true;
-          isPolling = false;
-        });
-      }
-      // If still pending, do nothing — timer will fire again in 5s
-    } on AuthException {
-      // Token may have expired — stop polling silently
+    if (user == null) {
+      // null means token expired → stop polling silently
       _pollingTimer?.cancel();
-    } catch (_) {
-      // Network error — keep polling, it will retry in 5 seconds
+      return;
     }
+
+    if (user.isApproved) {
+      _pollingTimer?.cancel();
+      setState(() {
+        isApproved = true;
+        isPolling = false;
+      });
+      // Show approved state for 2 seconds, then navigate to login
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
+          (route) => false,
+        );
+      }
+    } else if (user.isRejected) {
+      _pollingTimer?.cancel();
+      setState(() {
+        isRejected = true;
+        isPolling = false;
+      });
+    }
+    // If still pending, do nothing — timer will fire again in 5 s
   }
 
   @override
@@ -186,8 +184,7 @@ class _StudentWaitingApprovalScreenState
                 const Spacer(),
                 if (isPolling && !isApproved && !isRejected) ...[
                   const CircularProgressIndicator(
-                    color: ColorPallet.primaryBlue,
-                  ),
+                      color: ColorPallet.primaryBlue),
                   const SizedBox(height: 12),
                   Text(
                     'Checking every 5 seconds...',

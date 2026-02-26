@@ -353,14 +353,14 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
             child: CircularProgressIndicator(color: ColorPallet.primaryBlue),
           );
         }
-        if (admin.errorMessage != null) {
+        if (admin.teachersError != null) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.error_outline, color: Colors.red.shade300, size: 48),
                 const SizedBox(height: 12),
-                Text(admin.errorMessage!,
+                Text(admin.teachersError!,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey.shade600)),
                 const SizedBox(height: 16),

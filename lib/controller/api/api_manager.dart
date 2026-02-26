@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:facialtrackapp/controller/api/endpoints.dart';
+import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
@@ -317,7 +318,8 @@ class ApiManager {
   Future<List<UserModel>> getAllTeachers() async {
     try {
       final response = await http
-          .get(Uri.parse(Endpoints.adminTeachers), headers: await _authHeaders())
+          .get(Uri.parse(Endpoints.adminTeachers),
+              headers: await _authHeaders())
           .timeout(const Duration(seconds: 10));
 
       _assertSuccess(response);
@@ -389,6 +391,104 @@ class ApiManager {
 
       _assertSuccess(response);
       return UserModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 15. LIST ALL SEMESTERS (Admin) ──────────────────────────────────────
+  Future<List<SemesterModel>> getSemesters() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.adminSemesters),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => SemesterModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 16. CREATE SEMESTER (Admin) ─────────────────────────────────────────
+  Future<SemesterModel> createSemester({
+    required int semesterNumber,
+    required String academicSession,
+    required String termType,
+    required String operationalStatus,
+    required String startDate,
+    required String endDate,
+  }) async {
+    try {
+      final body = {
+        'semester_number': semesterNumber,
+        'academic_session': academicSession,
+        'term_type': termType,
+        'operational_status': operationalStatus,
+        'start_date': startDate,
+        'end_date': endDate,
+      };
+
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminSemesters),
+            headers: await _authHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      _assertSuccess(response);
+      return SemesterModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 17. UPDATE SEMESTER (Admin) ─────────────────────────────────────────
+  Future<SemesterModel> updateSemester({
+    required String semesterId,
+    int? semesterNumber,
+    String? academicSession,
+    String? termType,
+    String? operationalStatus,
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {};
+      if (semesterNumber != null) body['semester_number'] = semesterNumber;
+      if (academicSession != null) body['academic_session'] = academicSession;
+      if (termType != null) body['term_type'] = termType;
+      if (operationalStatus != null) {
+        body['operational_status'] = operationalStatus;
+      }
+      if (startDate != null) body['start_date'] = startDate;
+      if (endDate != null) body['end_date'] = endDate;
+
+      final response = await http
+          .put(
+            Uri.parse(Endpoints.adminSemester(semesterId)),
+            headers: await _authHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      _assertSuccess(response);
+      return SemesterModel.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>);
     } on AuthException {
       rethrow;

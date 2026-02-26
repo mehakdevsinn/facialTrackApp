@@ -26,4 +26,12 @@ class Endpoints {
   /// Returns the URL for updating or deleting a specific teacher.
   /// Usage: `Endpoints.adminTeacher('some-uuid')`
   static String adminTeacher(String teacherId) => '$_admin/teachers/$teacherId';
+
+  // ── Admin — Semesters ────────────────────────────────────────────────────
+  /// GET → list all semesters  |  POST → create a new semester
+  static const String adminSemesters = '$_admin/semesters';
+
+  /// PUT → update a specific semester by id
+  static String adminSemester(String semesterId) =>
+      '$_admin/semesters/$semesterId';
 }

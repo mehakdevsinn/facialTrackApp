@@ -34,4 +34,16 @@ class Endpoints {
   /// PUT → update a specific semester by id
   static String adminSemester(String semesterId) =>
       '$_admin/semesters/$semesterId';
+
+  // ── Admin — Student Approval ─────────────────────────────────────────────
+  /// GET → list all pending students
+  static const String adminStudentsPending = '$_admin/students/pending';
+
+  /// POST → approve a specific student
+  static String adminStudentApprove(String studentId) =>
+      '$_admin/students/$studentId/approve';
+
+  /// POST → reject a specific student
+  static String adminStudentReject(String studentId) =>
+      '$_admin/students/$studentId/reject';
 }

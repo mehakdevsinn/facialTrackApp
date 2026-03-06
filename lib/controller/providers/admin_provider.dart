@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:flutter/foundation.dart';
@@ -25,6 +26,12 @@ class AdminProvider extends ChangeNotifier {
   bool _semestersLoaded = false;
   String? _semestersError; // isolated from teacher errors
 
+  // ── Student approval ───────────────────────────────────────────────────────
+  List<PendingStudentModel> _pendingStudents = [];
+  bool _isPendingStudentsLoading = false;
+  bool _pendingStudentsLoaded = false;
+  String? _pendingStudentsError;
+
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -39,6 +46,12 @@ class AdminProvider extends ChangeNotifier {
   bool get isSemestersLoading => _isSemestersLoading;
   bool get semestersLoaded => _semestersLoaded;
   String? get semestersError => _semestersError;
+
+  // Pending students
+  List<PendingStudentModel> get pendingStudents =>
+      List.unmodifiable(_pendingStudents);
+  bool get isPendingStudentsLoading => _isPendingStudentsLoading;
+  String? get pendingStudentsError => _pendingStudentsError;
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   void _setLoading(bool value) {
@@ -255,13 +268,88 @@ class AdminProvider extends ChangeNotifier {
   void clear() {
     _teachers = [];
     _semesters = [];
+    _pendingStudents = [];
     _semestersLoaded = false;
+    _pendingStudentsLoaded = false;
     _errorMessage = null;
     _teachersError = null;
     _semestersError = null;
+    _pendingStudentsError = null;
     _isLoading = false;
     _isTeachersLoading = false;
     _isSemestersLoading = false;
+    _isPendingStudentsLoading = false;
     notifyListeners();
+  }
+
+  // ── Student Approval Methods ─────────────────────────────────────────
+
+  /// Fetches all pending students. Pass [force] = true to bypass cache.
+  Future<void> fetchPendingStudents({bool force = false}) async {
+    if (_pendingStudentsLoaded && !force) return;
+    _isPendingStudentsLoading = true;
+    _pendingStudentsError = null;
+    notifyListeners();
+    try {
+      debugPrint('== AdminProvider: calling getPendingStudents()');
+      _pendingStudents = await _api.getPendingStudents();
+      debugPrint(
+          '== AdminProvider: got ${_pendingStudents.length} pending students');
+      _pendingStudentsLoaded = true;
+      _isPendingStudentsLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      debugPrint('== AdminProvider: getPendingStudents error: ${e.message}');
+      _pendingStudentsError = e.message;
+      _isPendingStudentsLoading = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('== AdminProvider: getPendingStudents error: $e');
+      _pendingStudentsError = 'An unexpected error occurred.';
+      _isPendingStudentsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Approves a pending student. Removes them from the local list on success.
+  Future<bool> approveStudent(String studentId, {String? notes}) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _api.approveStudent(studentId, notes: notes);
+      _pendingStudents =
+          _pendingStudents.where((s) => s.id != studentId).toList();
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Rejects a pending student. Removes them from the local list on success.
+  Future<bool> rejectStudent(String studentId, {String? notes}) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _api.rejectStudent(studentId, notes: notes);
+      _pendingStudents =
+          _pendingStudents.where((s) => s.id != studentId).toList();
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
   }
 }

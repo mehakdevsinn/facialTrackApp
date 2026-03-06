@@ -1,15 +1,19 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'user_approval_screen.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class UserApprovalDetailScreen extends StatelessWidget {
-  final ApprovableUser user;
-  final Function(String) onStatusUpdate;
+  final PendingStudentModel student;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
 
   const UserApprovalDetailScreen({
     super.key,
-    required this.user,
-    required this.onStatusUpdate,
+    required this.student,
+    required this.onApprove,
+    required this.onReject,
   });
 
   @override
@@ -21,15 +25,12 @@ class UserApprovalDetailScreen extends StatelessWidget {
           backgroundColor: ColorPallet.primaryBlue,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-              size: 20,
-            ),
+            icon:
+                const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
-            "User Profile Details",
+            'Student Profile',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -41,98 +42,101 @@ class UserApprovalDetailScreen extends StatelessWidget {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              _buildProfileHeader(),
+              // ── Profile header ───────────────────────────────────
+              _buildHeader(),
+
               Padding(
-                padding: const EdgeInsets.all(25.0),
+                padding: const EdgeInsets.all(25),
                 child: Column(
                   children: [
-                    _buildDetailItem(
-                      Icons.email_outlined,
-                      "Email Address",
-                      user.email,
-                    ),
-                    _buildDetailItem(
-                      Icons.business_outlined,
-                      "Department",
-                      user.department,
-                    ),
-                    _buildDetailItem(
-                      Icons.badge_outlined,
-                      "Registration Number",
-                      user.rollNo ?? "N/A",
-                    ),
-                    _buildDetailItem(
-                      Icons.calendar_month_outlined,
-                      "Current Semester",
-                      user.semester ?? "N/A",
-                    ),
-                    _buildDetailItem(
-                      Icons.info_outline,
-                      "Current Status",
-                      user.status,
-                    ),
+                    _DetailItem(Icons.email_outlined, 'Email', student.email),
+                    _DetailItem(Icons.badge_outlined, 'Roll Number',
+                        student.rollNumber),
+                    _DetailItem(Icons.business_outlined, 'Department',
+                        student.department),
+                    _DetailItem(
+                        Icons.school_outlined, 'Semester', student.semester),
+                    _DetailItem(
+                        Icons.group_outlined, 'Section', student.section),
+                    _DetailItem(Icons.event_note_outlined, 'Registered On',
+                        student.formattedDate),
+
                     const SizedBox(height: 40),
-                    if (user.status == 'Pending')
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
+
+                    // ── Action buttons ────────────────────────
+                    Consumer<AdminProvider>(
+                      builder: (ctx, admin, _) {
+                        return Row(
+                          children: [
+                            // Approve
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                  elevation: 4,
+                                  shadowColor: Colors.green.withOpacity(0.3),
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                elevation: 5,
-                                shadowColor: Colors.green.withOpacity(0.3),
-                              ),
-                              onPressed: () {
-                                onStatusUpdate('Approved');
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                "Approve Student",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(
-                                  color: Colors.red,
-                                  width: 2,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              onPressed: () {
-                                onStatusUpdate('Rejected');
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                "Reject",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                onPressed: admin.isLoading
+                                    ? null
+                                    : () {
+                                        onApprove();
+                                        Navigator.pop(context);
+                                      },
+                                icon: admin.isLoading
+                                    ? const SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2))
+                                    : const Icon(Icons.check_circle_outline),
+                                label: const Text(
+                                  'Approve',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 15),
+                            // Reject
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(
+                                      color: Colors.red, width: 2),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                ),
+                                onPressed: admin.isLoading
+                                    ? null
+                                    : () {
+                                        onReject();
+                                        Navigator.pop(context);
+                                      },
+                                icon: const Icon(Icons.cancel_outlined),
+                                label: const Text(
+                                  'Reject',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -143,7 +147,7 @@ class UserApprovalDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildHeader() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(bottom: 40, top: 20),
@@ -156,47 +160,66 @@ class UserApprovalDetailScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Avatar
           Container(
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
+                color: Colors.white, shape: BoxShape.circle),
             child: CircleAvatar(
-              radius: 60,
+              radius: 55,
               backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
               child: Text(
-                user.name[0].toUpperCase(),
+                student.initials,
                 style: const TextStyle(
                   color: ColorPallet.primaryBlue,
-                  fontSize: 50,
+                  fontSize: 42,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 14),
+          // Name
           Text(
-            user.name,
+            student.fullName,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
+          // Role chip
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white12,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-              user.role,
-              style: const TextStyle(
+            child: const Text(
+              'Student',
+              style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Pending badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'PENDING APPROVAL',
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                letterSpacing: 0.8,
               ),
             ),
           ),
@@ -204,22 +227,31 @@ class UserApprovalDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildDetailItem(IconData icon, String title, String value) {
+// ─── Detail row widget ────────────────────────────────────────────────────────
+class _DetailItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  const _DetailItem(this.icon, this.title, this.value);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 25),
+      padding: const EdgeInsets.only(bottom: 22),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
               color: ColorPallet.primaryBlue.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: ColorPallet.primaryBlue, size: 26),
+            child: Icon(icon, color: ColorPallet.primaryBlue, size: 24),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,16 +260,16 @@ class UserApprovalDetailScreen extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: Colors.grey[500],
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
-                  value,
+                  value.isEmpty ? 'N/A' : value,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 17,
+                    fontSize: 16,
                     color: Colors.black87,
                   ),
                 ),

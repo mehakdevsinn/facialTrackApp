@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:facialtrackapp/controller/api/endpoints.dart';
+import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
@@ -490,6 +491,66 @@ class ApiManager {
       _assertSuccess(response);
       return SemesterModel.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 18. LIST PENDING STUDENTS (Admin) ──────────────────────────────────
+  Future<List<PendingStudentModel>> getPendingStudents() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.adminStudentsPending),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => PendingStudentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 19. APPROVE STUDENT (Admin) ──────────────────────────────────────
+  Future<void> approveStudent(String studentId, {String? notes}) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminStudentApprove(studentId)),
+            headers: await _authHeaders(),
+            body: jsonEncode({'notes': notes ?? ''}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      _assertSuccess(response);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 20. REJECT STUDENT (Admin) ───────────────────────────────────────
+  Future<void> rejectStudent(String studentId, {String? notes}) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminStudentReject(studentId)),
+            headers: await _authHeaders(),
+            body: jsonEncode({'notes': notes ?? ''}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      _assertSuccess(response);
     } on AuthException {
       rethrow;
     } catch (e) {

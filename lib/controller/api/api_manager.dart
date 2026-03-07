@@ -69,7 +69,10 @@ class ApiManager {
       return AuthException('Cannot connect to server. Check your internet.');
     }
     if (error is TimeoutException) {
-      return AuthException('Connection timed out. Please check your internet.');
+      return AuthException(
+        'The server is taking too long to respond. '
+        'Your request may still be processing — please wait a moment before trying again.',
+      );
     }
     if (response != null) {
       try {
@@ -119,7 +122,7 @@ class ApiManager {
       final response = await http
           .post(Uri.parse(Endpoints.register),
               headers: _jsonHeaders, body: jsonEncode(body))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -140,7 +143,7 @@ class ApiManager {
           .post(Uri.parse(Endpoints.verifyOtp),
               headers: _jsonHeaders,
               body: jsonEncode({'email': email, 'otp_code': otpCode}))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -171,7 +174,7 @@ class ApiManager {
       final response = await http
           .post(Uri.parse(Endpoints.resendOtp),
               headers: _jsonHeaders, body: jsonEncode({'email': email}))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -188,7 +191,7 @@ class ApiManager {
       final response = await http
           .post(Uri.parse(Endpoints.resendResetOtp),
               headers: _jsonHeaders, body: jsonEncode({'email': email}))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
     } on AuthException {
       rethrow;
@@ -203,7 +206,7 @@ class ApiManager {
       final response = await http
           .post(Uri.parse(Endpoints.forgotPassword),
               headers: _jsonHeaders, body: jsonEncode({'email': email}))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
     } on AuthException {
       rethrow;
@@ -222,7 +225,7 @@ class ApiManager {
           .post(Uri.parse(Endpoints.verifyResetOtp),
               headers: _jsonHeaders,
               body: jsonEncode({'email': email, 'otp_code': otpCode}))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
     } on AuthException {
       rethrow;
@@ -246,7 +249,7 @@ class ApiManager {
                 'otp_code': otpCode,
                 'new_password': newPassword,
               }))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
     } on AuthException {
       rethrow;
@@ -265,7 +268,7 @@ class ApiManager {
           .post(Uri.parse(Endpoints.login),
               headers: _jsonHeaders,
               body: jsonEncode({'email': email, 'password': password}))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       // Detect account-state 403s BEFORE the generic _assertSuccess
       if (response.statusCode == 403) {
@@ -313,7 +316,7 @@ class ApiManager {
             Uri.parse('${Endpoints.baseUrl}/api/v1/auth/me'),
             headers: await _authHeaders(),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return UserModel.fromJson(
@@ -341,7 +344,7 @@ class ApiManager {
                 'old_password': oldPassword,
                 'new_password': newPassword,
               }))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
     } on AuthException {
       rethrow;
@@ -356,7 +359,7 @@ class ApiManager {
       final response = await http
           .get(Uri.parse(Endpoints.adminTeachers),
               headers: await _authHeaders())
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       final List data = jsonDecode(response.body) as List;
@@ -393,7 +396,7 @@ class ApiManager {
       final response = await http
           .post(Uri.parse(Endpoints.adminTeachers),
               headers: await _authHeaders(), body: jsonEncode(body))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return UserModel.fromJson(
@@ -423,7 +426,7 @@ class ApiManager {
       final response = await http
           .put(Uri.parse(Endpoints.adminTeacher(teacherId)),
               headers: await _authHeaders(), body: jsonEncode(body))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return UserModel.fromJson(
@@ -443,7 +446,7 @@ class ApiManager {
             Uri.parse(Endpoints.adminSemesters),
             headers: await _authHeaders(),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       final List data = jsonDecode(response.body) as List;
@@ -482,7 +485,7 @@ class ApiManager {
             headers: await _authHeaders(),
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return SemesterModel.fromJson(
@@ -521,7 +524,7 @@ class ApiManager {
             headers: await _authHeaders(),
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       return SemesterModel.fromJson(
@@ -541,7 +544,7 @@ class ApiManager {
             Uri.parse(Endpoints.adminStudentsPending),
             headers: await _authHeaders(),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
       final List data = jsonDecode(response.body) as List;
@@ -564,7 +567,7 @@ class ApiManager {
             headers: await _authHeaders(),
             body: jsonEncode({'notes': notes ?? ''}),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
     } on AuthException {
@@ -583,7 +586,7 @@ class ApiManager {
             headers: await _authHeaders(),
             body: jsonEncode({'notes': notes ?? ''}),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
     } on AuthException {

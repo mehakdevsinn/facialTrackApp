@@ -20,6 +20,24 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
+// ── Account-state exceptions (thrown from login()) ───────────────────────────
+
+/// Thrown when the backend returns 403 with "pending" in the detail message.
+class AccountPendingException implements Exception {
+  final String message;
+  const AccountPendingException([this.message = 'Account pending approval.']);
+  @override
+  String toString() => message;
+}
+
+/// Thrown when the backend returns 403 with "rejected" in the detail message.
+class AccountRejectedException implements Exception {
+  final String message;
+  const AccountRejectedException([this.message = 'Account rejected.']);
+  @override
+  String toString() => message;
+}
+
 // ─── API Manager ──────────────────────────────────────────────────────────────
 class ApiManager {
   ApiManager._();
@@ -65,6 +83,8 @@ class ApiManager {
   }
 
   /// Throws [AuthException] if status code >= 400.
+  /// For login-specific 403 responses, throws [AccountPendingException] or
+  /// [AccountRejectedException] instead so the UI can route accordingly.
   void _assertSuccess(http.Response response) {
     if (response.statusCode >= 400) {
       throw _handleError('HTTP ${response.statusCode}', response: response);
@@ -247,6 +267,17 @@ class ApiManager {
               body: jsonEncode({'email': email, 'password': password}))
           .timeout(const Duration(seconds: 10));
 
+      // Detect account-state 403s BEFORE the generic _assertSuccess
+      if (response.statusCode == 403) {
+        String detail = '';
+        try {
+          final body = jsonDecode(response.body) as Map<String, dynamic>;
+          detail = (body['detail'] ?? '').toString().toLowerCase();
+        } catch (_) {}
+        if (detail.contains('pending')) throw const AccountPendingException();
+        if (detail.contains('rejected')) throw const AccountRejectedException();
+      }
+
       _assertSuccess(response);
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -263,6 +294,10 @@ class ApiManager {
         );
       }
       return data;
+    } on AccountPendingException {
+      rethrow;
+    } on AccountRejectedException {
+      rethrow;
     } on AuthException {
       rethrow;
     } catch (e) {

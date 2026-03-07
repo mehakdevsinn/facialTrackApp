@@ -1,7 +1,10 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
+import 'package:facialtrackapp/view/student/Approval%20Status/pending_approval_screen.dart';
+import 'package:facialtrackapp/view/student/Approval%20Status/rejected_screen.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:facialtrackapp/view/student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
@@ -55,34 +58,48 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
   Future<void> _handleLogin() async {
     final auth = context.read<AuthProvider>();
-    final success = await auth.login(email: email, password: password);
+    try {
+      final success = await auth.login(email: email, password: password);
+      if (!mounted) return;
 
-    if (!mounted) return;
-
-    if (success) {
-      final user = auth.currentUser!;
-      if (user.isStudent) {
-        if (!user.faceVerified) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => StudentFaceEnrolements()),
-            (route) => false,
-          );
+      if (success) {
+        final user = auth.currentUser!;
+        if (user.isStudent) {
+          if (!user.faceVerified) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => StudentFaceEnrolements()),
+              (route) => false,
+            );
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const StudentRootScreen()),
+              (route) => false,
+            );
+          }
         } else {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const StudentRootScreen()),
-            (route) => false,
-          );
+          await auth.logout();
+          _showError('This account is not registered as a Student.');
         }
       } else {
-        // Non-student credential used on the student portal → reject & clear token
-        await auth.logout();
-        _showError('This account is not registered as a Student.');
+        _showError(
+            auth.errorMessage ?? 'Something went wrong. Please try again.');
       }
-    } else {
-      _showError(
-          auth.errorMessage ?? 'Something went wrong. Please try again.');
+    } on AccountPendingException {
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+        (route) => false,
+      );
+    } on AccountRejectedException {
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const RejectedScreen()),
+        (route) => false,
+      );
     }
   }
 

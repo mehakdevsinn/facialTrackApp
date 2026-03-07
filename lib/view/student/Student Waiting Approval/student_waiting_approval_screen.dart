@@ -1,83 +1,15 @@
-import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/controller/providers/student_provider.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
-class StudentWaitingApprovalScreen extends StatefulWidget {
+/// Shown immediately after a student successfully verifies their OTP.
+/// Informs them their account is under review and directs them to
+/// check their email. No polling — the backend sends an email on decision.
+class StudentWaitingApprovalScreen extends StatelessWidget {
   const StudentWaitingApprovalScreen({super.key});
-
-  @override
-  State<StudentWaitingApprovalScreen> createState() =>
-      _StudentWaitingApprovalScreenState();
-}
-
-class _StudentWaitingApprovalScreenState
-    extends State<StudentWaitingApprovalScreen> {
-  bool isApproved = false;
-  bool isRejected = false;
-  bool isPolling = true;
-  Timer? _pollingTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startPolling();
-  }
-
-  void _startPolling() {
-    // Poll immediately once, then every 5 seconds
-    _checkApprovalStatus();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _checkApprovalStatus();
-    });
-  }
-
-  Future<void> _checkApprovalStatus() async {
-    final student = context.read<StudentProvider>();
-    final user = await student.checkApprovalStatus();
-
-    if (!mounted) return;
-
-    if (user == null) {
-      // null means token expired → stop polling silently
-      _pollingTimer?.cancel();
-      return;
-    }
-
-    if (user.isApproved) {
-      _pollingTimer?.cancel();
-      setState(() {
-        isApproved = true;
-        isPolling = false;
-      });
-      // Show approved state for 2 seconds, then navigate to login
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
-          (route) => false,
-        );
-      }
-    } else if (user.isRejected) {
-      _pollingTimer?.cancel();
-      setState(() {
-        isRejected = true;
-        isPolling = false;
-      });
-    }
-    // If still pending, do nothing — timer will fire again in 5 s
-  }
-
-  @override
-  void dispose() {
-    _pollingTimer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,113 +18,122 @@ class _StudentWaitingApprovalScreenState
         statusBarColor: Colors.white,
         statusBarIconBrightness: Brightness.dark,
       ),
-      child: SafeArea(
+      child: PopScope(
+        canPop: false, // Prevent back navigation
         child: Scaffold(
           backgroundColor: Colors.white,
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: Lottie.asset(
-                    'assets/animations/face-detect.json',
-                    repeat: true,
-                    animate: true,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Text(
-                  isRejected
-                      ? 'Account Rejected'
-                      : isApproved
-                          ? 'Approved!'
-                          : 'Registration Successful!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: isRejected
-                        ? Colors.red
-                        : isApproved
-                            ? ColorPallet.softGreen
-                            : ColorPallet.primaryBlue,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  isRejected
-                      ? 'Your account has been rejected by the administrator. Please contact support for more information.'
-                      : isApproved
-                          ? 'Your account has been approved. Redirecting to login...'
-                          : 'Your account is pending admin approval. We\'ll notify you automatically when it\'s approved.',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: ColorPallet.lightGray,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: isRejected
-                          ? Colors.red.withOpacity(0.5)
-                          : isApproved
-                              ? ColorPallet.softGreen.withOpacity(0.5)
-                              : ColorPallet.primaryBlue.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isRejected
-                            ? Icons.cancel_outlined
-                            : isApproved
-                                ? Icons.check_circle_outline
-                                : Icons.info_outline,
-                        color: isRejected
-                            ? Colors.red
-                            : isApproved
-                                ? ColorPallet.softGreen
-                                : ColorPallet.primaryBlue,
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // ── Illustration ─────────────────────────────────────
+                    Container(
+                      width: 130,
+                      height: 130,
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Text(
-                          isRejected
-                              ? 'Your registration was not approved. Please contact the administrator.'
-                              : isApproved
-                                  ? 'Approval granted! You can now access your student portal.'
-                                  : 'Checking approval status every 5 seconds...',
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 14,
+                      child: Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 70,
+                        color: Colors.green.shade400,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // ── Title ────────────────────────────────────────────
+                    const Text(
+                      'Registration Submitted!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Body ─────────────────────────────────────────────
+                    Text(
+                      'Your email has been verified. Your account is now under review by the admin team.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade600,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ── Email hint ───────────────────────────────────────
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: ColorPallet.primaryBlue.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: ColorPallet.primaryBlue.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.email_outlined,
+                              color: ColorPallet.primaryBlue, size: 20),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              'You will receive an email once your account is approved or rejected.',
+                              style: TextStyle(
+                                color: ColorPallet.primaryBlue,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+
+                    // ── Back to Login button ─────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorPallet.primaryBlue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 3,
+                        ),
+                        onPressed: () async {
+                          await context.read<AuthProvider>().logout();
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const StudentLoginScreen()),
+                              (route) => false,
+                            );
+                          }
+                        },
+                        child: const Text(
+                          'Back to Login',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                if (isPolling && !isApproved && !isRejected) ...[
-                  const CircularProgressIndicator(
-                      color: ColorPallet.primaryBlue),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Checking every 5 seconds...',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                  ),
-                ],
-                const SizedBox(height: 30),
-              ],
+              ),
             ),
           ),
         ),

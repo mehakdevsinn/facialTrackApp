@@ -138,6 +138,12 @@ class AuthProvider extends ChangeNotifier {
       }
       _setLoading(false);
       return true;
+    } on AccountPendingException {
+      _setLoading(false);
+      rethrow; // Let the UI navigate to PendingApprovalScreen
+    } on AccountRejectedException {
+      _setLoading(false);
+      rethrow; // Let the UI navigate to RejectedScreen
     } on AuthException catch (e) {
       _setError(e.message);
       _setLoading(false);

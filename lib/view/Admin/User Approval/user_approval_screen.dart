@@ -65,8 +65,8 @@ class _UserApprovalScreenState extends State<UserApprovalScreen> {
     ));
   }
 
-  /// Shows a bottom sheet with an optional text field and returns the note
-  /// string on confirm or null on cancel.
+  /// Shows a bottom sheet with a REQUIRED text field.
+  /// Returns the note string on confirm, or null if the admin cancels.
   Future<String?> _showNotesSheet({
     required String title,
     required String hint,
@@ -80,76 +80,129 @@ class _UserApprovalScreenState extends State<UserApprovalScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          String? errorText;
+
+          void onConfirm() {
+            if (ctrl.text.trim().isEmpty) {
+              setSheetState(
+                  () => errorText = 'Please enter a reason for rejection.');
+              return;
+            }
+            Navigator.pop(ctx, ctrl.text.trim());
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 28,
             ),
-            const SizedBox(height: 20),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: hint,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    child: const Text('Cancel'),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, ctrl.text),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: confirmColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                const SizedBox(height: 20),
+
+                // Title + required asterisk
+                Row(
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 6),
+                    const Text('*',
+                        style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'A reason is required before rejecting.',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+
+                // Note field
+                TextField(
+                  controller: ctrl,
+                  maxLines: 3,
+                  onChanged: (_) {
+                    if (errorText != null) {
+                      setSheetState(() => errorText = null);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    errorText: errorText,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: confirmColor, width: 2),
                     ),
-                    child: Text(confirmLabel,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide:
+                          const BorderSide(color: Colors.red, width: 1.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
                   ),
+                ),
+                const SizedBox(height: 20),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: onConfirm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: confirmColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(confirmLabel,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

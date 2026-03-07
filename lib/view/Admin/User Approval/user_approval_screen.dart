@@ -44,7 +44,7 @@ class _UserApprovalScreenState extends State<UserApprovalScreen> {
     // Show a bottom sheet to collect an optional rejection note
     final note = await _showNotesSheet(
       title: 'Reject ${student.fullName}?',
-      hint: 'Reason for rejection (optional)',
+      hint: 'Reason for rejection ',
       confirmLabel: 'Reject',
       confirmColor: Colors.red,
     );
@@ -374,7 +374,27 @@ class _UserApprovalScreenState extends State<UserApprovalScreen> {
                               builder: (_) => UserApprovalDetailScreen(
                                 student: student,
                                 onApprove: () => _approve(student),
-                                onReject: () => _reject(student),
+                                onRejectWithNote: (note) async {
+                                  final admin = context.read<AdminProvider>();
+                                  final ok = await admin
+                                      .rejectStudent(student.id, notes: note);
+                                  if (!context.mounted) return;
+                                  if (ok) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content:
+                                          Text('${student.fullName} rejected.'),
+                                      backgroundColor: Colors.red,
+                                    ));
+                                  } else {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(admin.errorMessage ??
+                                          'Failed to reject.'),
+                                      backgroundColor: Colors.red.shade800,
+                                    ));
+                                  }
+                                },
                               ),
                             ),
                           ),

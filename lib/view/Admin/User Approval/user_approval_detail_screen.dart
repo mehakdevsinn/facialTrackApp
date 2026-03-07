@@ -4,17 +4,158 @@ import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class UserApprovalDetailScreen extends StatelessWidget {
+class UserApprovalDetailScreen extends StatefulWidget {
   final PendingStudentModel student;
   final VoidCallback onApprove;
-  final VoidCallback onReject;
+  final Future<void> Function(String note) onRejectWithNote;
 
   const UserApprovalDetailScreen({
     super.key,
     required this.student,
     required this.onApprove,
-    required this.onReject,
+    required this.onRejectWithNote,
   });
+
+  @override
+  State<UserApprovalDetailScreen> createState() =>
+      _UserApprovalDetailScreenState();
+}
+
+class _UserApprovalDetailScreenState extends State<UserApprovalDetailScreen> {
+  /// Shows a bottom sheet to collect a REQUIRED rejection note,
+  /// then calls [widget.onRejectWithNote] and pops the screen.
+  Future<void> _handleReject() async {
+    final ctrl = TextEditingController();
+    final note = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) {
+          String? errorText;
+
+          void onConfirm() {
+            if (ctrl.text.trim().isEmpty) {
+              setState(
+                  () => errorText = 'Please enter a reason for rejection.');
+              return;
+            }
+            Navigator.pop(ctx, ctrl.text.trim());
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 28,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Text(
+                      'Reject ${widget.student.fullName}?',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text('*',
+                        style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'A reason is required before rejecting.',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: ctrl,
+                  maxLines: 3,
+                  onChanged: (_) {
+                    if (errorText != null) {
+                      setState(() => errorText = null);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Reason for rejection',
+                    errorText: errorText,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide:
+                          const BorderSide(color: Colors.red, width: 1.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: onConfirm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Confirm Reject',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    if (note == null || !mounted) return;
+    await widget.onRejectWithNote(note);
+    if (mounted) Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,17 +190,18 @@ class UserApprovalDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(25),
                 child: Column(
                   children: [
-                    _DetailItem(Icons.email_outlined, 'Email', student.email),
+                    _DetailItem(
+                        Icons.email_outlined, 'Email', widget.student.email),
                     _DetailItem(Icons.badge_outlined, 'Roll Number',
-                        student.rollNumber),
+                        widget.student.rollNumber),
                     _DetailItem(Icons.business_outlined, 'Department',
-                        student.department),
-                    _DetailItem(
-                        Icons.school_outlined, 'Semester', student.semester),
-                    _DetailItem(
-                        Icons.group_outlined, 'Section', student.section),
+                        widget.student.department),
+                    _DetailItem(Icons.school_outlined, 'Semester',
+                        widget.student.semester),
+                    _DetailItem(Icons.group_outlined, 'Section',
+                        widget.student.section),
                     _DetailItem(Icons.event_note_outlined, 'Registered On',
-                        student.formattedDate),
+                        widget.student.formattedDate),
 
                     const SizedBox(height: 40),
 
@@ -84,7 +226,7 @@ class UserApprovalDetailScreen extends StatelessWidget {
                                 onPressed: admin.isLoading
                                     ? null
                                     : () {
-                                        onApprove();
+                                        widget.onApprove();
                                         Navigator.pop(context);
                                       },
                                 icon: admin.isLoading
@@ -117,12 +259,8 @@ class UserApprovalDetailScreen extends StatelessWidget {
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14)),
                                 ),
-                                onPressed: admin.isLoading
-                                    ? null
-                                    : () {
-                                        onReject();
-                                        Navigator.pop(context);
-                                      },
+                                onPressed:
+                                    admin.isLoading ? null : _handleReject,
                                 icon: const Icon(Icons.cancel_outlined),
                                 label: const Text(
                                   'Reject',
@@ -169,7 +307,7 @@ class UserApprovalDetailScreen extends StatelessWidget {
               radius: 55,
               backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
               child: Text(
-                student.initials,
+                widget.student.initials,
                 style: const TextStyle(
                   color: ColorPallet.primaryBlue,
                   fontSize: 42,
@@ -181,7 +319,7 @@ class UserApprovalDetailScreen extends StatelessWidget {
           const SizedBox(height: 14),
           // Name
           Text(
-            student.fullName,
+            widget.student.fullName,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,

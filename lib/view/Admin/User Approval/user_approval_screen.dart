@@ -413,10 +413,10 @@ class _UserApprovalScreenState extends State<UserApprovalScreen> {
 }
 
 // ─── Student Card ─────────────────────────────────────────────────────────────
-class _StudentCard extends StatelessWidget {
+class _StudentCard extends StatefulWidget {
   final PendingStudentModel student;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
+  final Future<void> Function() onApprove;
+  final Future<void> Function() onReject;
   final VoidCallback onTap;
 
   const _StudentCard({
@@ -425,6 +425,28 @@ class _StudentCard extends StatelessWidget {
     required this.onReject,
     required this.onTap,
   });
+
+  @override
+  State<_StudentCard> createState() => _StudentCardState();
+}
+
+class _StudentCardState extends State<_StudentCard> {
+  bool _isApproving = false;
+  bool _isRejecting = false;
+
+  bool get _isBusy => _isApproving || _isRejecting;
+
+  Future<void> _approve() async {
+    setState(() => _isApproving = true);
+    await widget.onApprove();
+    if (mounted) setState(() => _isApproving = false);
+  }
+
+  Future<void> _reject() async {
+    setState(() => _isRejecting = true);
+    await widget.onReject();
+    if (mounted) setState(() => _isRejecting = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -445,7 +467,7 @@ class _StudentCard extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          onTap: onTap,
+          onTap: _isBusy ? null : widget.onTap,
           borderRadius: BorderRadius.circular(20),
           child: Column(
             children: [
@@ -479,7 +501,7 @@ class _StudentCard extends StatelessWidget {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        student.initials,
+                        widget.student.initials,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -495,7 +517,7 @@ class _StudentCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            student.fullName,
+                            widget.student.fullName,
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
@@ -504,7 +526,7 @@ class _StudentCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            student.email,
+                            widget.student.email,
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 12,
@@ -559,17 +581,17 @@ class _StudentCard extends StatelessWidget {
                   children: [
                     _InfoChip(
                       icon: Icons.badge_outlined,
-                      label: student.rollNumber.isEmpty
+                      label: widget.student.rollNumber.isEmpty
                           ? 'N/A'
-                          : student.rollNumber,
+                          : widget.student.rollNumber,
                       color: ColorPallet.primaryBlue,
                     ),
                     const SizedBox(width: 8),
                     _InfoChip(
                       icon: Icons.school_outlined,
-                      label: student.semester.isEmpty
+                      label: widget.student.semester.isEmpty
                           ? 'N/A'
-                          : '${student.semester} Sem',
+                          : '${widget.student.semester} Sem',
                       color: const Color(0xFF7C3AED),
                     ),
                   ],
@@ -580,74 +602,85 @@ class _StudentCard extends StatelessWidget {
               Divider(height: 1, color: Colors.grey.shade100),
 
               // ── Action row ────────────────────────────────────────
-              Consumer<AdminProvider>(
-                builder: (ctx, admin, _) => Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
-                    children: [
-                      // View Details
-                      Expanded(
-                        child: TextButton.icon(
-                          onPressed: onTap,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey[700],
-                            backgroundColor: Colors.grey.shade50,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.visibility_outlined, size: 16),
-                          label: const Text(
-                            'Details',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 13),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    // View Details
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _isBusy ? null : widget.onTap,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[700],
+                          backgroundColor: Colors.grey.shade50,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Approve
-                      Expanded(
-                        child: TextButton.icon(
-                          onPressed: admin.isLoading ? null : onApprove,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.green.shade500,
-                            disabledBackgroundColor: Colors.grey.shade200,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.check_rounded, size: 16),
-                          label: const Text(
-                            'Approve',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 13),
-                          ),
+                        icon: const Icon(Icons.visibility_outlined, size: 16),
+                        label: const Text(
+                          'Details',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Reject — icon-only to save space
-                      SizedBox(
-                        height: 42,
-                        width: 42,
-                        child: TextButton(
-                          onPressed: admin.isLoading ? null : onReject,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            backgroundColor: Colors.red.shade50,
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Approve
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _isBusy ? null : _approve,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.green.shade500,
+                          disabledBackgroundColor: Colors.grey.shade200,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.close_rounded, size: 20),
+                        ),
+                        icon: _isApproving
+                            ? const SizedBox(
+                                height: 14,
+                                width: 14,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.check_rounded, size: 16),
+                        label: Text(
+                          _isApproving ? 'Approving…' : 'Approve',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 13),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Reject — icon only to save space
+                    SizedBox(
+                      height: 42,
+                      width: 42,
+                      child: TextButton(
+                        onPressed: _isBusy ? null : _reject,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          backgroundColor: Colors.red.shade50,
+                          disabledBackgroundColor: Colors.grey.shade100,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: _isRejecting
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                    color: Colors.red, strokeWidth: 2))
+                            : const Icon(Icons.close_rounded, size: 20),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

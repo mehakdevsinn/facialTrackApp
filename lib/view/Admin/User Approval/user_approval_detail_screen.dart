@@ -22,6 +22,25 @@ class UserApprovalDetailScreen extends StatefulWidget {
 }
 
 class _UserApprovalDetailScreenState extends State<UserApprovalDetailScreen> {
+  bool _isApproving = false;
+  bool _isRejecting = false;
+
+  Future<void> _handleApprove() async {
+    setState(() => _isApproving = true);
+    widget.onApprove();
+    // onApprove is a VoidCallback; the actual async work is kicked off in the
+    // parent. We wait briefly so the provider's isLoading can settle, then pop.
+    // Because the parent's _approve() is fully async, we resolve by awaiting
+    // the provider directly.
+    final admin = context.read<AdminProvider>();
+    // Poll until the provider is done (it sets isLoading false on complete)
+    await Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 100));
+      return admin.isLoading;
+    });
+    if (mounted) Navigator.pop(context);
+  }
+
   /// Shows a bottom sheet to collect a REQUIRED rejection note,
   /// then calls [widget.onRejectWithNote] and pops the screen.
   Future<void> _handleReject() async {
@@ -153,8 +172,12 @@ class _UserApprovalDetailScreenState extends State<UserApprovalDetailScreen> {
     );
 
     if (note == null || !mounted) return;
+    setState(() => _isRejecting = true);
     await widget.onRejectWithNote(note);
-    if (mounted) Navigator.pop(context);
+    if (mounted) {
+      setState(() => _isRejecting = false);
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -206,74 +229,73 @@ class _UserApprovalDetailScreenState extends State<UserApprovalDetailScreen> {
                     const SizedBox(height: 40),
 
                     // ── Action buttons ────────────────────────
-                    Consumer<AdminProvider>(
-                      builder: (ctx, admin, _) {
-                        return Row(
-                          children: [
-                            // Approve
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
-                                  elevation: 4,
-                                  shadowColor: Colors.green.withOpacity(0.3),
-                                ),
-                                onPressed: admin.isLoading
-                                    ? null
-                                    : () {
-                                        widget.onApprove();
-                                        Navigator.pop(context);
-                                      },
-                                icon: admin.isLoading
-                                    ? const SizedBox(
-                                        height: 16,
-                                        width: 16,
-                                        child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2))
-                                    : const Icon(Icons.check_circle_outline),
-                                label: const Text(
-                                  'Approve',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                    Row(
+                      children: [
+                        // Approve
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor:
+                                  Colors.green.withOpacity(0.5),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                              elevation: 4,
+                              shadowColor: Colors.green.withOpacity(0.3),
+                            ),
+                            onPressed: (_isApproving || _isRejecting)
+                                ? null
+                                : _handleApprove,
+                            icon: _isApproving
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.check_circle_outline),
+                            label: Text(
+                              _isApproving ? 'Approving…' : 'Approve',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
                               ),
                             ),
-                            const SizedBox(width: 15),
-                            // Reject
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(
-                                      color: Colors.red, width: 2),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
-                                ),
-                                onPressed:
-                                    admin.isLoading ? null : _handleReject,
-                                icon: const Icon(Icons.cancel_outlined),
-                                label: const Text(
-                                  'Reject',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        // Reject
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side:
+                                  const BorderSide(color: Colors.red, width: 2),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
+                            onPressed: (_isApproving || _isRejecting)
+                                ? null
+                                : _handleReject,
+                            icon: _isRejecting
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.red, strokeWidth: 2))
+                                : const Icon(Icons.cancel_outlined),
+                            label: Text(
+                              _isRejecting ? 'Rejecting…' : 'Reject',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
                               ),
                             ),
-                          ],
-                        );
-                      },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -32,6 +32,12 @@ class AdminProvider extends ChangeNotifier {
   bool _pendingStudentsLoaded = false;
   String? _pendingStudentsError;
 
+  /// IDs of students currently being approved.
+  final Set<String> _approvingStudentIds = {};
+
+  /// IDs of students currently being rejected.
+  final Set<String> _rejectingStudentIds = {};
+
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -52,6 +58,18 @@ class AdminProvider extends ChangeNotifier {
       List.unmodifiable(_pendingStudents);
   bool get isPendingStudentsLoading => _isPendingStudentsLoading;
   String? get pendingStudentsError => _pendingStudentsError;
+
+  /// Returns true while the given student is being approved.
+  bool isStudentApproving(String studentId) =>
+      _approvingStudentIds.contains(studentId);
+
+  /// Returns true while the given student is being rejected.
+  bool isStudentRejecting(String studentId) =>
+      _rejectingStudentIds.contains(studentId);
+
+  /// Returns true while ANY action is in progress for the given student.
+  bool isStudentProcessing(String studentId) =>
+      isStudentApproving(studentId) || isStudentRejecting(studentId);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   void _setLoading(bool value) {
@@ -313,42 +331,50 @@ class AdminProvider extends ChangeNotifier {
 
   /// Approves a pending student. Removes them from the local list on success.
   Future<bool> approveStudent(String studentId, {String? notes}) async {
-    _setLoading(true);
+    _approvingStudentIds.add(studentId);
     _setError(null);
+    notifyListeners();
     try {
       await _api.approveStudent(studentId, notes: notes);
       _pendingStudents =
           _pendingStudents.where((s) => s.id != studentId).toList();
-      _setLoading(false);
+      _approvingStudentIds.remove(studentId);
+      notifyListeners();
       return true;
     } on AuthException catch (e) {
       _setError(e.message);
-      _setLoading(false);
+      _approvingStudentIds.remove(studentId);
+      notifyListeners();
       return false;
     } catch (_) {
       _setError('An unexpected error occurred.');
-      _setLoading(false);
+      _approvingStudentIds.remove(studentId);
+      notifyListeners();
       return false;
     }
   }
 
   /// Rejects a pending student. Removes them from the local list on success.
   Future<bool> rejectStudent(String studentId, {String? notes}) async {
-    _setLoading(true);
+    _rejectingStudentIds.add(studentId);
     _setError(null);
+    notifyListeners();
     try {
       await _api.rejectStudent(studentId, notes: notes);
       _pendingStudents =
           _pendingStudents.where((s) => s.id != studentId).toList();
-      _setLoading(false);
+      _rejectingStudentIds.remove(studentId);
+      notifyListeners();
       return true;
     } on AuthException catch (e) {
       _setError(e.message);
-      _setLoading(false);
+      _rejectingStudentIds.remove(studentId);
+      notifyListeners();
       return false;
     } catch (_) {
       _setError('An unexpected error occurred.');
-      _setLoading(false);
+      _rejectingStudentIds.remove(studentId);
+      notifyListeners();
       return false;
     }
   }

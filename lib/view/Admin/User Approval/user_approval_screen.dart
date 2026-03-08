@@ -413,7 +413,7 @@ class _UserApprovalScreenState extends State<UserApprovalScreen> {
 }
 
 // ─── Student Card ─────────────────────────────────────────────────────────────
-class _StudentCard extends StatefulWidget {
+class _StudentCard extends StatelessWidget {
   final PendingStudentModel student;
   final Future<void> Function() onApprove;
   final Future<void> Function() onReject;
@@ -427,266 +427,252 @@ class _StudentCard extends StatefulWidget {
   });
 
   @override
-  State<_StudentCard> createState() => _StudentCardState();
-}
-
-class _StudentCardState extends State<_StudentCard> {
-  bool _isApproving = false;
-  bool _isRejecting = false;
-
-  bool get _isBusy => _isApproving || _isRejecting;
-
-  Future<void> _approve() async {
-    setState(() => _isApproving = true);
-    await widget.onApprove();
-    if (mounted) setState(() => _isApproving = false);
-  }
-
-  Future<void> _reject() async {
-    setState(() => _isRejecting = true);
-    await widget.onReject();
-    if (mounted) setState(() => _isRejecting = false);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: _isBusy ? null : widget.onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
-            children: [
-              // ── Top section ───────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Gradient avatar
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            ColorPallet.primaryBlue,
-                            Color(0xFF4F46E5),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: ColorPallet.primaryBlue.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        widget.student.initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-
-                    // Name + email
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.student.fullName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            widget.student.email,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Pending badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.orange.shade200),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.orange,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            'PENDING',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Info chips ────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                child: Row(
-                  children: [
-                    _InfoChip(
-                      icon: Icons.badge_outlined,
-                      label: widget.student.rollNumber.isEmpty
-                          ? 'N/A'
-                          : widget.student.rollNumber,
-                      color: ColorPallet.primaryBlue,
-                    ),
-                    const SizedBox(width: 8),
-                    _InfoChip(
-                      icon: Icons.school_outlined,
-                      label: widget.student.semester.isEmpty
-                          ? 'N/A'
-                          : '${widget.student.semester} Sem',
-                      color: const Color(0xFF7C3AED),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Divider ───────────────────────────────────────────
-              Divider(height: 1, color: Colors.grey.shade100),
-
-              // ── Action row ────────────────────────────────────────
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  children: [
-                    // View Details
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: _isBusy ? null : widget.onTap,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[700],
-                          backgroundColor: Colors.grey.shade50,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.visibility_outlined, size: 16),
-                        label: const Text(
-                          'Details',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 13),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Approve
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: _isBusy ? null : _approve,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.green.shade500,
-                          disabledBackgroundColor: Colors.grey.shade200,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: _isApproving
-                            ? const SizedBox(
-                                height: 14,
-                                width: 14,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2))
-                            : const Icon(Icons.check_rounded, size: 16),
-                        label: Text(
-                          _isApproving ? 'Approving…' : 'Approve',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 13),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Reject — icon only to save space
-                    SizedBox(
-                      height: 42,
-                      width: 42,
-                      child: TextButton(
-                        onPressed: _isBusy ? null : _reject,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          backgroundColor: Colors.red.shade50,
-                          disabledBackgroundColor: Colors.grey.shade100,
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isRejecting
-                            ? const SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                    color: Colors.red, strokeWidth: 2))
-                            : const Icon(Icons.close_rounded, size: 20),
-                      ),
-                    ),
-                  ],
-                ),
+    return Consumer<AdminProvider>(
+      builder: (ctx, admin, _) {
+        final isApproving = admin.isStudentApproving(student.id);
+        final isRejecting = admin.isStudentRejecting(student.id);
+        final isBusy = isApproving || isRejecting;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-        ),
-      ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              onTap: isBusy ? null : onTap,
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                children: [
+                  // ── Top section ───────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Gradient avatar
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                ColorPallet.primaryBlue,
+                                Color(0xFF4F46E5),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: ColorPallet.primaryBlue.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            student.initials,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        // Name + email
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                student.fullName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                student.email,
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Pending badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              const Text(
+                                'PENDING',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Info chips ────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                    child: Row(
+                      children: [
+                        _InfoChip(
+                          icon: Icons.badge_outlined,
+                          label: student.rollNumber.isEmpty
+                              ? 'N/A'
+                              : student.rollNumber,
+                          color: ColorPallet.primaryBlue,
+                        ),
+                        const SizedBox(width: 8),
+                        _InfoChip(
+                          icon: Icons.school_outlined,
+                          label: student.semester.isEmpty
+                              ? 'N/A'
+                              : '${student.semester} Sem',
+                          color: const Color(0xFF7C3AED),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Divider ───────────────────────────────────────────
+                  Divider(height: 1, color: Colors.grey.shade100),
+
+                  // ── Action row ────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        // View Details
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: isBusy ? null : onTap,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.grey[700],
+                              backgroundColor: Colors.grey.shade50,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon:
+                                const Icon(Icons.visibility_outlined, size: 16),
+                            label: const Text(
+                              'Details',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Approve
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: isBusy ? null : onApprove,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.green.shade500,
+                              disabledBackgroundColor: Colors.grey.shade200,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: isApproving
+                                ? const SizedBox(
+                                    height: 14,
+                                    width: 14,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.check_rounded, size: 16),
+                            label: Text(
+                              isApproving ? 'Approving…' : 'Approve',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Reject — icon only to save space
+                        SizedBox(
+                          height: 42,
+                          width: 42,
+                          child: TextButton(
+                            onPressed: isBusy ? null : onReject,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              backgroundColor: Colors.red.shade50,
+                              disabledBackgroundColor: Colors.grey.shade100,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: isRejecting
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.red, strokeWidth: 2))
+                                : const Icon(Icons.close_rounded, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

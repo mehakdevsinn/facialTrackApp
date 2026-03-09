@@ -230,9 +230,25 @@ class FaceEnrollmentController extends ChangeNotifier {
       } else {
         _consecutiveReadyCount = 0;
       }
+    } else if (_phase == EnrollmentPhase.holding) {
+      if (result.readyToCapture) {
+        // ── API-result-based fill: +20% per confirmed ready result ────────
+        // 5 consecutive ready results = 100% = capture.
+        // Naturally adapts to network speed:
+        //   fast  (~400ms/result): ~2 s
+        //   slow (~1000ms/result): ~5 s
+        //   very  (~2000ms/result): ~10 s
+        _holdProgress = (_holdProgress + 0.20).clamp(0.0, 1.0);
+        if (_holdProgress >= 1.0) {
+          _holdTimer?.cancel();
+          _holdTimer = null;
+          _captureCurrentStep();
+          notifyListeners();
+          return;
+        }
+      }
+      // Drain is handled by the hold timer on fresh not-ready results.
     }
-    // During HOLDING: the hold timer itself reads isReady directly each tick—
-    // no need to cancel or reset anything from here.
     notifyListeners();
   }
 
@@ -242,31 +258,16 @@ class FaceEnrollmentController extends ChangeNotifier {
     _holdTimer?.cancel();
     _holdProgress = 0.0;
 
+    // Timer is drain-only. Fill is driven by API results in _onAnalysisResult.
+    // Drain fires when the backend freshly says not-ready (user moved face).
     const tickDuration = Duration(milliseconds: 50);
-    // Fill in 2 seconds (40 ticks of 50ms)
-    const double fillIncrement = 1.0 / 40.0;
-    // Drain fast when backend explicitly says NOT ready (fresh result = false)
-    const double drainDecrement = 0.15;
+    const double drainDecrement = 0.10; // drain ~500ms from 100%
 
     _holdTimer = Timer.periodic(tickDuration, (timer) {
       final bool fresh = _isResultFresh;
       final bool backendReady = _lastResult.readyToCapture;
 
-      if (fresh && backendReady) {
-        // ── FILL: backend actively confirmed ready ──────────────────────────
-        _holdProgress = (_holdProgress + fillIncrement).clamp(0.0, 1.0);
-        notifyListeners();
-
-        if (_holdProgress >= 1.0) {
-          timer.cancel();
-          _holdTimer = null;
-          _captureCurrentStep();
-        }
-      } else if (!fresh) {
-        // ── PAUSE: result is stale (slow network) — ring holds, no drain ───
-        // Border stays green from last result; don't penalise slow connection.
-        // No notifyListeners() needed (nothing changed visually).
-      } else {
+      if (fresh && !backendReady) {
         // ── DRAIN: backend freshly said not-ready (user moved) ──────────────
         _holdProgress = (_holdProgress - drainDecrement).clamp(0.0, 1.0);
         notifyListeners();
@@ -279,6 +280,8 @@ class FaceEnrollmentController extends ChangeNotifier {
           notifyListeners();
         }
       }
+      // fresh && backendReady  → fill handled in _onAnalysisResult (not here)
+      // !fresh                 → PAUSE (stale result), do nothing
     });
   }
 

@@ -504,7 +504,8 @@ class _ThumbnailRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  sequence.length > i ? sequence[i].angle : '',
+                  _instructionLabel(
+                      sequence.length > i ? sequence[i].instruction : ''),
                   style: const TextStyle(color: Colors.white38, fontSize: 10),
                 ),
               ],
@@ -513,5 +514,16 @@ class _ThumbnailRow extends StatelessWidget {
         }),
       ),
     );
+  }
+
+  /// Derives a user-facing label from the backend instruction text.
+  /// e.g. 'Turn your head slightly to the right 👉' → 'right'
+  ///      'Look straight at the camera 😊'           → 'center'
+  String _instructionLabel(String instruction) {
+    final lower = instruction.toLowerCase();
+    if (lower.contains('straight') || lower.contains('center')) return 'center';
+    if (lower.contains('right')) return 'right';
+    if (lower.contains('left')) return 'left';
+    return instruction;
   }
 }

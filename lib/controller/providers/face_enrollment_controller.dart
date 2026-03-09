@@ -211,7 +211,11 @@ class FaceEnrollmentController extends ChangeNotifier {
   static Uint8List _compressIsolate(Uint8List bytes) {
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return bytes;
-    return img.encodeJpg(decoded, quality: 80) as Uint8List;
+    // Flip horizontally: Flutter's front camera takePicture() returns HAL-mirrored
+    // JPEG bytes (selfie-style). The HTML frontend sends original sensor bytes
+    // (non-mirrored canvas). Flipping normalises to match the backend's expectation.
+    final flipped = img.flipHorizontal(decoded);
+    return Uint8List.fromList(img.encodeJpg(flipped, quality: 80));
   }
 
   // ─── Analysis result handler ────────────────────────────────────────────────

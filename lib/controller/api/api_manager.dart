@@ -1,14 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:facialtrackapp/controller/api/endpoints.dart';
+import 'package:facialtrackapp/core/models/enrollment_config_model.dart';
+import 'package:facialtrackapp/core/models/face_status_model.dart';
+import 'package:facialtrackapp/core/models/frame_analysis_result.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 // ─── Custom Exception ─────────────────────────────────────────────────────────
 // Named AuthException so every existing `on AuthException catch` block works.
@@ -589,6 +594,125 @@ class ApiManager {
           .timeout(const Duration(seconds: 30));
 
       _assertSuccess(response);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // Face Enrollment
+  // ────────────────────────────────────────────────────────────────────
+
+  /// GET /enrollment-config
+  /// Call once when the screen opens to get the capture sequence + fps.
+  Future<EnrollmentConfig> getEnrollmentConfig() async {
+    final headers = await _authHeaders();
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.enrollmentConfig), headers: headers)
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) {
+        throw AuthException('Failed to load enrollment config.');
+      }
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return EnrollmentConfig.fromJson(body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// POST /analyze-frame
+  /// Sends a JPEG frame to the backend and returns real-time guidance.
+  /// [angle] must be one of: center, left, right.
+  Future<FrameAnalysisResult> analyzeFrame(
+      Uint8List jpegBytes, String angle) async {
+    final token = await StorageService.getToken();
+    try {
+      final request =
+          http.MultipartRequest('POST', Uri.parse(Endpoints.analyzeFrame))
+            ..headers['Authorization'] = 'Bearer $token'
+            ..fields['angle'] = angle
+            ..files.add(http.MultipartFile.fromBytes(
+              'image',
+              jpegBytes,
+              filename: 'frame.jpg',
+              contentType: MediaType('image', 'jpeg'),
+            ));
+
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 401) {
+        throw AuthException('Session expired. Please log in again.');
+      }
+      if (response.statusCode == 500) {
+        // Guide says: skip 500 silently, return not-ready
+        return FrameAnalysisResult.notReady;
+      }
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return FrameAnalysisResult.fromJson(body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      // Network/timeout — treat as not-ready (Rule 3)
+      return FrameAnalysisResult.notReady;
+    }
+  }
+
+  /// POST /students/face/upload
+  /// Uploads one captured face image. Call sequentially for each angle.
+  /// [angle] is sent as a multipart form field (NOT a query param — per guide).
+  Future<bool> uploadFaceImage(Uint8List jpegBytes, String angle) async {
+    final token = await StorageService.getToken();
+    try {
+      final request =
+          http.MultipartRequest('POST', Uri.parse(Endpoints.faceUpload))
+            ..headers['Authorization'] = 'Bearer $token'
+            ..fields['angle'] = angle
+            ..files.add(http.MultipartFile.fromBytes(
+              'file',
+              jpegBytes,
+              filename: '$angle.jpg',
+              contentType: MediaType('image', 'jpeg'),
+            ));
+
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 401) {
+        throw AuthException('Session expired. Please log in again.');
+      }
+      if (response.statusCode != 200) {
+        throw AuthException(
+            'Upload failed for $angle angle. Please try re-enrolling.');
+      }
+      return true;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /students/face/status
+  /// Returns whether the student has uploaded face images and how many.
+  Future<FaceStatusModel> getFaceStatus() async {
+    final headers = await _authHeaders();
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.faceStatus), headers: headers)
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) {
+        throw AuthException('Failed to fetch face status.');
+      }
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return FaceStatusModel.fromJson(body);
     } on AuthException {
       rethrow;
     } catch (e) {

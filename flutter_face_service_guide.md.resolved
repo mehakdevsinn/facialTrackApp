@@ -1,0 +1,410 @@
+# FacialTrack — Flutter Face Service Integration Guide
+
+> **Audience:** Flutter mobile developers integrating the face enrollment feature.  
+> **Purpose:** This document is the sole source of truth for how the face enrollment service works and how to implement it on the Flutter side. Feed this entire document to your AI coding assistant.
+
+---
+
+## 1. Overview: What This Feature Does
+
+Face enrollment collects **3 photos** of the student's face — center, left-side, and right-side — using the device's **front camera**. The backend analyzes each frame in real time and tells the app whether the frame is good enough to capture. The app drives the user through three sequential steps, one per angle, and uploads each captured image to the backend.
+
+**The app never decides independently whether a frame is good enough. The backend makes that decision on every frame.**
+
+---
+
+## 2. User Flow (Exact Sequence)
+
+```
+1. Student opens Face Enrollment screen
+2. App opens front camera (full-screen camera preview)
+3. App starts streaming frames to /analyze-frame at 10 FPS
+4. Backend responds to each frame with quality feedback + ready_to_capture flag
+
+── STEP 1: CENTER ──────────────────────────────────────────────────────────
+5. Show instruction: "Look straight at the camera 😊"
+6. Show live feedback from backend (see §5)
+7. When backend returns ready_to_capture: true for 3 CONSECUTIVE frames:
+   → Start a visual "hold" countdown (2 seconds, progress bar or ring)
+   → If ready_to_capture drops to false at any point → RESET the hold timer
+8. When hold timer completes → capture and freeze that frame
+9. Display captured image in a thumbnail
+
+── STEP 2: LEFT ANGLE ──────────────────────────────────────────────────────
+10. Show instruction: "Turn your head slightly to the right 👉"
+    (Note: "left" angle means the student turns RIGHT so camera sees left side)
+11. Send angle="left" in the frame analysis requests
+12. Repeat the 3-frame ready → hold → capture flow
+
+── STEP 3: RIGHT ANGLE ─────────────────────────────────────────────────────
+13. Show instruction: "Turn your head slightly to the left 👈"
+14. Send angle="right" in the frame analysis requests
+15. Repeat the 3-frame ready → hold → capture flow
+
+── UPLOAD ──────────────────────────────────────────────────────────────────
+16. Upload all 3 captured images sequentially to /students/face/upload
+17. Show success screen
+```
+
+---
+
+## 3. API Endpoints
+
+**Base URL:** `<your_backend_url>/api/v1`  
+**Authentication:** All endpoints require `Authorization: Bearer <jwt_token>` header.  
+**Student token** is required (not teacher/admin).
+
+---
+
+### 3.1 GET `/enrollment-config`
+
+Call this **once when the screen opens** to get the sequence and instructions.
+
+**Response:**
+```json
+{
+  "capture_sequence": [
+    { "angle": "center", "instruction": "Look straight at the camera" },
+    { "angle": "left",   "instruction": "Turn your head slightly to the right" },
+    { "angle": "right",  "instruction": "Turn your head slightly to the left" }
+  ],
+  "frame_analysis": {
+    "recommended_fps": 10
+  },
+  "auto_capture": {
+    "enabled": true,
+    "countdown_seconds": 3,
+    "min_score_required": 80
+  }
+}
+```
+
+Use `capture_sequence` to drive your step loop. The `instruction` field is already human-readable and correct — display it directly.
+
+---
+
+### 3.2 POST `/analyze-frame`
+
+Send this **at 10 FPS** while the camera is active. This is the core real-time guidance loop.
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Description |
+|---|---|---|
+| [image](file:///c:/Users/Administrator/Desktop/My%20Projects/Facial%20Track/app/services/face_service.py#178-221) | File (JPEG) | Camera frame. Compress to JPEG quality 80. |
+| `angle` | String | Current step angle: `"center"`, `"left"`, or `"right"` |
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "face_detected": true,
+  "ready_to_capture": false,
+  "feedback_message": "↩ Turn your head to the RIGHT",
+  "feedback_color": "red",
+  "overall_score": 62,
+  "position": {
+    "distance": "good",
+    "horizontal": "centered",
+    "vertical": "centered"
+  },
+  "quality": {
+    "blur": "sharp",
+    "lighting": "good",
+    "face_coverage": 0.31
+  },
+  "pose": {
+    "pose_status": "turn_more_left",
+    "yaw": 3.2,
+    "expected_angle": "left"
+  },
+  "liveness": {
+    "is_real_face": true,
+    "confidence": 0.67
+  }
+}
+```
+
+**Key fields your UI needs:**
+
+| Field | Use |
+|---|---|
+| `ready_to_capture` | **Primary signal.** Drive the hold timer with this. |
+| `feedback_message` | Display this to the user verbatim as real-time guidance. |
+| `feedback_color` | `"green"` = border green, `"yellow"` = border yellow, `"red"` = border red |
+| `face_detected` | If `false`, show "No face detected" and stop the analysis briefly |
+| [overall_score](file:///c:/Users/Administrator/Desktop/My%20Projects/Facial%20Track/app/services/enhanced_face_service.py#421-461) | Show as a live score badge (0–100) |
+
+**`feedback_color` → UI border color mapping:**
+- `"green"` → Green camera border (ready / perfect pose)
+- `"yellow"` → Yellow camera border (acceptable, holding)
+- `"red"` → Red camera border (needs adjustment)
+
+---
+
+### 3.3 POST `/students/face/upload`
+
+Call this **once per captured image**, sequentially (center → left → right).
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Description |
+|---|---|---|
+| `file` | File (JPEG) | The captured image |
+| `angle` | String (Form field) | `"center"`, `"left"`, or `"right"` — **must be sent as a form field, not query param** |
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Face image uploaded successfully (center angle)",
+  "face_detected": true,
+  "uploaded_at": "2026-03-02T13:10:00Z"
+}
+```
+
+**Important:** Upload images **one at a time**, wait for the 200 before sending the next.
+
+---
+
+### 3.4 GET `/students/face/status`
+
+Check before showing the enrollment screen — if the student already has all 3 angles, show a "re-enroll" option instead of the full flow.
+
+**Response:**
+```json
+{
+  "has_face_image": true,
+  "is_verified": true,
+  "image_count": 3,
+  "angles": ["center", "left", "right"],
+  "uploaded_at": "2026-03-02T13:10:00Z"
+}
+```
+
+---
+
+### 3.5 DELETE `/students/face/delete`
+
+Delete stored face images. Optional query param: `angle=center` (specific angle) or omit to delete all.
+
+---
+
+## 4. Critical Implementation Rules
+
+These are **non-negotiable** rules derived from the backend architecture. Ignoring them causes silent bugs.
+
+### Rule 1 — Snapshot the angle before sending; discard stale responses
+
+```
+When you start a frame analysis request, record the CURRENT step angle.
+When the response arrives, check if the current step is STILL the same angle.
+If the step has advanced (e.g. center → left), DISCARD the response.
+```
+
+**Why:** The network round-trip takes 200–500ms. When the center step completes and the app advances to the left step, there are 3–5 in-flight center-angle requests still pending. Their responses all have `ready_to_capture: true` (the center pose was perfect). Without this guard, those stale responses will immediately fill the hold timer for the left angle — causing the app to silently capture a straight-face photo and label it as "left."
+
+**Pseudocode:**
+```dart
+final String angleAtSendTime = currentAngle; // snapshot
+final response = await api.analyzeFrame(frame, angleAtSendTime);
+if (angleAtSendTime != currentAngle) return; // discard stale response
+// safe to process
+```
+
+### Rule 2 — The hold timer must reset if ready_to_capture drops to false
+
+The hold timer is NOT a countdown that starts and runs to completion. It is a progress bar that **fills only while `ready_to_capture` is true** and **resets instantly** when it becomes false.
+
+```
+ready=true  → fill bar +X per frame
+ready=false → reset bar to 0 immediately
+bar reaches 100% → capture
+```
+
+**Why:** Users move during the hold. If the bar doesn't reset, a single good frame followed by movement still triggers capture.
+
+### Rule 3 — Treat unresponsive frames as not-ready
+
+If no response has arrived in the last 200ms (e.g., network stall), treat the state as `ready_to_capture: false`. Do not let the hold timer continue filling based on a cached result.
+
+```dart
+final age = DateTime.now().difference(lastResultTimestamp).inMilliseconds;
+final isReady = lastResult.readyToCapture && age < 200;
+```
+
+### Rule 4 — Stop sending analysis frames during upload
+
+Once all 3 images are captured, stop the 10 FPS analysis loop immediately. Do not send frames while uploading.
+
+### Rule 5 — Use the front camera, and do NOT flip the frame before sending
+
+The backend's MediaPipe pose estimation is calibrated for the raw camera output. Do **not** apply any horizontal flip/mirror to the pixel data before sending. CSS/UI-level mirror for display is separate from the pixel data you send — make sure you're sending the raw camera bytes.
+
+---
+
+## 5. UI Requirements
+
+### Camera Preview
+- Full-screen or large front-camera preview
+- **Mirror the display** (like a selfie mirror) so the user sees what they expect — but send raw bytes to the API
+- Overlay a circular or oval frame guide
+
+### Feedback Overlay
+- Colored border around the camera frame: green / yellow / red matching `feedback_color`
+- Text label below showing `feedback_message` verbatim (backend already handles user-friendly wording)
+- Small score badge showing `overall_score / 100`
+
+### Hold Timer / Progress Indicator
+- A circular ring or progress bar that fills over 2 seconds
+- Only fills while `ready_to_capture` is true
+- Instantly resets to 0 if `ready_to_capture` drops to false
+- Shows "✅ Hold still..." text while filling
+
+### Step Indicator
+- 3-step progress bar (Center → Left → Right)
+- Each step fills green when that angle is captured
+
+### Instruction Text
+- Large, bold text at the top or bottom showing the current step instruction
+- Update it when advancing to the next step
+
+### Captured Thumbnails
+- Show a small thumbnail of each captured image as steps complete
+- Confirm to the user what was captured
+
+### Upload State
+- Show a loading screen while uploading ("Saving your face data...")
+- Show success screen with all 3 thumbnails on completion
+
+---
+
+## 6. State Machine
+
+```
+IDLE
+  └─[open screen]─► LOADING_CONFIG
+                        └─[config received]─► STARTING_CAMERA
+                                                └─[camera ready]─► ANALYZING (step=center)
+                                                                      │
+                                                     ┌────────────────┘
+                                                     ▼
+                                               ANALYZING
+                                          (send frames at 10fps)
+                                                     │
+                                        ready=true x3 consecutive frames
+                                                     │
+                                                     ▼
+                                              HOLDING (fill timer)
+                                           ready=false → ANALYZING
+                                           timer=100% →
+                                                     │
+                                                     ▼
+                                              CAPTURED (step N)
+                                           step < 3 → advance step → ANALYZING
+                                           step = 3 →
+                                                     │
+                                                     ▼
+                                              UPLOADING (3 requests)
+                                                     │
+                                                     ▼
+                                              COMPLETE
+```
+
+---
+
+## 7. Error Handling
+
+| Scenario | Handler |
+|---|---|
+| `/analyze-frame` returns `face_detected: false` | Show "No face in frame" feedback, continue analysis loop |
+| `/analyze-frame` returns 401 | Token expired — redirect to login |
+| `/analyze-frame` returns 500 | Skip that frame silently, continue loop |
+| `/students/face/upload` returns 400 | Show error: "Upload failed. Please try re-enrolling." Offer reset. |
+| `/students/face/upload` returns 401 | Token expired — redirect to login |
+| Camera permission denied | Show permission request screen before starting |
+| Network timeout on analysis frame | Treat as ready=false (Rule 3), continue loop |
+
+---
+
+## 8. Recommended Architecture (Flutter)
+
+```
+FaceEnrollmentScreen
+├── FaceEnrollmentController (state machine)
+│   ├── EnrollmentStep (enum: center, left, right, uploading, complete)
+│   ├── CaptureState (enum: analyzing, holding, captured)
+│   ├── analyzeFrameLoop() — Timer.periodic(100ms) sending frames
+│   ├── onAnalysisResult() — handles Rule 1 (stale check), Rule 3 (age check)
+│   ├── holdTimerTick() — handles Rule 2 (reset on not-ready)
+│   └── uploadAll() — sequential upload of 3 images
+│
+├── CameraPreview widget (camera_plus or camera package)
+├── OverlayBorder widget (color from feedback_color)
+├── FeedbackText widget (text from feedback_message)
+├── HoldTimerRing widget (animated, resets on ready=false)
+├── StepIndicator widget (3 steps)
+└── CapturedThumbnails widget
+```
+
+**Recommended packages:**
+- `camera` — Flutter camera package (official)
+- `http` or `dio` — for multipart uploads
+- [image](file:///c:/Users/Administrator/Desktop/My%20Projects/Facial%20Track/app/services/face_service.py#178-221) — for JPEG encoding of camera frames
+
+**Capturing a frame in Flutter:**
+```dart
+// From CameraController, capture image as XFile
+final XFile file = await cameraController.takePicture();
+final Uint8List bytes = await file.readAsBytes();
+// Send bytes as multipart to /analyze-frame
+```
+
+For the 10 FPS analysis loop (lighter than full captures):
+```dart
+// Use CameraController.startImageStream() for low-overhead frame access
+cameraController.startImageStream((CameraImage image) {
+  // Convert YUV/BGRA to JPEG bytes, send to analyzeFrame
+});
+```
+
+---
+
+## 9. Angle Naming Clarification
+
+The backend stores angles with these names. The physical action and DB label may feel counterintuitive:
+
+| DB angle name | What user does | What camera sees |
+|---|---|---|
+| `center` | Looks straight at camera | Front face |
+| `left` | Turns head to their **RIGHT** | Left side of face |
+| `right` | Turns head to their **LEFT** | Right side of face |
+
+The `enrollment-config` endpoint returns the correct human-readable instructions already. Always display those instructions — do not infer direction from the angle string.
+
+---
+
+## 10. Quick Reference — Checklist Before Submitting
+
+- [ ] Front camera is used (not rear)
+- [ ] Raw camera bytes sent (no manual flip applied to pixel data)
+- [ ] Frames sent at ~10 FPS (`100ms` interval), not faster
+- [ ] `angle` sent as a multipart `Form` field (not query param) on both `/analyze-frame` and `/students/face/upload`
+- [ ] Stale-response guard implemented (Rule 1)
+- [ ] Hold timer resets on `ready_to_capture = false` (Rule 2)
+- [ ] Result age check implemented (Rule 3)
+- [ ] Analysis loop stopped before upload starts (Rule 4)
+- [ ] All 3 uploads done sequentially with correct `angle` field
+- [ ] `Authorization: Bearer <token>` header on all requests

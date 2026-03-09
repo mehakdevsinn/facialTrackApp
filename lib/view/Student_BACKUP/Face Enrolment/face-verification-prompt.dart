@@ -80,7 +80,7 @@ class FaceVerificationPrompt extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const StudentFaceEnrolements(),
+                      builder: (context) => const StudentFaceEnrollement(),
                     ),
                   );
                 },

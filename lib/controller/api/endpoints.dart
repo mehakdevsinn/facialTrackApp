@@ -46,4 +46,19 @@ class Endpoints {
   /// POST → reject a specific student
   static String adminStudentReject(String studentId) =>
       '$_admin/students/$studentId/reject';
+
+  // ── Student — Face Enrollment ─────────────────────────────────────────────
+  static const String _face = '$baseUrl/api/v1';
+
+  /// GET → fetch capture sequence + config (call once on screen open)
+  static const String enrollmentConfig = '$_face/enrollment-config';
+
+  /// POST → send a camera frame for real-time analysis (multipart/form-data)
+  static const String analyzeFrame = '$_face/analyze-frame';
+
+  /// POST → upload a captured face image (multipart/form-data, angle as form field)
+  static const String faceUpload = '$_face/students/face/upload';
+
+  /// GET → check if the student already has face images uploaded
+  static const String faceStatus = '$_face/students/face/status';
 }

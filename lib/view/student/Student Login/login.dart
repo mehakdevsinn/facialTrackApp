@@ -5,7 +5,7 @@ import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Approval%20Status/pending_approval_screen.dart';
 import 'package:facialtrackapp/view/student/Approval%20Status/rejected_screen.dart';
-import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
+import 'package:facialtrackapp/view/student/Face%20Enrolment/face-verification-prompt.dart';
 import 'package:facialtrackapp/view/student/Forgot%20Password/forgot-password-screen.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:facialtrackapp/view/student/Student%20Signup/student_signup.dart';
@@ -68,7 +68,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           if (!user.faceVerified) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => StudentFaceEnrolements()),
+              MaterialPageRoute(builder: (_) => const FaceVerificationPrompt()),
               (route) => false,
             );
           } else {

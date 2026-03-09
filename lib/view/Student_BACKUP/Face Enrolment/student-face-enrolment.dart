@@ -3,7 +3,6 @@ import 'package:camera/camera.dart';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:flutter/material.dart';
 import 'package:facialtrackapp/view/student/Face Enrolment/enrollment-result-screen.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class StudentFaceEnrolements extends StatefulWidget {
   const StudentFaceEnrolements({super.key});
@@ -15,15 +14,12 @@ class StudentFaceEnrolements extends StatefulWidget {
 class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
     with SingleTickerProviderStateMixin {
   CameraController? _controller;
+  // ignore: unused_field
   bool _isBusy = false;
   bool _canProceed = false;
   bool _isSubmitting = false;
   int currentStep = 0;
   late AnimationController _scanController;
-
-  final FaceDetector _faceDetector = FaceDetector(
-    options: FaceDetectorOptions(enableTracking: true, enableLandmarks: true),
-  );
 
   final List<Map<String, dynamic>> steps = [
     {'label': 'Straight', 'icon': Icons.face},
@@ -77,86 +73,8 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
   }
 
   void _processCameraImage(CameraImage image) async {
-    if (_isBusy) return;
-    _isBusy = true;
-
-    final inputImage = _inputImageFromCameraImage(image);
-    if (inputImage == null) {
-      _isBusy = false;
-      return;
-    }
-
-    try {
-      final faces = await _faceDetector.processImage(inputImage);
-
-      if (faces.isNotEmpty) {
-        final face = faces.first;
-        double headY = face.headEulerAngleY ?? 0; // Left/Right
-        double headX = face.headEulerAngleX ?? 0; // Up/Down
-
-        bool detected = false;
-
-        // Detection Logic based on current step
-        switch (currentStep) {
-          case 0: // Straight
-            if (headY.abs() < 10 && headX.abs() < 10) detected = true;
-            break;
-          case 1: // Left (User turns face left, Euler Y is positive)
-            if (headY > 20) detected = true;
-            break;
-          case 2: // Right (User turns face right, Euler Y is negative)
-            if (headY < -20) detected = true;
-            break;
-          case 3: // Up
-            if (headX > 15) detected = true;
-            break;
-          case 4: // Down
-            if (headX < -15) detected = true;
-            break;
-        }
-
-        if (detected != _canProceed) {
-          if (mounted) {
-            setState(() {
-              _canProceed = detected;
-            });
-          }
-        }
-      } else {
-        if (_canProceed) {
-          if (mounted) {
-            setState(() {
-              _canProceed = false;
-            });
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
-
+    // BACKUP FILE — on-device detection removed; backend now handles analysis.
     _isBusy = false;
-  }
-
-  InputImage? _inputImageFromCameraImage(CameraImage image) {
-    if (_controller == null) return null;
-    final sensorOrientation = _controller!.description.sensorOrientation;
-    final inputImageFormat = InputImageFormatValue.fromRawValue(
-      image.format.raw,
-    );
-    if (inputImageFormat == null) return null;
-    final plane = image.planes.first;
-    return InputImage.fromBytes(
-      bytes: plane.bytes,
-      metadata: InputImageMetadata(
-        size: Size(image.width.toDouble(), image.height.toDouble()),
-        rotation:
-            InputImageRotationValue.fromRawValue(sensorOrientation) ??
-            InputImageRotation.rotation0deg,
-        format: inputImageFormat,
-        bytesPerRow: plane.bytesPerRow,
-      ),
-    );
   }
 
   Future<void> _captureAndNextStep() async {
@@ -218,7 +136,6 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
   void dispose() {
     _controller?.dispose();
     _scanController.dispose();
-    _faceDetector.close();
     super.dispose();
   }
 
@@ -302,8 +219,7 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(30),
-                              child:
-                                  (_controller != null &&
+                              child: (_controller != null &&
                                       _controller!.value.isInitialized)
                                   ? CameraPreview(_controller!)
                                   : Container(
@@ -428,9 +344,8 @@ class _StudentFaceEnrolementsState extends State<StudentFaceEnrolements>
                               Text(
                                 steps[index]['label'],
                                 style: TextStyle(
-                                  color: isActive
-                                      ? primaryBlue
-                                      : Colors.black54,
+                                  color:
+                                      isActive ? primaryBlue : Colors.black54,
                                   fontSize: 10,
                                   fontWeight: isActive
                                       ? FontWeight.bold

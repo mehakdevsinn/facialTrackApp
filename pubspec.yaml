@@ -45,7 +45,6 @@ dependencies:
   permission_handler: ^11.3.1 # Permission lene ke liye 
   table_calendar: ^3.1.2
   camera: ^0.11.0
-  google_mlkit_face_detection: ^0.11.0
   google_fonts: ^5.1.0 
   http: ^1.2.2
   provider: ^6.1.2

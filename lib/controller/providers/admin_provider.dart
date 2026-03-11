@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
@@ -26,6 +27,12 @@ class AdminProvider extends ChangeNotifier {
   bool _semestersLoaded = false;
   String? _semestersError; // isolated from teacher errors
 
+  // ── Course management ─────────────────────────────────────────────────────
+  // Cache courses by semester: semesterId -> List<CourseModel>
+  final Map<String, List<CourseModel>> _coursesBySemester = {};
+  final Set<String> _loadingSemestersForCourses = {};
+  final Map<String, String> _coursesErrorBySemester = {};
+
   // ── Student approval ───────────────────────────────────────────────────────
   List<PendingStudentModel> _pendingStudents = [];
   bool _isPendingStudentsLoading = false;
@@ -52,6 +59,14 @@ class AdminProvider extends ChangeNotifier {
   bool get isSemestersLoading => _isSemestersLoading;
   bool get semestersLoaded => _semestersLoaded;
   String? get semestersError => _semestersError;
+
+  // Courses
+  List<CourseModel> getCoursesForSemester(String semesterId) =>
+      _coursesBySemester[semesterId] ?? [];
+  bool isCoursesLoading(String semesterId) =>
+      _loadingSemestersForCourses.contains(semesterId);
+  String? getCoursesError(String semesterId) =>
+      _coursesErrorBySemester[semesterId];
 
   // Pending students
   List<PendingStudentModel> get pendingStudents =>
@@ -280,6 +295,101 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
+  // ── Course Methods ─────────────────────────────────────────────────────────
+
+  Future<void> fetchCourses(String semesterId, {bool force = false}) async {
+    if (_coursesBySemester.containsKey(semesterId) && !force) return;
+
+    _loadingSemestersForCourses.add(semesterId);
+    _coursesErrorBySemester.remove(semesterId);
+    notifyListeners();
+
+    try {
+      final courses = await _api.getCoursesBySemester(semesterId);
+      _coursesBySemester[semesterId] = courses;
+      _loadingSemestersForCourses.remove(semesterId);
+      notifyListeners();
+    } on AuthException catch (e) {
+      _coursesErrorBySemester[semesterId] = e.message;
+      _loadingSemestersForCourses.remove(semesterId);
+      notifyListeners();
+    } catch (_) {
+      _coursesErrorBySemester[semesterId] = 'An unexpected error occurred.';
+      _loadingSemestersForCourses.remove(semesterId);
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createCourse({
+    required String code,
+    required String name,
+    required String semesterId,
+    String description = '',
+    int creditHours = 3,
+    bool attendanceRequired = true,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final created = await _api.createCourse(
+        code: code,
+        name: name,
+        semesterId: semesterId,
+        description: description,
+        creditHours: creditHours,
+        attendanceRequired: attendanceRequired,
+      );
+      final list = _coursesBySemester[semesterId] ?? [];
+      _coursesBySemester[semesterId] = [created, ...list];
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> updateCourse({
+    required String courseId,
+    required String semesterId,
+    String? name,
+    int? creditHours,
+    bool? attendanceRequired,
+    bool? isActive,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final updated = await _api.updateCourse(
+        courseId: courseId,
+        name: name,
+        creditHours: creditHours,
+        attendanceRequired: attendanceRequired,
+        isActive: isActive,
+      );
+
+      final list = _coursesBySemester[semesterId] ?? [];
+      _coursesBySemester[semesterId] =
+          list.map((c) => c.id == courseId ? updated : c).toList();
+
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ── Reset ──────────────────────────────────────────────────────────────────
 
   /// Call on logout to wipe all cached data.
@@ -287,12 +397,18 @@ class AdminProvider extends ChangeNotifier {
     _teachers = [];
     _semesters = [];
     _pendingStudents = [];
+    _coursesBySemester.clear();
+
     _semestersLoaded = false;
     _pendingStudentsLoaded = false;
+    _loadingSemestersForCourses.clear();
+
     _errorMessage = null;
     _teachersError = null;
     _semestersError = null;
     _pendingStudentsError = null;
+    _coursesErrorBySemester.clear();
+
     _isLoading = false;
     _isTeachersLoading = false;
     _isSemestersLoading = false;

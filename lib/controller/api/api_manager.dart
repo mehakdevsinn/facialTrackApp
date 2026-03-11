@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:facialtrackapp/controller/api/endpoints.dart';
+import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/enrollment_config_model.dart';
 import 'package:facialtrackapp/core/models/face_status_model.dart';
 import 'package:facialtrackapp/core/models/frame_analysis_result.dart';
@@ -713,6 +714,94 @@ class ApiManager {
       }
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       return FaceStatusModel.fromJson(body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── ADMIN — COURSES ──────────────────────────────────────────────────────
+
+  /// GET /admin/courses/by-semester/{semesterId}
+  Future<List<CourseModel>> getCoursesBySemester(String semesterId) async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminCoursesBySemester(semesterId)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => CourseModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// POST /admin/courses
+  Future<CourseModel> createCourse({
+    required String code,
+    required String name,
+    required String semesterId,
+    String description = '',
+    int creditHours = 3,
+    bool attendanceRequired = true,
+  }) async {
+    try {
+      final body = {
+        'code': code,
+        'name': name,
+        'semester_id': semesterId,
+        'description': description,
+        'credit_hours': creditHours,
+        'attendance_required': attendanceRequired,
+      };
+
+      final response = await http
+          .post(Uri.parse(Endpoints.adminCourses),
+              headers: await _authHeaders(), body: jsonEncode(body))
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      return CourseModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// PUT /admin/courses/{id}
+  Future<CourseModel> updateCourse({
+    required String courseId,
+    String? name,
+    int? creditHours,
+    bool? attendanceRequired,
+    bool? isActive,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {};
+      if (name != null) body['name'] = name;
+      if (creditHours != null) body['credit_hours'] = creditHours;
+      if (attendanceRequired != null) {
+        body['attendance_required'] = attendanceRequired;
+      }
+      if (isActive != null) body['is_active'] = isActive;
+
+      final response = await http
+          .put(Uri.parse(Endpoints.adminCourse(courseId)),
+              headers: await _authHeaders(), body: jsonEncode(body))
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      return CourseModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
     } on AuthException {
       rethrow;
     } catch (e) {

@@ -1,6 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/assignment_data_service.dart';
-import 'package:facialtrackapp/view/Admin/Scheme%20of%20Study/add_edit_subject_screen.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedAddButton extends StatefulWidget {
@@ -23,9 +22,8 @@ class _AnimatedAddButtonState extends State<AnimatedAddButton> {
       onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        transform: _isPressed
-            ? (Matrix4.identity()..scale(0.9))
-            : Matrix4.identity(),
+        transform:
+            _isPressed ? (Matrix4.identity()..scale(0.9)) : Matrix4.identity(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: ColorPallet.primaryBlue,
@@ -486,31 +484,6 @@ class SchemeToggleField extends StatelessWidget {
 }
 
 class SchemeDialogs {
-  static Future<void> showEditDialog({
-    required BuildContext context,
-    required List<Map<String, dynamic>> currentList,
-    int? index,
-    required VoidCallback onUpdate,
-  }) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddEditSubjectScreen(
-          initialData: index != null ? currentList[index] : null,
-        ),
-      ),
-    );
-
-    if (result != null && result is Map<String, dynamic>) {
-      if (index != null) {
-        currentList[index] = result;
-      } else {
-        currentList.add(result);
-      }
-      onUpdate();
-    }
-  }
-
   static void showAssignTeacherDialog(
     BuildContext context,
     String title,

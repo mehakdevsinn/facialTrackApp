@@ -1,10 +1,19 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/utils/widgets/scheme_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AddEditSubjectScreen extends StatefulWidget {
-  final Map<String, dynamic>? initialData;
-  const AddEditSubjectScreen({super.key, this.initialData});
+  final String semesterId;
+  final CourseModel? initialCourse;
+
+  const AddEditSubjectScreen({
+    super.key,
+    required this.semesterId,
+    this.initialCourse,
+  });
 
   @override
   State<AddEditSubjectScreen> createState() => _AddEditSubjectScreenState();
@@ -20,16 +29,18 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
   final _creditsController = TextEditingController();
   final _outlineController = TextEditingController();
   bool _attendanceRequired = true;
+  bool _isActive = true;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialData != null) {
-      _titleController.text = widget.initialData!['title'] ?? "";
-      _codeController.text = widget.initialData!['code'] ?? "";
-      _creditsController.text = widget.initialData!['credits'] ?? "";
-      _outlineController.text = widget.initialData!['outline'] ?? "";
-      _attendanceRequired = widget.initialData!['attendanceRequired'] ?? true;
+    if (widget.initialCourse != null) {
+      _titleController.text = widget.initialCourse!.name;
+      _codeController.text = widget.initialCourse!.code;
+      _creditsController.text = widget.initialCourse!.creditHours.toString();
+      _outlineController.text = widget.initialCourse!.description;
+      _attendanceRequired = widget.initialCourse!.attendanceRequired;
+      _isActive = widget.initialCourse!.isActive;
     }
 
     _controller = AnimationController(
@@ -50,6 +61,59 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
     super.dispose();
   }
 
+  Future<void> _handleSave() async {
+    if (_titleController.text.isEmpty || _codeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill all required fields"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    final provider = context.read<AdminProvider>();
+    final creditHours = int.tryParse(_creditsController.text) ?? 3;
+
+    final success = widget.initialCourse == null
+        ? await provider.createCourse(
+            code: _codeController.text.trim(),
+            name: _titleController.text.trim(),
+            semesterId: widget.semesterId,
+            description: _outlineController.text.trim(),
+            creditHours: creditHours,
+            attendanceRequired: _attendanceRequired,
+          )
+        : await provider.updateCourse(
+            courseId: widget.initialCourse!.id,
+            semesterId: widget.semesterId,
+            name: _titleController.text.trim(),
+            creditHours: creditHours,
+            attendanceRequired: _attendanceRequired,
+            isActive: _isActive,
+          );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              "Course ${widget.initialCourse == null ? 'created' : 'updated'} successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? "An error occurred"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -63,9 +127,7 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            widget.initialData != null
-                ? "Edit Subject Detail"
-                : "New Subject Detail",
+            widget.initialCourse != null ? "Edit Course" : "New Course",
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w900,
@@ -102,12 +164,13 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
                         const SchemeLabel(text: "Subject Information"),
                         SchemeModernField(
                           controller: _titleController,
-                          hint: "Subject Title",
+                          hint: "Subject Title (e.g. Data Structures)",
                           icon: Icons.edit_note_rounded,
                         ),
                         Row(
                           children: [
                             Expanded(
+                              flex: 2,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -122,6 +185,7 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
                             ),
                             const SizedBox(width: 15),
                             Expanded(
+                              flex: 1,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -145,7 +209,14 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
                           onChanged: (val) =>
                               setState(() => _attendanceRequired = val),
                         ),
-                        const SchemeLabel(text: "Course Outline"),
+                        if (widget.initialCourse != null)
+                          SchemeToggleField(
+                            label: "Course Active",
+                            value: _isActive,
+                            icon: Icons.toggle_on_rounded,
+                            onChanged: (val) => setState(() => _isActive = val),
+                          ),
+                        const SchemeLabel(text: "Description"),
                         SchemeModernField(
                           controller: _outlineController,
                           hint: "Briefly describe the course content...",
@@ -156,38 +227,52 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
                         SizedBox(
                           width: double.infinity,
                           height: 55,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorPallet.primaryBlue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              elevation: 8,
-                              shadowColor: ColorPallet.primaryBlue.withOpacity(
-                                0.4,
-                              ),
-                            ),
-                            onPressed: () => _handleSave(),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.check_circle_outline,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  widget.initialData != null
-                                      ? "UPDATE SUBJECT"
-                                      : "SAVE SUBJECT",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                          child: Consumer<AdminProvider>(
+                            builder: (context, provider, child) {
+                              return ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorPallet.primaryBlue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
                                   ),
+                                  elevation: 8,
+                                  shadowColor:
+                                      ColorPallet.primaryBlue.withOpacity(0.4),
                                 ),
-                              ],
-                            ),
+                                onPressed:
+                                    provider.isLoading ? null : _handleSave,
+                                child: provider.isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle_outline,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            widget.initialCourse != null
+                                                ? "UPDATE COURSE"
+                                                : "SAVE COURSE",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -200,27 +285,5 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
         ),
       ),
     );
-  }
-
-  void _handleSave() {
-    if (_titleController.text.isEmpty ||
-        _codeController.text.isEmpty ||
-        _creditsController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
-    Navigator.pop(context, {
-      "title": _titleController.text,
-      "code": _codeController.text,
-      "credits": _creditsController.text,
-      "outline": _outlineController.text,
-      "attendanceRequired": _attendanceRequired,
-    });
   }
 }

@@ -1,5 +1,4 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/controller/assignment_data_service.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedAddButton extends StatefulWidget {
@@ -298,33 +297,6 @@ class SchemeCourseCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // New Assign Button
-                      TextButton.icon(
-                        onPressed: () => SchemeDialogs.showAssignTeacherDialog(
-                          context,
-                          title,
-                          code,
-                          credits,
-                        ),
-                        icon: const Icon(Icons.link_rounded, size: 16),
-                        label: const Text(
-                          "Assign",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: ColorPallet.primaryBlue,
-                          backgroundColor: ColorPallet.primaryBlue.withOpacity(
-                            0.05,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -478,117 +450,6 @@ class SchemeToggleField extends StatelessWidget {
             activeColor: ColorPallet.primaryBlue,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class SchemeDialogs {
-  static void showAssignTeacherDialog(
-    BuildContext context,
-    String title,
-    String code,
-    String credits,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Assign Teacher",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: ColorPallet.primaryBlue,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              "Select faculty for $title ($code)",
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-            ...<Map<String, dynamic>>[
-              {
-                "name": "Dr. Sarah Ahmed",
-                "designation": "Associate Professor",
-                "initials": "SA",
-              },
-              {
-                "name": "Prof. Usman Khan",
-                "designation": "Head of Department",
-                "initials": "UK",
-              },
-              {
-                "name": "Engr. Maria Ali",
-                "designation": "Lecturer",
-                "initials": "MA",
-              },
-            ].map(
-              (t) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  backgroundColor: ColorPallet.primaryBlue.withOpacity(0.1),
-                  child: Text(
-                    t['initials']!,
-                    style: const TextStyle(
-                      color: ColorPallet.primaryBlue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  t['name']!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                subtitle: Text(
-                  t['designation']!,
-                  style: const TextStyle(fontSize: 12),
-                ),
-                trailing: const Icon(
-                  Icons.add_link_rounded,
-                  color: ColorPallet.primaryBlue,
-                ),
-                onTap: () {
-                  AssignmentDataService.addSubjectToTeacher(t['name']!, {
-                    "course": title,
-                    "semester": "2nd Sem",
-                    "section": "Section A",
-                    "code": code,
-                    "credits": credits,
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Course assigned to ${t['name']}"),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
       ),
     );
   }

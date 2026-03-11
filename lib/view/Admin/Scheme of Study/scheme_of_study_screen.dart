@@ -222,7 +222,7 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Courses',
+                            'Course List',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

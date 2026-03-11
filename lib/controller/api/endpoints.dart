@@ -45,6 +45,14 @@ class Endpoints {
   /// PUT → update a specific course by id
   static String adminCourse(String courseId) => '$_admin/courses/$courseId';
 
+  // ── Admin — Assignments ───────────────────────────────────────────────────
+  /// GET → all assignments  |  POST → create a new assignment
+  static const String adminAssignments = '$_admin/assignments';
+
+  /// PUT → update assignment  |  DELETE → remove assignment
+  static String adminAssignment(String assignmentId) =>
+      '$_admin/assignments/$assignmentId';
+
   // ── Admin — Student Approval ─────────────────────────────────────────────
   /// GET → list all pending students
   static const String adminStudentsPending = '$_admin/students/pending';

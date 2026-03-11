@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:facialtrackapp/controller/api/endpoints.dart';
+import 'package:facialtrackapp/core/models/assignment_model.dart';
 import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/enrollment_config_model.dart';
 import 'package:facialtrackapp/core/models/face_status_model.dart';
@@ -802,6 +803,101 @@ class ApiManager {
       _assertSuccess(response);
       return CourseModel.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+}
+
+// Extension to add assignment methods (avoids touching the original class body)
+extension AssignmentApiMethods on ApiManager {
+  // ─── ADMIN — ASSIGNMENTS ──────────────────────────────────────────────────
+
+  /// GET /admin/assignments — returns all assignments
+  Future<List<AssignmentModel>> getAssignments() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminAssignments),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => AssignmentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// POST /admin/assignments — create a new assignment
+  Future<AssignmentModel> createAssignment({
+    required String courseId,
+    required String teacherId,
+    required String section,
+  }) async {
+    try {
+      final body = {
+        'course_id': courseId,
+        'teacher_id': teacherId,
+        'section': section,
+      };
+      final response = await http
+          .post(Uri.parse(Endpoints.adminAssignments),
+              headers: await _authHeaders(), body: jsonEncode(body))
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      return AssignmentModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// PUT /admin/assignments/{id} — update teacher or section
+  Future<AssignmentModel> updateAssignment({
+    required String assignmentId,
+    String? teacherId,
+    String? section,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {};
+      if (teacherId != null) body['teacher_id'] = teacherId;
+      if (section != null) body['section'] = section;
+
+      final response = await http
+          .put(Uri.parse(Endpoints.adminAssignment(assignmentId)),
+              headers: await _authHeaders(), body: jsonEncode(body))
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      return AssignmentModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// DELETE /admin/assignments/{id} — remove an assignment (204 No Content)
+  Future<void> deleteAssignment(String assignmentId) async {
+    try {
+      final response = await http
+          .delete(Uri.parse(Endpoints.adminAssignment(assignmentId)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 204) return; // success — no body
+      _assertSuccess(response);
     } on AuthException {
       rethrow;
     } catch (e) {

@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/assignment_model.dart';
 import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
@@ -32,6 +33,12 @@ class AdminProvider extends ChangeNotifier {
   final Map<String, List<CourseModel>> _coursesBySemester = {};
   final Set<String> _loadingSemestersForCourses = {};
   final Map<String, String> _coursesErrorBySemester = {};
+
+  // ── Assignment management ─────────────────────────────────────────────────
+  List<AssignmentModel> _assignments = [];
+  bool _isAssignmentsLoading = false;
+  bool _assignmentsLoaded = false;
+  String? _assignmentsError;
 
   // ── Student approval ───────────────────────────────────────────────────────
   List<PendingStudentModel> _pendingStudents = [];
@@ -67,6 +74,12 @@ class AdminProvider extends ChangeNotifier {
       _loadingSemestersForCourses.contains(semesterId);
   String? getCoursesError(String semesterId) =>
       _coursesErrorBySemester[semesterId];
+
+  // Assignments
+  List<AssignmentModel> get assignments => List.unmodifiable(_assignments);
+  bool get isAssignmentsLoading => _isAssignmentsLoading;
+  bool get assignmentsLoaded => _assignmentsLoaded;
+  String? get assignmentsError => _assignmentsError;
 
   // Pending students
   List<PendingStudentModel> get pendingStudents =>
@@ -390,6 +403,103 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
+  // ── Assignment Methods ─────────────────────────────────────────────────────
+
+  Future<void> fetchAssignments({bool force = false}) async {
+    if (_assignmentsLoaded && !force) return;
+    _isAssignmentsLoading = true;
+    _assignmentsError = null;
+    notifyListeners();
+    try {
+      _assignments = await _api.getAssignments();
+      _assignmentsLoaded = true;
+      _isAssignmentsLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      _assignmentsError = e.message;
+      _isAssignmentsLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _assignmentsError = 'An unexpected error occurred.';
+      _isAssignmentsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createAssignment({
+    required String courseId,
+    required String teacherId,
+    required String section,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final created = await _api.createAssignment(
+        courseId: courseId,
+        teacherId: teacherId,
+        section: section,
+      );
+      _assignments = [created, ..._assignments];
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> updateAssignment({
+    required String assignmentId,
+    String? teacherId,
+    String? section,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final updated = await _api.updateAssignment(
+        assignmentId: assignmentId,
+        teacherId: teacherId,
+        section: section,
+      );
+      _assignments =
+          _assignments.map((a) => a.id == assignmentId ? updated : a).toList();
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> deleteAssignment(String assignmentId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _api.deleteAssignment(assignmentId);
+      _assignments.removeWhere((a) => a.id == assignmentId);
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ── Reset ──────────────────────────────────────────────────────────────────
 
   /// Call on logout to wipe all cached data.
@@ -397,22 +507,26 @@ class AdminProvider extends ChangeNotifier {
     _teachers = [];
     _semesters = [];
     _pendingStudents = [];
+    _assignments = [];
     _coursesBySemester.clear();
 
     _semestersLoaded = false;
     _pendingStudentsLoaded = false;
+    _assignmentsLoaded = false;
     _loadingSemestersForCourses.clear();
 
     _errorMessage = null;
     _teachersError = null;
     _semestersError = null;
     _pendingStudentsError = null;
+    _assignmentsError = null;
     _coursesErrorBySemester.clear();
 
     _isLoading = false;
     _isTeachersLoading = false;
     _isSemestersLoading = false;
     _isPendingStudentsLoading = false;
+    _isAssignmentsLoading = false;
     notifyListeners();
   }
 

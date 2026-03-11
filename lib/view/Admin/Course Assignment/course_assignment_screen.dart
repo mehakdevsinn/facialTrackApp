@@ -1,16 +1,14 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/controller/assignment_data_service.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/semester_model.dart';
+import 'package:facialtrackapp/core/models/course_model.dart';
+import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/utils/widgets/course_assignment_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class CourseAssignmentScreen extends StatefulWidget {
-  final String? initialTeacher;
-  final List<Map<String, dynamic>>? initialSubjects;
-  const CourseAssignmentScreen({
-    super.key,
-    this.initialTeacher,
-    this.initialSubjects,
-  });
+  const CourseAssignmentScreen({super.key});
 
   @override
   State<CourseAssignmentScreen> createState() => _CourseAssignmentScreenState();
@@ -18,156 +16,152 @@ class CourseAssignmentScreen extends StatefulWidget {
 
 class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
   int currentStep = 1;
-  String? selectedTeacher;
-  List<Map<String, dynamic>> assignedSubjects = [];
+  UserModel? selectedTeacher;
+
+  SemesterModel? selectedSemester;
+  CourseModel? selectedCourse;
+  String? selectedSection;
+
+  static const List<String> _sections = ['A', 'B', 'C', 'D', 'E'];
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialTeacher != null) {
-      currentStep = 2;
-      selectedTeacher = widget.initialTeacher;
-    }
-    if (widget.initialSubjects != null) {
-      assignedSubjects = List.from(widget.initialSubjects!);
-    }
+    Future.microtask(() {
+      if (!mounted) return;
+      final p = context.read<AdminProvider>();
+      p.fetchTeachers();
+      p.fetchSemesters();
+    });
   }
-
-  final List<Map<String, String>> teachers = [
-    {
-      "name": "Dr. Sarah Ahmed",
-      "designation": "Associate Professor",
-      "initials": "SA",
-    },
-    {
-      "name": "Prof. Usman Khan",
-      "designation": "Head of Department",
-      "initials": "UK",
-    },
-    {"name": "Engr. Maria Ali", "designation": "Lecturer", "initials": "MA"},
-    {
-      "name": "Dr. Ahmed Hassan",
-      "designation": "Assistant Professor",
-      "initials": "AH",
-    },
-    {"name": "Ms. Zainab Bibi", "designation": "Instructor", "initials": "ZB"},
-  ];
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        body: Column(
-          children: [
-            AssignmentHeader(
-              currentStep: currentStep,
-              title: "Course Assignment",
-              onBack: () {
-                if (currentStep > 1) {
-                  setState(() => currentStep--);
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 25,
+    return Consumer<AdminProvider>(
+      builder: (context, provider, _) {
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.grey[100],
+            body: Column(
+              children: [
+                AssignmentHeader(
+                  currentStep: currentStep,
+                  title: "Course Assignment",
+                  onBack: () {
+                    if (currentStep > 1) {
+                      setState(() => currentStep--);
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (currentStep == 1) _buildTeacherStep(),
-                    if (currentStep == 2) _buildSubjectStep(),
-                    const SizedBox(height: 100),
-                  ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 25),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (currentStep == 1) _buildTeacherStep(provider),
+                        if (currentStep == 2) _buildCourseStep(provider),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: currentStep == 1
-            ? AssignmentBottomButton(
-                label: "Confirm Teacher",
-                isEnabled: selectedTeacher != null,
-                onTap: () => setState(() => currentStep = 2),
-              )
-            : AssignmentBottomButton(
-                label: "Finalize Assignment",
-                isEnabled: assignedSubjects.isNotEmpty,
-                onTap: () {
-                  final teacherData = teachers.firstWhere(
-                    (t) => t['name'] == selectedTeacher,
-                  );
-                  final result = {
-                    "teacherName": selectedTeacher,
-                    "teacherDesignation": teacherData['designation'],
-                    "initials": teacherData['initials'],
-                    "subjects": assignedSubjects,
-                  };
-
-                  AssignmentDataService.updateAssignment(result);
-
-                  Navigator.pop(context, result);
-                },
-              ),
-      ),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: currentStep == 1
+                ? AssignmentBottomButton(
+                    label: "Confirm Teacher",
+                    isEnabled: selectedTeacher != null,
+                    onTap: () => setState(() => currentStep = 2),
+                  )
+                : AssignmentBottomButton(
+                    label: provider.isLoading
+                        ? "Saving..."
+                        : "Finalize Assignment",
+                    isEnabled: selectedCourse != null &&
+                        selectedSection != null &&
+                        !provider.isLoading,
+                    onTap: () => _handleFinalize(provider),
+                  ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTeacherStep() {
+  Future<void> _handleFinalize(AdminProvider provider) async {
+    if (selectedTeacher == null ||
+        selectedCourse == null ||
+        selectedSection == null) return;
+
+    final success = await provider.createAssignment(
+      courseId: selectedCourse!.id,
+      teacherId: selectedTeacher!.id,
+      section: selectedSection!,
+    );
+
+    if (!mounted) return;
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Assignment created successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? "Failed to create assignment"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  Widget _buildTeacherStep(AdminProvider provider) {
+    if (provider.isTeachersLoading) {
+      return const Center(heightFactor: 5, child: CircularProgressIndicator());
+    }
+    if (provider.teachers.isEmpty) {
+      return const Center(
+          heightFactor: 5, child: Text("No teachers available."));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Faculty Members",
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF1E293B),
-            letterSpacing: -0.5,
-          ),
-        ),
-        Text(
-          "Select a teacher to assign courses",
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade500,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        const Text("Faculty Members",
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1E293B),
+                letterSpacing: -0.5)),
+        Text("Select a teacher to assign courses",
+            style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 20),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: teachers.length,
+          itemCount: provider.teachers.length,
           itemBuilder: (context, index) {
-            final teacher = teachers[index];
-            final isSelected = selectedTeacher == teacher['name'];
+            final teacher = provider.teachers[index];
+            final isSelected = selectedTeacher?.id == teacher.id;
             return TeacherSelectionCard(
-              teacher: teacher,
-              isSelected: isSelected,
-              onTap: () {
-                setState(() {
-                  selectedTeacher = teacher['name'];
-                  final existing = AssignmentDataService.allAssignments
-                      .firstWhere(
-                        (a) => a['teacherName'] == selectedTeacher,
-                        orElse: () => {},
-                      );
-                  if (existing.isNotEmpty && existing['subjects'] != null) {
-                    assignedSubjects = List<Map<String, dynamic>>.from(
-                      existing['subjects'],
-                    );
-                  } else {
-                    assignedSubjects = [];
-                  }
-                });
+              teacher: {
+                'name': teacher.fullName,
+                'designation': teacher.designation ?? 'Teacher',
+                'initials': _initials(teacher.fullName),
               },
+              isSelected: isSelected,
+              onTap: () => setState(() => selectedTeacher = teacher),
             );
           },
         ),
@@ -175,95 +169,131 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
     );
   }
 
-  Widget _buildSubjectStep() {
+  Widget _buildCourseStep(AdminProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Assigned Subjects",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  "Courses assigned to $selectedTeacher",
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-            IconButton(
-              onPressed: () => AssignmentDialogs.openAssignScreen(
-                context: context,
-                selectedTeacher: selectedTeacher!,
-                onResult: (result, isEdit) {
-                  setState(() => assignedSubjects.add(result));
-                },
-              ),
-              icon: const Icon(
-                Icons.add_circle_rounded,
-                color: ColorPallet.primaryBlue,
-                size: 30,
-              ),
-            ),
-          ],
+        Text(
+          "Assign Courses to ${selectedTeacher?.fullName ?? ''}",
+          style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1E293B)),
         ),
-        const SizedBox(height: 25),
-        if (assignedSubjects.isEmpty)
-          Center(
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                Icon(
-                  Icons.menu_book_rounded,
-                  size: 60,
-                  color: Colors.grey.shade200,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "No subjects assigned yet",
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 16),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  "Click + to start allotting courses",
-                  style: TextStyle(color: Colors.grey.shade300, fontSize: 12),
-                ),
-              ],
-            ),
-          )
+        Text("Pick semester → course → section",
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+        const SizedBox(height: 24),
+
+        // SEMESTER DROPDOWN
+        _sectionLabel("Semester"),
+        if (provider.isSemestersLoading)
+          const CircularProgressIndicator()
         else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: assignedSubjects.length,
-            itemBuilder: (context, index) {
-              final sub = assignedSubjects[index];
-              return BlueAssignedSubjectCard(
-                title: sub['course'],
-                code: sub['code'],
-                credits: sub['credits'],
-                semester: "${sub['semester']} • ${sub['section']}",
-                onEdit: () => AssignmentDialogs.openAssignScreen(
-                  context: context,
-                  selectedTeacher: selectedTeacher!,
-                  initialData: sub,
-                  index: index,
-                  onResult: (result, isEdit) {
-                    setState(() => assignedSubjects[index] = result);
-                  },
-                ),
-              );
+          _dropdownCard<SemesterModel>(
+            value: selectedSemester,
+            hint: "Choose Semester",
+            icon: Icons.calendar_today_rounded,
+            items: provider.semesters,
+            displayText: (s) => s.displayName,
+            onChanged: (s) {
+              setState(() {
+                selectedSemester = s;
+                selectedCourse = null;
+              });
+              if (s != null) provider.fetchCourses(s.id);
             },
           ),
+
+        if (selectedSemester != null) ...[
+          const SizedBox(height: 16),
+          _sectionLabel("Course"),
+          if (provider.isCoursesLoading(selectedSemester!.id))
+            const CircularProgressIndicator()
+          else
+            _dropdownCard<CourseModel>(
+              value: selectedCourse,
+              hint: "Choose Course",
+              icon: Icons.menu_book_rounded,
+              items: provider.getCoursesForSemester(selectedSemester!.id),
+              displayText: (c) => "${c.code} — ${c.name}",
+              onChanged: (c) => setState(() => selectedCourse = c),
+            ),
+        ],
+
+        if (selectedCourse != null) ...[
+          const SizedBox(height: 16),
+          _sectionLabel("Section"),
+          _dropdownCard<String>(
+            value: selectedSection,
+            hint: "Choose Section",
+            icon: Icons.school_rounded,
+            items: _sections,
+            displayText: (s) => "Section $s",
+            onChanged: (s) => setState(() => selectedSection = s),
+          ),
+        ],
       ],
     );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(text,
+          style: TextStyle(
+              color: ColorPallet.primaryBlue.withOpacity(0.6),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              letterSpacing: 0.5)),
+    );
+  }
+
+  Widget _dropdownCard<T>({
+    required T? value,
+    required String hint,
+    required IconData icon,
+    required List<T> items,
+    required String Function(T) displayText,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          hint: Row(children: [
+            Icon(icon, color: Colors.grey.shade400, size: 18),
+            const SizedBox(width: 10),
+            Text(hint,
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
+          ]),
+          items: items
+              .map((item) => DropdownMenuItem<T>(
+                    value: item,
+                    child: Text(displayText(item),
+                        style: const TextStyle(
+                            color: Color(0xFF1E293B),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14)),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: ColorPallet.primaryBlue),
+        ),
+      ),
+    );
+  }
+
+  String _initials(String fullName) {
+    final parts = fullName.trim().split(' ');
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 }

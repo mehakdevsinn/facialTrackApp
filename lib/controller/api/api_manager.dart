@@ -904,4 +904,39 @@ extension AssignmentApiMethods on ApiManager {
       throw _handleError(e);
     }
   }
+
+  /// GET /admin/users/students — returns all enrolled students
+  /// We only need the count so we return the raw list length-able list.
+  Future<List<dynamic>> getAllStudents() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminAllStudents),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return jsonDecode(response.body) as List;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /admin/courses — returns all courses across all semesters
+  Future<List<CourseModel>> getAllCourses() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminCourses), headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => CourseModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }

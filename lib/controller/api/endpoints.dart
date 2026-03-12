@@ -65,6 +65,10 @@ class Endpoints {
   static String adminStudentReject(String studentId) =>
       '$_admin/students/$studentId/reject';
 
+  // ── Admin — All Students ─────────────────────────────────────────────────────
+  /// GET → list all enrolled students
+  static const String adminAllStudents = '$_admin/users/students';
+
   // ── Student — Face Enrollment ─────────────────────────────────────────────
   static const String _face = '$baseUrl/api/v1';
 

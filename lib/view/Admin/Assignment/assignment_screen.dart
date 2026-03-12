@@ -22,7 +22,9 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      context.read<AdminProvider>().fetchAssignments();
+      final p = context.read<AdminProvider>();
+      p.fetchAssignments();
+      p.fetchAllCoursesCount();
     });
   }
 
@@ -123,7 +125,9 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
                                       color: Colors.white.withOpacity(0.1)),
                                   _buildStat(
                                       "Courses",
-                                      allAssignments.length.toString(),
+                                      provider.isAllCoursesCountLoading
+                                          ? '…'
+                                          : provider.allCoursesCount.toString(),
                                       Icons.book_rounded),
                                   Container(
                                       width: 1.5,

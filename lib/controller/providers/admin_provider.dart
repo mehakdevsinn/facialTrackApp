@@ -40,6 +40,14 @@ class AdminProvider extends ChangeNotifier {
   bool _assignmentsLoaded = false;
   String? _assignmentsError;
 
+  // ── Student count (all enrolled) ────────────────────────────────────────────
+  int _studentCount = 0;
+  bool _isStudentCountLoading = false;
+
+  // ── All courses count ───────────────────────────────────────────────────
+  int _allCoursesCount = 0;
+  bool _isAllCoursesCountLoading = false;
+
   // ── Student approval ───────────────────────────────────────────────────────
   List<PendingStudentModel> _pendingStudents = [];
   bool _isPendingStudentsLoading = false;
@@ -80,6 +88,14 @@ class AdminProvider extends ChangeNotifier {
   bool get isAssignmentsLoading => _isAssignmentsLoading;
   bool get assignmentsLoaded => _assignmentsLoaded;
   String? get assignmentsError => _assignmentsError;
+
+  // Student count
+  int get studentCount => _studentCount;
+  bool get isStudentCountLoading => _isStudentCountLoading;
+
+  // All courses count
+  int get allCoursesCount => _allCoursesCount;
+  bool get isAllCoursesCountLoading => _isAllCoursesCountLoading;
 
   // Pending students
   List<PendingStudentModel> get pendingStudents =>
@@ -497,6 +513,42 @@ class AdminProvider extends ChangeNotifier {
       _setError('An unexpected error occurred.');
       _setLoading(false);
       return false;
+    }
+  }
+
+  // ── Dashboard Summary Counts ────────────────────────────────────────────────
+
+  Future<void> fetchStudentCount() async {
+    _isStudentCountLoading = true;
+    notifyListeners();
+    try {
+      final list = await _api.getAllStudents();
+      _studentCount = list.length;
+      _isStudentCountLoading = false;
+      notifyListeners();
+    } on AuthException {
+      _isStudentCountLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _isStudentCountLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchAllCoursesCount() async {
+    _isAllCoursesCountLoading = true;
+    notifyListeners();
+    try {
+      final list = await _api.getAllCourses();
+      _allCoursesCount = list.length;
+      _isAllCoursesCountLoading = false;
+      notifyListeners();
+    } on AuthException {
+      _isAllCoursesCountLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _isAllCoursesCountLoading = false;
+      notifyListeners();
     }
   }
 

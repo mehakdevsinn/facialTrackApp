@@ -5,6 +5,7 @@ import 'package:facialtrackapp/utils/widgets/admin_animated_card.dart';
 import 'package:facialtrackapp/view/Admin/Course Assignment/course_assignment_screen.dart';
 import 'package:facialtrackapp/view/Admin/Manage Teachers/manage-teachers.dart';
 import 'package:facialtrackapp/view/Admin/Scheme of Study/scheme_of_study_screen.dart';
+import 'package:facialtrackapp/view/Admin/Student%20Management/student_list_screen.dart';
 import 'package:facialtrackapp/view/Admin/Semester%20Management/individual_semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
 import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dart';
@@ -237,14 +238,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       );
                     },
                   ),
-                  // _buildMenuItem(
-                  //   context,
-                  //   icon: Icons.face_retouching_natural,
-                  //   color: Colors.red,
-                  //   title: 'Student & Facial Track',
-                  //   subtitle: 'Enroll students with face sync',
-                  //   onTap: () {},
-                  // ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.people_alt_rounded,
+                    color: Colors.deepPurple,
+                    title: 'Student Management',
+                    subtitle: 'View, edit & promote students',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StudentListScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   _buildMenuItem(
                     context,
                     icon: Icons.link_rounded,

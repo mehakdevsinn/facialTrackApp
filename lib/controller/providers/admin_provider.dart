@@ -3,6 +3,7 @@ import 'package:facialtrackapp/core/models/assignment_model.dart';
 import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
+import 'package:facialtrackapp/core/models/student_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:flutter/foundation.dart';
 
@@ -43,6 +44,12 @@ class AdminProvider extends ChangeNotifier {
   // ── Student count (all enrolled) ────────────────────────────────────────────
   int _studentCount = 0;
   bool _isStudentCountLoading = false;
+
+  // ── Student management (full list) ────────────────────────────────────────
+  List<StudentModel> _students = [];
+  bool _isStudentsLoading = false;
+  String? _studentsError;
+  bool _isStudentsActionLoading = false;
 
   // ── All courses count ───────────────────────────────────────────────────
   int _allCoursesCount = 0;
@@ -92,6 +99,12 @@ class AdminProvider extends ChangeNotifier {
   // Student count
   int get studentCount => _studentCount;
   bool get isStudentCountLoading => _isStudentCountLoading;
+
+  // Student management
+  List<StudentModel> get students => List.unmodifiable(_students);
+  bool get isStudentsLoading => _isStudentsLoading;
+  String? get studentsError => _studentsError;
+  bool get isStudentsActionLoading => _isStudentsActionLoading;
 
   // All courses count
   int get allCoursesCount => _allCoursesCount;
@@ -532,6 +545,147 @@ class AdminProvider extends ChangeNotifier {
     } catch (_) {
       _isStudentCountLoading = false;
       notifyListeners();
+    }
+  }
+
+  // ── Student Management Methods ──────────────────────────────────────────
+
+  /// Fetches all students. Pass [force]=true to bypass cache.
+  Future<void> fetchStudents({bool force = false}) async {
+    if (_students.isNotEmpty && !force) return;
+    _isStudentsLoading = true;
+    _studentsError = null;
+    notifyListeners();
+    try {
+      _students = await _api.getAllStudents();
+      _studentCount = _students.length;
+      _isStudentsLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      _studentsError = e.message;
+      _isStudentsLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _studentsError = 'Failed to load students. Please try again.';
+      _isStudentsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Updates a student's editable fields. Returns updated [StudentModel] or null on failure.
+  Future<StudentModel?> updateStudent(
+    String studentId, {
+    required String fullName,
+    required String rollNo,
+    required String email,
+    required int semesterNumber,
+    required String section,
+  }) async {
+    _isStudentsActionLoading = true;
+    _setError(null);
+    notifyListeners();
+    try {
+      final updated = await _api.updateStudent(
+        studentId,
+        fullName: fullName,
+        rollNo: rollNo,
+        email: email,
+        semesterNumber: semesterNumber,
+        section: section,
+      );
+      final idx = _students.indexWhere((s) => s.id == studentId);
+      if (idx != -1) _students[idx] = updated;
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return updated;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _setError('Failed to update student. Please try again.');
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Deletes a single student by ID.
+  Future<bool> deleteStudent(String studentId) async {
+    _isStudentsActionLoading = true;
+    _setError(null);
+    notifyListeners();
+    try {
+      await _api.deleteStudent(studentId);
+      _students.removeWhere((s) => s.id == studentId);
+      _studentCount = _students.length;
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _setError('Failed to delete student. Please try again.');
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Bulk promotes students to the next semester.
+  /// Returns the response map (promoted_count, skipped_count) or null on failure.
+  Future<Map<String, dynamic>?> bulkPromoteStudents(
+      List<String> studentIds) async {
+    _isStudentsActionLoading = true;
+    _setError(null);
+    notifyListeners();
+    try {
+      final result = await _api.bulkPromoteStudents(studentIds);
+      // Refresh list after promote
+      _students = await _api.getAllStudents();
+      _studentCount = _students.length;
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return result;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _setError('Failed to promote students. Please try again.');
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Bulk deletes (graduates) a list of students.
+  Future<bool> bulkDeleteStudents(List<String> studentIds) async {
+    _isStudentsActionLoading = true;
+    _setError(null);
+    notifyListeners();
+    try {
+      await _api.bulkDeleteStudents(studentIds);
+      _students.removeWhere((s) => studentIds.contains(s.id));
+      _studentCount = _students.length;
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _setError('Failed to delete students. Please try again.');
+      _isStudentsActionLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 

@@ -1,10 +1,11 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/utils/dummy/student_dummy_data.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/student_model.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class StudentDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> student; // mutable copy from dummy data
-
+  final StudentModel student;
   const StudentDetailScreen({super.key, required this.student});
 
   @override
@@ -12,326 +13,377 @@ class StudentDetailScreen extends StatefulWidget {
 }
 
 class _StudentDetailScreenState extends State<StudentDetailScreen> {
-  bool _isEditing = false;
-  late Map<String, dynamic> _student;
+  late StudentModel _student;
+  bool _editMode = false;
 
-  // Text controllers for editable fields
-  late final TextEditingController _nameCtrl;
-  late final TextEditingController _emailCtrl;
-  late final TextEditingController _phoneCtrl;
-  late final TextEditingController _rollNoCtrl;
+  // Edit controllers
+  late TextEditingController _nameCtrl;
+  late TextEditingController _rollCtrl;
+  late TextEditingController _emailCtrl;
+  late int _semesterValue;
+  late String _sectionValue;
 
-  // Dropdown values
-  late String _selectedSection;
-  late int _selectedSemester;
-
-  static const List<String> _sections = ['A', 'B', 'C', 'D', 'E'];
-  static const List<int> _semesters = [1, 2, 3, 4, 5, 6, 7, 8];
+  static const _sections = ['A', 'B', 'C', 'D', 'E'];
 
   @override
   void initState() {
     super.initState();
-    _student = Map.from(widget.student);
-    _nameCtrl = TextEditingController(text: _student['fullName']);
-    _emailCtrl = TextEditingController(text: _student['email']);
-    _phoneCtrl = TextEditingController(text: _student['phone']);
-    _rollNoCtrl = TextEditingController(text: _student['rollNo']);
-    _selectedSection = _student['section'] as String;
-    _selectedSemester = _student['semesterNumber'] as int;
+    _student = widget.student;
+    _initControllers();
+
+    // Ensure semesters are loaded for the edit dropdown
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AdminProvider>().fetchSemesters();
+    });
+  }
+
+  void _initControllers() {
+    _nameCtrl = TextEditingController(text: _student.fullName);
+    _rollCtrl = TextEditingController(text: _student.rollNo);
+    _emailCtrl = TextEditingController(text: _student.email);
+    _semesterValue = _student.semesterNumber;
+    _sectionValue = _student.section;
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _rollCtrl.dispose();
     _emailCtrl.dispose();
-    _phoneCtrl.dispose();
-    _rollNoCtrl.dispose();
     super.dispose();
   }
 
-  String get _initials {
-    final parts = (_student['fullName'] as String).trim().split(' ');
-    return parts
-        .map((p) => p.isNotEmpty ? p[0] : '')
-        .take(2)
-        .join()
-        .toUpperCase();
-  }
+  void _enterEdit() => setState(() {
+        _editMode = true;
+        // Reset controllers to current values
+        _nameCtrl.text = _student.fullName;
+        _rollCtrl.text = _student.rollNo;
+        _emailCtrl.text = _student.email;
+        _semesterValue = _student.semesterNumber;
+        _sectionValue = _student.section;
+      });
 
-  Color get _avatarColor =>
-      StudentDummyData.avatarColor(_student['id'] as String);
+  void _cancelEdit() => setState(() => _editMode = false);
 
-  // ── Edit / Cancel / Save ──────────────────────────────────────────────────
-  void _enterEdit() => setState(() => _isEditing = true);
+  Future<void> _saveChanges() async {
+    final name = _nameCtrl.text.trim();
+    final roll = _rollCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
 
-  void _cancelEdit() {
-    _nameCtrl.text = _student['fullName'];
-    _emailCtrl.text = _student['email'];
-    _phoneCtrl.text = _student['phone'];
-    _rollNoCtrl.text = _student['rollNo'];
-    _selectedSection = _student['section'];
-    _selectedSemester = _student['semesterNumber'];
-    setState(() => _isEditing = false);
-  }
-
-  void _saveChanges() {
-    if (_nameCtrl.text.trim().isEmpty) {
-      _showSnack('Full name cannot be empty.', isError: true);
+    if (name.isEmpty || roll.isEmpty || email.isEmpty) {
+      _showSnack(
+          'Name, roll number and email are required.', Colors.red.shade600);
       return;
     }
-    final updated = {
-      'fullName': _nameCtrl.text.trim(),
-      'email': _emailCtrl.text.trim(),
-      'phone': _phoneCtrl.text.trim(),
-      'rollNo': _rollNoCtrl.text.trim(),
-      'section': _selectedSection,
-      'semesterNumber': _selectedSemester,
-    };
-    StudentDummyData.updateStudent(_student['id'] as String, updated);
-    setState(() {
-      _student = {..._student, ...updated};
-      _isEditing = false;
-    });
-    _showSnack('Student details updated!', isError: false);
+
+    final updated = await context.read<AdminProvider>().updateStudent(
+          _student.id,
+          fullName: name,
+          rollNo: roll,
+          email: email,
+          semesterNumber: _semesterValue,
+          section: _sectionValue,
+        );
+
+    if (!mounted) return;
+
+    if (updated != null) {
+      setState(() {
+        _student = updated;
+        _editMode = false;
+      });
+      _showSnack('Changes saved successfully!', Colors.green.shade600);
+    } else {
+      final err = context.read<AdminProvider>().errorMessage;
+      _showSnack(err ?? 'Failed to save changes.', Colors.red.shade600);
+    }
   }
 
-  void _showSnack(String msg, {required bool isError}) {
+  void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: isError ? Colors.red.shade600 : Colors.green.shade600,
+      backgroundColor: color,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: const EdgeInsets.all(16),
     ));
   }
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
+  Color get _avatarColor {
+    const colors = [
+      Color(0xFF6366F1),
+      Color(0xFF8B5CF6),
+      Color(0xFFEC4899),
+      Color(0xFF14B8A6),
+      Color(0xFFF97316),
+      Color(0xFF22C55E),
+      Color(0xFFEF4444),
+      Color(0xFF3B82F6),
+    ];
+    final hash = _student.id.codeUnits.fold(0, (a, b) => a + b);
+    return colors[hash % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isActionLoading =
+        context.watch<AdminProvider>().isStudentsActionLoading;
+
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: ColorPallet.primaryBlue,
-          elevation: 0,
-          leading: IconButton(
-            icon:
-                const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            _isEditing ? 'Edit Student' : 'Student Details',
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          centerTitle: true,
-          actions: [
-            if (!_isEditing)
-              IconButton(
-                icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                tooltip: 'Edit',
-                onPressed: _enterEdit,
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                tooltip: 'Cancel',
-                onPressed: _cancelEdit,
+        backgroundColor: Colors.grey[100],
+        body: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: _editMode
+                    ? _buildEditForm(isActionLoading)
+                    : _buildViewMode(),
               ),
+            ),
           ],
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: _isEditing ? _buildEditForm() : _buildViewRows(),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 
-  // ── Blue rounded header ────────────────────────────────────────────────────
+  // ── Blue header ────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(top: 20, bottom: 40),
+      padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 28),
       decoration: const BoxDecoration(
         color: ColorPallet.primaryBlue,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
       ),
       child: Column(
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.arrow_back_ios,
+                    color: Colors.white, size: 20),
+              ),
+              const Text(
+                'Student Profile',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+              if (!_editMode)
+                GestureDetector(
+                  onTap: _enterEdit,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            color: Colors.white, size: 14),
+                        SizedBox(width: 4),
+                        Text('Edit',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(width: 60),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Avatar
           Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle),
-            child: CircleAvatar(
-              radius: 55,
-              backgroundColor: _avatarColor.withOpacity(0.1),
-              child: Text(_initials,
-                  style: TextStyle(
-                      color: _avatarColor,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold)),
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: _avatarColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5),
+            ),
+            child: Center(
+              child: Text(
+                _student.initials,
+                style: TextStyle(
+                    color: _avatarColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 26),
+              ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
-            _student['fullName'] as String,
+            _student.fullName,
             style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            _student['rollNo'] as String,
+            _student.rollNo,
             style:
                 TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13),
           ),
           const SizedBox(height: 10),
-          // Semester + Section + Face badges
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _headerBadge('Semester ${_student['semesterNumber']}'),
-              const SizedBox(width: 8),
-              _headerBadge('Section ${_student['section']}'),
-              const SizedBox(width: 8),
-              _headerBadge(
-                (_student['faceEnrolled'] as bool)
-                    ? '✓ Face Enrolled'
-                    : '✗ No Face',
-                color: (_student['faceEnrolled'] as bool)
-                    ? Colors.green.withOpacity(0.25)
-                    : Colors.red.withOpacity(0.25),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  Widget _headerBadge(String text, {Color? color}) {
+  Widget _headerBadge(String label, IconData icon, {Color? color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color ?? Colors.white12,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(text,
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color ?? Colors.white70, size: 13),
+          const SizedBox(width: 5),
+          Text(label,
+              style: TextStyle(
+                  color: color ?? Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 
   // ── View mode ──────────────────────────────────────────────────────────────
-  List<Widget> _buildViewRows() {
-    return [
-      _viewRow(Icons.person_outline, 'Full Name', _student['fullName']),
-      _viewRow(Icons.badge_outlined, 'Roll Number', _student['rollNo']),
-      _viewRow(Icons.email_outlined, 'Email Address', _student['email']),
-      _viewRow(Icons.phone_outlined, 'Phone Number', _student['phone']),
-      _viewRow(Icons.school_rounded, 'Semester',
-          'Semester ${_student['semesterNumber']}'),
-      _viewRow(
-          Icons.group_rounded, 'Section', 'Section ${_student['section']}'),
-      _viewRowReadOnly(Icons.calendar_today_outlined, 'Enrollment Date',
-          _student['enrollmentDate']),
-      _viewRowReadOnly(
-        Icons.face_retouching_natural,
-        'Face Enrollment',
-        (_student['faceEnrolled'] as bool) ? 'Enrolled ✓' : 'Not Enrolled',
-        valueColor:
-            (_student['faceEnrolled'] as bool) ? Colors.green : Colors.orange,
-      ),
-    ];
-  }
-
-  Widget _viewRow(IconData icon, String label, String value) {
-    return _buildDetailCard(
-      icon: icon,
-      label: label,
-      value: value,
-      isReadOnly: false,
+  Widget _buildViewMode() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        _sectionTitle('Personal Information'),
+        _infoCard([
+          _infoRow(Icons.person_outline, 'Full Name', _student.fullName),
+          _divider(),
+          _infoRow(Icons.email_outlined, 'Email', _student.email),
+          _divider(),
+          _infoRow(Icons.badge_outlined, 'Roll Number', _student.rollNo),
+        ]),
+        const SizedBox(height: 20),
+        _sectionTitle('Academic Information'),
+        _infoCard([
+          _infoRow(Icons.school_outlined, 'Semester',
+              'Semester ${_student.semesterNumber}'),
+          _divider(),
+          _infoRow(Icons.people_outline, 'Section', _student.section),
+          _divider(),
+          _infoRow(Icons.calendar_today_outlined, 'Enrollment Date',
+              _student.displayDate,
+              readOnly: true),
+        ]),
+        const SizedBox(height: 20),
+        _sectionTitle('Face Enrollment'),
+        _infoCard([
+          _infoRow(
+            Icons.face_retouching_natural,
+            'Status',
+            _student.faceEnrolled ? 'Enrolled' : 'Not Enrolled',
+            valueColor: _student.faceEnrolled
+                ? Colors.green.shade600
+                : Colors.orange.shade700,
+            readOnly: true,
+          ),
+        ]),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
-  Widget _viewRowReadOnly(IconData icon, String label, String value,
-      {Color? valueColor}) {
-    return _buildDetailCard(
-      icon: icon,
-      label: label,
-      value: value,
-      isReadOnly: true,
-      valueColor: valueColor,
-    );
-  }
+  Widget _sectionTitle(String title) => Padding(
+        padding: const EdgeInsets.only(bottom: 10, left: 2),
+        child: Text(title,
+            style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5)),
+      );
 
-  Widget _buildDetailCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isReadOnly,
-    Color? valueColor,
-  }) {
+  Widget _infoCard(List<Widget> children) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(children: children),
+      );
+
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool readOnly = false, Color? valueColor}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: ColorPallet.primaryBlue.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(14),
+              color: ColorPallet.primaryBlue.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: ColorPallet.primaryBlue, size: 24),
+            child: Icon(icon, color: ColorPallet.primaryBlue, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 2),
-                Text(label,
-                    style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500)),
-                const SizedBox(height: 3),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(value,
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: valueColor ?? const Color(0xFF1E293B))),
-                    ),
-                    if (isReadOnly)
+                    Text(label,
+                        style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500)),
+                    if (readOnly) ...[
+                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                            horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text('read-only',
                             style: TextStyle(
                                 color: Colors.grey.shade400, fontSize: 9)),
                       ),
+                    ]
                   ],
                 ),
+                const SizedBox(height: 2),
+                Text(value,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: valueColor ?? const Color(0xFF0F172A))),
               ],
             ),
           ),
@@ -340,201 +392,215 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     );
   }
 
-  // ── Edit mode ──────────────────────────────────────────────────────────────
-  List<Widget> _buildEditForm() {
-    return [
-      _editField(
-          ctrl: _nameCtrl,
-          label: 'FULL NAME *',
-          icon: Icons.person_outline,
-          hint: 'Ali Hassan'),
-      const SizedBox(height: 14),
-      _editField(
-          ctrl: _rollNoCtrl,
-          label: 'ROLL NUMBER',
-          icon: Icons.badge_outlined,
-          hint: 'BSCS-F21-001'),
-      const SizedBox(height: 14),
-      _editField(
-          ctrl: _emailCtrl,
-          label: 'EMAIL',
-          icon: Icons.email_outlined,
-          hint: 'student@edu.pk',
-          keyboard: TextInputType.emailAddress),
-      const SizedBox(height: 14),
-      _editField(
-          ctrl: _phoneCtrl,
-          label: 'PHONE',
-          icon: Icons.phone_outlined,
-          hint: '0301-1234567',
-          keyboard: TextInputType.phone),
-      const SizedBox(height: 14),
-      // Semester dropdown
-      _dropdownField<int>(
-        label: 'SEMESTER',
-        icon: Icons.school_rounded,
-        value: _selectedSemester,
-        items: _semesters,
-        display: (v) => 'Semester $v',
-        onChanged: (v) => setState(() => _selectedSemester = v!),
-      ),
-      const SizedBox(height: 14),
-      // Section dropdown
-      _dropdownField<String>(
-        label: 'SECTION',
-        icon: Icons.group_rounded,
-        value: _selectedSection,
-        items: _sections,
-        display: (v) => 'Section $v',
-        onChanged: (v) => setState(() => _selectedSection = v!),
-      ),
-      const SizedBox(height: 6),
-      // Read-only fields note
-      Container(
-        margin: const EdgeInsets.symmetric(vertical: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+  Widget _divider() =>
+      Divider(height: 1, indent: 66, color: Colors.grey.shade100);
+
+  // ── Edit form ──────────────────────────────────────────────────────────────
+  Widget _buildEditForm(bool isLoading) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        // Editable fields card
+        Container(
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3))
+              ]),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _fieldLabel('FULL NAME'),
+              _textField(_nameCtrl, 'e.g. Ali Hassan', Icons.person_outline),
+              const SizedBox(height: 14),
+              _fieldLabel('ROLL NUMBER'),
+              _textField(_rollCtrl, 'e.g. BSCS-F21-001', Icons.badge_outlined),
+              const SizedBox(height: 14),
+              _fieldLabel('EMAIL ADDRESS'),
+              _textField(
+                  _emailCtrl, 'e.g. ali@student.edu', Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress),
+              const SizedBox(height: 14),
+              _fieldLabel('SEMESTER'),
+              Consumer<AdminProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isSemestersLoading) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14.0),
+                      child: Center(
+                          child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2))),
+                    );
+                  }
+
+                  final semestersList = provider.semesters
+                      .map((s) => s.semesterNumber)
+                      .toList()
+                    ..sort();
+                  // Fallback to ensuring current student semester exists if local list is empty
+                  if (!semestersList.contains(_semesterValue)) {
+                    semestersList.add(_semesterValue);
+                    semestersList.sort();
+                  }
+
+                  return _dropdownField<int>(
+                    value: _semesterValue,
+                    items: semestersList,
+                    labelBuilder: (v) => 'Semester $v',
+                    onChanged: (v) => setState(() => _semesterValue = v!),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              _fieldLabel('SECTION'),
+              _dropdownField<String>(
+                value: _sectionValue,
+                items: _sections,
+                labelBuilder: (v) => 'Section $v',
+                onChanged: (v) => setState(() => _sectionValue = v!),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.lock_outline_rounded,
-                color: Colors.grey.shade400, size: 18),
+
+        // Read-only info
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(children: [
+            Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade500),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Enrollment Date and Face Status are system-managed and cannot be edited.',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                'Enrollment date and face enrollment status are system-managed and cannot be edited.',
+                style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic),
+              ),
+            ),
+          ]),
+        ),
+
+        const SizedBox(height: 24),
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: isLoading ? null : _cancelEdit,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                child: Text('Cancel',
+                    style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _saveChanges,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorPallet.primaryBlue,
+                  disabledBackgroundColor:
+                      ColorPallet.primaryBlue.withOpacity(0.5),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  elevation: 0,
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const Text('Save Changes',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
         ),
-      ),
-      const SizedBox(height: 16),
-      // Save button
-      SizedBox(
-        width: double.infinity,
-        height: 54,
-        child: ElevatedButton.icon(
-          onPressed: _saveChanges,
-          icon: const Icon(Icons.save_outlined, color: Colors.white),
-          label: const Text('Save Changes',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorPallet.primaryBlue,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            elevation: 4,
-          ),
-        ),
-      ),
-    ];
-  }
-
-  Widget _editField({
-    required TextEditingController ctrl,
-    required String label,
-    required IconData icon,
-    required String hint,
-    TextInputType keyboard = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 7),
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  letterSpacing: 0.5)),
-        ),
-        TextField(
-          controller: ctrl,
-          keyboardType: keyboard,
-          cursorColor: ColorPallet.primaryBlue,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            prefixIcon: Icon(icon, color: ColorPallet.primaryBlue, size: 20),
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200)),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: Colors.grey.shade200, width: 1.4)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: ColorPallet.primaryBlue, width: 2)),
-          ),
-        ),
+        const SizedBox(height: 20),
       ],
     );
   }
+
+  Widget _fieldLabel(String label) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade500,
+                letterSpacing: 0.4)),
+      );
+
+  Widget _textField(
+    TextEditingController ctrl,
+    String hint,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) =>
+      TextField(
+        controller: ctrl,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.grey[50],
+          prefixIcon: Icon(icon, color: Colors.grey, size: 20),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      );
 
   Widget _dropdownField<T>({
-    required String label,
-    required IconData icon,
     required T value,
     required List<T> items,
-    required String Function(T) display,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 7),
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  letterSpacing: 0.5)),
+    required String Function(T) labelBuilder,
+    required void Function(T?) onChanged,
+  }) =>
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200, width: 1.4),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              value: value,
-              isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                  color: ColorPallet.primaryBlue),
-              items: items
-                  .map((item) => DropdownMenuItem(
-                      value: item,
-                      child: Row(
-                        children: [
-                          Icon(icon, color: ColorPallet.primaryBlue, size: 18),
-                          const SizedBox(width: 10),
-                          Text(display(item),
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1E293B))),
-                        ],
-                      )))
-                  .toList(),
-              onChanged: onChanged,
-            ),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          underline: const SizedBox(),
+          items: items
+              .map((v) => DropdownMenuItem<T>(
+                    value: v,
+                    child: Text(labelBuilder(v)),
+                  ))
+              .toList(),
+          onChanged: onChanged,
         ),
-      ],
-    );
-  }
+      );
 }

@@ -65,9 +65,19 @@ class Endpoints {
   static String adminStudentReject(String studentId) =>
       '$_admin/students/$studentId/reject';
 
-  // ── Admin — All Students ─────────────────────────────────────────────────────
-  /// GET → list all enrolled students
-  static const String adminAllStudents = '$_admin/users/students';
+  // ── Admin — Student Management ────────────────────────────────────────────
+  /// GET → list all enrolled students (also used for dashboard count)
+  static const String adminAllStudents = '$_admin/students/';
+
+  /// GET → single student  |  PUT → update  |  DELETE → remove
+  static String adminStudent(String studentId) => '$_admin/students/$studentId';
+
+  /// POST → promote a list of students to the next semester
+  static const String adminStudentsBulkPromote =
+      '$_admin/students/bulk-promote';
+
+  /// POST → permanently delete a list of students
+  static const String adminStudentsBulkDelete = '$_admin/students/bulk-delete';
 
   // ── Student — Face Enrollment ─────────────────────────────────────────────
   static const String _face = '$baseUrl/api/v1';

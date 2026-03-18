@@ -1,7 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/utils/dummy/student_dummy_data.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/student_model.dart';
 import 'package:facialtrackapp/view/Admin/Student%20Management/student_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class StudentListScreen extends StatefulWidget {
   const StudentListScreen({super.key});
@@ -11,7 +13,6 @@ class StudentListScreen extends StatefulWidget {
 }
 
 class _StudentListScreenState extends State<StudentListScreen> {
-  List<Map<String, dynamic>> _students = [];
   int? _selectedSemesterFilter;
   String _searchQuery = '';
   bool _bulkMode = false;
@@ -21,7 +22,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
   @override
   void initState() {
     super.initState();
-    _students = StudentDummyData.students;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AdminProvider>().fetchStudents(force: true);
+    });
   }
 
   @override
@@ -30,14 +33,14 @@ class _StudentListScreenState extends State<StudentListScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filtered {
+  List<StudentModel> _filterStudents(List<StudentModel> all) {
     final q = _searchQuery.toLowerCase();
-    return _students.where((s) {
+    return all.where((s) {
       final semMatch = _selectedSemesterFilter == null ||
-          s['semesterNumber'] == _selectedSemesterFilter;
+          s.semesterNumber == _selectedSemesterFilter;
       final searchMatch = q.isEmpty ||
-          (s['fullName'] as String).toLowerCase().contains(q) ||
-          (s['rollNo'] as String).toLowerCase().contains(q);
+          s.fullName.toLowerCase().contains(q) ||
+          s.rollNo.toLowerCase().contains(q);
       return semMatch && searchMatch;
     }).toList();
   }
@@ -58,8 +61,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
             : _selectedIds.add(id);
       });
 
-  void _selectAll() => setState(
-      () => _selectedIds.addAll(_filtered.map((s) => s['id'] as String)));
+  void _selectAll(List<StudentModel> filtered) =>
+      setState(() => _selectedIds.addAll(filtered.map((s) => s.id)));
 
   void _clearAll() => setState(() => _selectedIds.clear());
 
@@ -71,16 +74,21 @@ class _StudentListScreenState extends State<StudentListScreen> {
         message: 'This student will be permanently removed. Are you sure?',
         confirmLabel: 'Delete',
         confirmColor: Colors.red.shade600,
-        onConfirm: () {
-          StudentDummyData.deleteStudent(id);
-          setState(() => _students = StudentDummyData.students);
-          _showSnack('Student removed successfully');
+        onConfirm: () async {
+          final provider = context.read<AdminProvider>();
+          final ok = await provider.deleteStudent(id);
+          if (!mounted) return;
+          _showSnack(
+              ok
+                  ? 'Student removed successfully'
+                  : (provider.errorMessage ?? 'Failed to delete student.'),
+              ok ? Colors.green.shade600 : Colors.red.shade600);
         },
       ),
     );
   }
 
-  void _bulkDelete() {
+  void _bulkDelete(List<StudentModel> all) {
     final count = _selectedIds.length;
     showDialog(
       context: context,
@@ -90,97 +98,128 @@ class _StudentListScreenState extends State<StudentListScreen> {
             'Permanently remove $count selected student${count > 1 ? 's' : ''}? This cannot be undone.',
         confirmLabel: 'Delete All',
         confirmColor: Colors.red.shade600,
-        onConfirm: () {
-          StudentDummyData.bulkDelete(_selectedIds.toList());
+        onConfirm: () async {
+          final ids = _selectedIds.toList();
+          final ok =
+              await context.read<AdminProvider>().bulkDeleteStudents(ids);
+          if (!mounted) return;
           setState(() {
-            _students = StudentDummyData.students;
             _bulkMode = false;
             _selectedIds.clear();
           });
-          _showSnack('$count student${count > 1 ? 's' : ''} deleted');
+          _showSnack(
+              ok
+                  ? '$count student${count > 1 ? 's' : ''} deleted'
+                  : (context.read<AdminProvider>().errorMessage ??
+                      'Failed to delete.'),
+              ok ? Colors.green.shade600 : Colors.red.shade600);
         },
       ),
     );
   }
 
-  void _bulkPromote() {
-    final sems = _students
-        .where((s) => _selectedIds.contains(s['id']))
-        .map((s) => s['semesterNumber'] as int)
-        .toSet();
-    final semText =
-        sems.length == 1 ? 'Semester ${sems.first}' : 'selected semesters';
+  void _bulkPromote(List<StudentModel> all) {
     final count = _selectedIds.length;
     showDialog(
       context: context,
       builder: (_) => _ConfirmDialog(
         title: 'Promote $count Student${count > 1 ? 's' : ''}',
         message:
-            'Move $count student${count > 1 ? 's' : ''} from $semText to the next semester?',
+            'Move $count student${count > 1 ? 's' : ''} to the next semester?',
         confirmLabel: 'Promote',
         confirmColor: ColorPallet.primaryBlue,
-        onConfirm: () {
-          StudentDummyData.promoteStudents(_selectedIds.toList());
+        onConfirm: () async {
+          final ids = _selectedIds.toList();
+          final result =
+              await context.read<AdminProvider>().bulkPromoteStudents(ids);
+          if (!mounted) return;
           setState(() {
-            _students = StudentDummyData.students;
             _bulkMode = false;
             _selectedIds.clear();
           });
-          _showSnack('Students promoted successfully!');
+          if (result != null) {
+            final promoted = result['promoted_count'] ?? count;
+            final skipped = result['skipped_count'] ?? 0;
+            final msg = skipped > 0
+                ? '$promoted promoted, $skipped skipped (already on Sem 8)'
+                : '$promoted student${promoted > 1 ? 's' : ''} promoted!';
+            _showSnack(msg, Colors.green.shade600);
+          } else {
+            _showSnack(
+                context.read<AdminProvider>().errorMessage ??
+                    'Failed to promote.',
+                Colors.red.shade600);
+          }
         },
       ),
     );
   }
 
-  void _showSnack(String msg) {
+  void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: Colors.green.shade600,
+      backgroundColor: color,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: const EdgeInsets.all(16),
     ));
   }
 
+  // ── Avatar colour (deterministic) ─────────────────────────────────────────
+  Color _avatarColor(String id) {
+    const colors = [
+      Color(0xFF6366F1),
+      Color(0xFF8B5CF6),
+      Color(0xFFEC4899),
+      Color(0xFF14B8A6),
+      Color(0xFFF97316),
+      Color(0xFF22C55E),
+      Color(0xFFEF4444),
+      Color(0xFF3B82F6),
+    ];
+    final hash = id.codeUnits.fold(0, (a, b) => a + b);
+    return colors[hash % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        body: Stack(
-          children: [
-            Column(
+    return Consumer<AdminProvider>(
+      builder: (context, provider, _) {
+        final filtered = _filterStudents(provider.students);
+
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.grey[100],
+            body: Stack(
               children: [
-                _buildHeader(filtered.length),
-                _buildSemesterFilter(),
-                if (_bulkMode) _buildBulkBanner(),
-                Expanded(
-                  child: filtered.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                          itemCount: filtered.length,
-                          itemBuilder: (_, i) => _buildStudentCard(filtered[i]),
-                        ),
+                Column(
+                  children: [
+                    _buildHeader(provider, filtered.length),
+                    _buildSemesterFilter(),
+                    if (_bulkMode) _buildBulkBanner(),
+                    Expanded(
+                      child: _buildBody(provider, filtered),
+                    ),
+                  ],
                 ),
+                if (_bulkMode && _selectedIds.isNotEmpty)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: _buildBulkBar(provider.students, filtered),
+                  ),
               ],
             ),
-            if (_bulkMode && _selectedIds.isNotEmpty)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _buildBulkBar(),
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  // ── Header  ────────────────────────────────────────────────────────────────
-  Widget _buildHeader(int showing) {
+  // ── Header ─────────────────────────────────────────────────────────────────
+  Widget _buildHeader(AdminProvider provider, int showing) {
+    final total = provider.students.length;
     return Container(
       padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 28),
       decoration: const BoxDecoration(
@@ -215,9 +254,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         GestureDetector(
-                          onTap: _selectedIds.length == _filtered.length
-                              ? _clearAll
-                              : _selectAll,
+                          onTap: () => _selectedIds.length == showing
+                              ? _clearAll()
+                              : _selectAll(_filterStudents(provider.students)),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
@@ -226,7 +265,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              _selectedIds.length == _filtered.length
+                              _selectedIds.length == showing
                                   ? 'Deselect All'
                                   : 'Select All',
                               style: const TextStyle(
@@ -274,8 +313,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
           // Stat pills
           Row(
             children: [
-              _statPill(Icons.people_rounded, '${_students.length}',
-                  'Total Students'),
+              _statPill(Icons.people_rounded, '$total', 'Total Students'),
               const SizedBox(width: 10),
               _statPill(Icons.filter_list_rounded, '$showing', 'Showing'),
             ],
@@ -405,7 +443,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
     );
   }
 
-  // ── Bulk mode banner ───────────────────────────────────────────────────────
+  // ── Bulk banner ────────────────────────────────────────────────────────────
   Widget _buildBulkBanner() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
@@ -432,24 +470,66 @@ class _StudentListScreenState extends State<StudentListScreen> {
     );
   }
 
-  // ── Student card ────────────────────────────────────────────────────
-  Widget _buildStudentCard(Map<String, dynamic> s) {
-    final id = s['id'] as String;
-    final isSelected = _selectedIds.contains(id);
-    final color = StudentDummyData.avatarColor(id);
-    final sem = s['semesterNumber'] as int;
-    final faceEnrolled = s['faceEnrolled'] as bool;
+  // ── Body ───────────────────────────────────────────────────────────────────
+  Widget _buildBody(AdminProvider provider, List<StudentModel> filtered) {
+    if (provider.isStudentsLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: ColorPallet.primaryBlue),
+      );
+    }
+
+    if (provider.studentsError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red.shade300, size: 48),
+            const SizedBox(height: 12),
+            Text(provider.studentsError!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => provider.fetchStudents(force: true),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorPallet.primaryBlue,
+                  foregroundColor: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (filtered.isEmpty) return _buildEmptyState();
+
+    return RefreshIndicator(
+      color: ColorPallet.primaryBlue,
+      onRefresh: () => provider.fetchStudents(force: true),
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        itemCount: filtered.length,
+        itemBuilder: (_, i) => _buildStudentCard(filtered[i]),
+      ),
+    );
+  }
+
+  // ── Student card ───────────────────────────────────────────────────────────
+  Widget _buildStudentCard(StudentModel s) {
+    final isSelected = _selectedIds.contains(s.id);
+    final color = _avatarColor(s.id);
 
     return GestureDetector(
       onTap: () {
         if (_bulkMode) {
-          _toggleSelect(id);
+          _toggleSelect(s.id);
         } else {
+          final provider = context.read<AdminProvider>();
           Navigator.push(
             context,
-            MaterialPageRoute(
-                builder: (_) => StudentDetailScreen(student: Map.from(s))),
-          ).then((_) => setState(() => _students = StudentDummyData.students));
+            MaterialPageRoute(builder: (_) => StudentDetailScreen(student: s)),
+          ).then((_) => provider.fetchStudents(force: true));
         }
       },
       child: AnimatedContainer(
@@ -480,7 +560,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                   height: 22,
                   child: Checkbox(
                     value: isSelected,
-                    onChanged: (_) => _toggleSelect(id),
+                    onChanged: (_) => _toggleSelect(s.id),
                     activeColor: ColorPallet.primaryBlue,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5)),
@@ -502,7 +582,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    StudentDummyData.initials(s['fullName'] as String),
+                    s.initials,
                     style: TextStyle(
                         color: color,
                         fontWeight: FontWeight.w900,
@@ -516,7 +596,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
             Expanded(
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 11),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -524,7 +604,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            s['fullName'] as String,
+                            s.fullName,
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14.5,
@@ -533,11 +613,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        // Face badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7, vertical: 3),
+                          margin: const EdgeInsets.only(right: 10),
                           decoration: BoxDecoration(
-                            color: faceEnrolled
+                            color: s.faceEnrolled
                                 ? Colors.green.withOpacity(0.1)
                                 : Colors.orange.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -546,21 +628,21 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                faceEnrolled
+                                s.faceEnrolled
                                     ? Icons.face_retouching_natural
                                     : Icons.face_outlined,
                                 size: 11,
-                                color: faceEnrolled
+                                color: s.faceEnrolled
                                     ? Colors.green.shade600
                                     : Colors.orange.shade700,
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                faceEnrolled ? 'Enrolled' : 'Pending',
+                                s.faceEnrolled ? 'Enrolled' : 'Pending',
                                 style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: faceEnrolled
+                                    color: s.faceEnrolled
                                         ? Colors.green.shade600
                                         : Colors.orange.shade700),
                               ),
@@ -570,7 +652,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(s['rollNo'] as String,
+                    Text(s.rollNo,
                         style: TextStyle(
                             color: Colors.grey.shade400,
                             fontSize: 11.5,
@@ -578,18 +660,18 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        _tag('S$sem', ColorPallet.primaryBlue),
+                        _tag('S${s.semesterNumber}', ColorPallet.primaryBlue),
                         const SizedBox(width: 6),
-                        _tag('Sec ${s['section']}', const Color(0xFF6366F1)),
+                        _tag('Sec ${s.section}', const Color(0xFF6366F1)),
                         const SizedBox(width: 6),
-                        _tag(s['enrollmentDate'] as String,
-                            Colors.grey.shade500),
+                        _tag(s.displayDate, Colors.grey.shade500),
                         const Spacer(),
                         if (!_bulkMode)
                           GestureDetector(
-                            onTap: () => _deleteSingle(id),
+                            onTap: () => _deleteSingle(s.id),
                             child: Container(
                               padding: const EdgeInsets.all(6),
+                              margin: const EdgeInsets.only(right: 10),
                               decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.07),
                                 borderRadius: BorderRadius.circular(8),
@@ -622,11 +704,11 @@ class _StudentListScreenState extends State<StudentListScreen> {
     );
   }
 
-  // ── Bulk action bottom bar ─────────────────────────────────────────────────
-  Widget _buildBulkBar() {
-    final canPromote = _students
-        .where((s) => _selectedIds.contains(s['id']))
-        .any((s) => (s['semesterNumber'] as int) < 8);
+  // ── Bulk action bar ────────────────────────────────────────────────────────
+  Widget _buildBulkBar(List<StudentModel> all, List<StudentModel> filtered) {
+    final selectedStudents =
+        all.where((s) => _selectedIds.contains(s.id)).toList();
+    final canPromote = selectedStudents.any((s) => s.semesterNumber < 8);
 
     return Container(
       decoration: BoxDecoration(
@@ -643,7 +725,6 @@ class _StudentListScreenState extends State<StudentListScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
           Container(
             width: 36,
             height: 4,
@@ -663,7 +744,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: canPromote ? _bulkPromote : null,
+                  onPressed: canPromote ? () => _bulkPromote(all) : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorPallet.primaryBlue,
                     disabledBackgroundColor:
@@ -685,7 +766,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: _bulkDelete,
+                  onPressed: () => _bulkDelete(all),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade600,
                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -739,7 +820,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 }
 
-// ── Confirm dialog ─────────────────────────────────────────────────────────
+// ── Confirm dialog ──────────────────────────────────────────────────────────
 class _ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;

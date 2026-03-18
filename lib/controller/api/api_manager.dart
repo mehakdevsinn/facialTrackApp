@@ -11,6 +11,7 @@ import 'package:facialtrackapp/core/models/face_status_model.dart';
 import 'package:facialtrackapp/core/models/frame_analysis_result.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
+import 'package:facialtrackapp/core/models/student_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
@@ -905,16 +906,125 @@ extension AssignmentApiMethods on ApiManager {
     }
   }
 
-  /// GET /admin/users/students — returns all enrolled students
-  /// We only need the count so we return the raw list length-able list.
-  Future<List<dynamic>> getAllStudents() async {
+  // ── Student Management ─────────────────────────────────────────────────────
+
+  /// GET /admin/students/ — all enrolled students as typed models.
+  Future<List<StudentModel>> getAllStudents() async {
     try {
       final response = await http
           .get(Uri.parse(Endpoints.adminAllStudents),
               headers: await _authHeaders())
           .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
-      return jsonDecode(response.body) as List;
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => StudentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /admin/students/{id} — single student.
+  Future<StudentModel> getStudentById(String studentId) async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminStudent(studentId)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// PUT /admin/students/{id} — update editable fields.
+  Future<StudentModel> updateStudent(
+    String studentId, {
+    required String fullName,
+    required String rollNo,
+    required String email,
+    required int semesterNumber,
+    required String section,
+  }) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse(Endpoints.adminStudent(studentId)),
+            headers: await _authHeaders(),
+            body: jsonEncode({
+              'full_name': fullName,
+              'roll_no': rollNo,
+              'email': email,
+              'semester_number': semesterNumber,
+              'section': section,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// DELETE /admin/students/{id} — hard delete a single student.
+  Future<void> deleteStudent(String studentId) async {
+    try {
+      final response = await http
+          .delete(Uri.parse(Endpoints.adminStudent(studentId)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// POST /admin/students/bulk-promote — promote list to next semester.
+  Future<Map<String, dynamic>> bulkPromoteStudents(
+      List<String> studentIds) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminStudentsBulkPromote),
+            headers: await _authHeaders(),
+            body: jsonEncode({'student_ids': studentIds}),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// POST /admin/students/bulk-delete — permanently remove multiple students.
+  Future<Map<String, dynamic>> bulkDeleteStudents(
+      List<String> studentIds) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminStudentsBulkDelete),
+            headers: await _authHeaders(),
+            body: jsonEncode({'student_ids': studentIds}),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } on AuthException {
       rethrow;
     } catch (e) {

@@ -245,28 +245,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     );
   }
 
-  Widget _headerBadge(String label, IconData icon, {Color? color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color ?? Colors.white70, size: 13),
-          const SizedBox(width: 5),
-          Text(label,
-              style: TextStyle(
-                  color: color ?? Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
   // ── View mode ──────────────────────────────────────────────────────────────
   Widget _buildViewMode() {
     return Column(

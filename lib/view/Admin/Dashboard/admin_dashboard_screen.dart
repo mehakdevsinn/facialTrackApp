@@ -8,6 +8,7 @@ import 'package:facialtrackapp/view/Admin/Scheme of Study/scheme_of_study_screen
 import 'package:facialtrackapp/view/Admin/Student%20Management/student_list_screen.dart';
 import 'package:facialtrackapp/view/Admin/Semester%20Management/individual_semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
+import 'package:facialtrackapp/view/Admin/Schedule%20Management/schedule_list_screen.dart';
 import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
 import 'package:facialtrackapp/view/Role Selection/role_selcetion_screen.dart';
@@ -280,6 +281,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         MaterialPageRoute(
                           builder: (context) =>
                               const IndividualSemesterManagementScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.table_chart_rounded,
+                    color: Colors.indigo,
+                    title: 'Schedule Management',
+                    subtitle: 'Build & manage weekly timetables',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ScheduleListScreen(),
                         ),
                       );
                     },

@@ -40,7 +40,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Consumer<AdminProvider>(builder: (context, provider, _) {
       return SafeArea(
         child: Scaffold(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: Colors.grey[50], // Very soft off-white background
           appBar: AppBar(
             elevation: 0,
             automaticallyImplyLeading: false,
@@ -384,22 +384,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 16),
       child: AdminAnimatedCard(
         color: color,
         onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16), // Softer, wider padding
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14), // More negative space around icon
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: color, size: 26),
+              child: Icon(icon, color: color, size: 24), // Slightly smaller, elegant icon
             ),
-            const SizedBox(width: 15),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

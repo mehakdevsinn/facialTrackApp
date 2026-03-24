@@ -9,7 +9,6 @@ import 'package:facialtrackapp/view/Admin/Student%20Management/student_list_scre
 import 'package:facialtrackapp/view/Admin/Semester%20Management/individual_semester_management_screen.dart';
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
 import 'package:facialtrackapp/view/Admin/Schedule%20Management/schedule_list_screen.dart';
-import 'package:facialtrackapp/view/Admin/User Approval/user_approval_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
 import 'package:facialtrackapp/view/Role Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
@@ -316,21 +315,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   //     );
                   //   },
                   // ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.how_to_reg_rounded,
-                    color: Colors.teal,
-                    title: 'Student Approval',
-                    subtitle: 'Approve or reject student registrations',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const UserApprovalScreen(),
-                        ),
-                      );
-                    },
-                  ),
+
                   _buildMenuItem(
                     context,
                     icon: Icons.bug_report_rounded,

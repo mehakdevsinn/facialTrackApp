@@ -1,7 +1,10 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
+import 'package:facialtrackapp/core/models/assignment_model.dart';
 import 'package:facialtrackapp/core/models/timetable_model.dart';
-import 'package:facialtrackapp/utils/dummy/schedule_dummy_data.dart';
+import 'package:facialtrackapp/services/schedule_pdf_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
@@ -20,11 +23,21 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   void initState() {
     super.initState();
     _tt = widget.timetable;
+    // Pre-load the assignments for this semester+section
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AdminProvider>().fetchScheduleAssignments(
+            semesterId: _tt.semesterId,
+            section: _tt.section,
+          );
+    });
   }
 
+  /// Reload fresh timetable from the provider's in-memory list.
   void _reload() {
-    final fresh = ScheduleDummyData.findById(_tt.id);
-    if (fresh != null) setState(() => _tt = fresh);
+    final prov = context.read<AdminProvider>();
+    final fresh = prov.timetables.firstWhere((t) => t.id == _tt.id,
+        orElse: () => _tt);
+    setState(() => _tt = fresh);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -89,7 +102,11 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 24),
+                GestureDetector(
+                  onTap: () => SchedulePdfService.exportToPDF(_tt),
+                  child: const Icon(Icons.print_rounded,
+                      color: Colors.white, size: 24),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -113,8 +130,6 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   // ── Timetable grid ─────────────────────────────────────────────────────────
   Widget _buildGrid() {
     final periods = _tt.periods;
-
-    // Column widths
     const dayColW = 56.0;
     const periodColW = 110.0;
     const breakColW = 75.0;
@@ -174,7 +189,6 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
         // ── Day rows ─────────────────────────────────────────────────────────
         ..._days.map((day) => Row(
               children: [
-                // Day label
                 _gridCell(
                   width: dayColW,
                   height: rowH,
@@ -187,7 +201,6 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                         color: Colors.grey.shade700),
                   ),
                 ),
-                // Period cells
                 ...periods.map((p) {
                   if (p.isBreak) {
                     return _gridCell(
@@ -213,8 +226,9 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                       width: periodColW,
                       height: rowH,
                       hasEntry: entry != null,
-                      child:
-                          entry != null ? _entryContent(entry) : _emptyCell(),
+                      child: entry != null
+                          ? _entryContent(entry)
+                          : _emptyCell(),
                     ),
                   );
                 }),
@@ -283,8 +297,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _AssignSlotSheet(
-        timetableId: _tt.id,
-        semesterNumber: _tt.semesterNumber,
+        timetable: _tt,
         day: day,
         period: period,
         existing: existing,
@@ -293,23 +306,23 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     );
   }
 
-  // ── Edit periods → re-open wizard step 2 ──────────────────────────────────
+  // ── Edit periods ──────────────────────────────────────────────────────────
   void _editPeriods() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) =>
-            _EditPeriodsScreen(timetableId: _tt.id, periods: _tt.periods),
+            _EditPeriodsScreen(timetable: _tt, onSaved: _reload),
       ),
-    ).then((_) => _reload());
+    );
   }
 }
 
-// ── Edit periods mini-screen ─────────────────────────────────────────────────
+// ── Edit periods mini-screen ──────────────────────────────────────────────────
 class _EditPeriodsScreen extends StatefulWidget {
-  final String timetableId;
-  final List<PeriodSlot> periods;
-  const _EditPeriodsScreen({required this.timetableId, required this.periods});
+  final Timetable timetable;
+  final VoidCallback onSaved;
+  const _EditPeriodsScreen({required this.timetable, required this.onSaved});
 
   @override
   State<_EditPeriodsScreen> createState() => _EditPeriodsScreenState();
@@ -322,7 +335,7 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
   @override
   void initState() {
     super.initState();
-    _slots = widget.periods.map((p) {
+    _slots = widget.timetable.periods.map((p) {
       if (p.isBreak) _breakAdded = true;
       return _SlotConfig(
           isBreak: p.isBreak, start: p.startTime, end: p.endTime);
@@ -332,14 +345,13 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
   Future<void> _pickTime(int index, bool isStart) async {
     final slot = _slots[index];
     final initial = isStart ? slot.start : slot.end;
-    final picked = await showTimePicker(context: context, initialTime: initial);
+    final picked =
+        await showTimePicker(context: context, initialTime: initial);
     if (picked == null) return;
     setState(() {
-      if (isStart) {
-        _slots[index] = _slots[index].copyWith(start: picked);
-      } else {
-        _slots[index] = _slots[index].copyWith(end: picked);
-      }
+      _slots[index] = isStart
+          ? _slots[index].copyWith(start: picked)
+          : _slots[index].copyWith(end: picked);
     });
   }
 
@@ -356,8 +368,8 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
             isBreak: false,
             start: const TimeOfDay(hour: 8, minute: 0),
             end: const TimeOfDay(hour: 9, minute: 0)));
-    setState(() => _slots
-        .add(_SlotConfig(isBreak: false, start: last.end, end: last.end)));
+    setState(() =>
+        _slots.add(_SlotConfig(isBreak: false, start: last.end, end: last.end)));
   }
 
   void _addBreak() {
@@ -392,8 +404,21 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
     }).toList();
   }
 
-  void _save() {
-    ScheduleDummyData.updatePeriods(widget.timetableId, _buildSlots());
+  Future<void> _save() async {
+    final prov = context.read<AdminProvider>();
+    final updated = await prov.updateTimetablePeriods(
+      timetableId: widget.timetable.id,
+      periods: _buildSlots(),
+    );
+    if (!mounted) return;
+    if (updated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(prov.scheduleActionError ?? 'Failed to update periods.'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+    widget.onSaved();
     Navigator.pop(context);
   }
 
@@ -410,12 +435,22 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
           title: const Text('Edit Periods',
               style: TextStyle(fontWeight: FontWeight.bold)),
           actions: [
-            TextButton(
-              onPressed: _save,
-              child: const Text('Save',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            )
+            Consumer<AdminProvider>(builder: (_, prov, __) {
+              return prov.isScheduleActionLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2)))
+                  : TextButton(
+                      onPressed: _save,
+                      child: const Text('Save',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)));
+            })
           ],
         ),
         body: Column(
@@ -471,7 +506,8 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
                         ),
                         Text('  –  ',
                             style: TextStyle(
-                                color: Colors.grey.shade400, fontSize: 12)),
+                                color: Colors.grey.shade400,
+                                fontSize: 12)),
                         GestureDetector(
                           onTap: () => _pickTime(i, false),
                           child: _timeChip(slot.end, color),
@@ -564,18 +600,16 @@ class _EditPeriodsScreenState extends State<_EditPeriodsScreen> {
   }
 }
 
-// ── Assign slot bottom sheet ─────────────────────────────────────────────────
+// ── Assign slot bottom sheet ──────────────────────────────────────────────────
 class _AssignSlotSheet extends StatefulWidget {
-  final String timetableId;
-  final int semesterNumber;
+  final Timetable timetable;
   final String day;
   final PeriodSlot period;
   final TimetableEntry? existing;
   final VoidCallback onSaved;
 
   const _AssignSlotSheet({
-    required this.timetableId,
-    required this.semesterNumber,
+    required this.timetable,
     required this.day,
     required this.period,
     required this.existing,
@@ -587,43 +621,51 @@ class _AssignSlotSheet extends StatefulWidget {
 }
 
 class _AssignSlotSheetState extends State<_AssignSlotSheet> {
-  late List<Map<String, dynamic>> _courses;
-  Map<String, dynamic>? _selectedCourse;
+  List<AssignmentModel> _allAssignments = [];
+
+  // Unique courses in these assignments
+  List<AssignmentModel> get _uniqueCourses {
+    final seen = <String>{};
+    return _allAssignments
+        .where((a) => seen.add(a.course.code))
+        .toList();
+  }
+
+  AssignmentModel? _selectedCourseAssignment;
   String? _selectedTeacher;
   bool _hasConflict = false;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _courses = ScheduleDummyData.coursesForSemester(widget.semesterNumber);
+    final prov = context.read<AdminProvider>();
+    _allAssignments = prov.scheduleAssignments(
+        widget.timetable.semesterId, widget.timetable.section);
 
     if (widget.existing != null) {
       try {
-        _selectedCourse = _courses
-            .firstWhere((c) => c['code'] == widget.existing!.courseCode);
+        _selectedCourseAssignment = _uniqueCourses
+            .firstWhere((a) => a.course.code == widget.existing!.courseCode);
       } catch (_) {}
       _selectedTeacher = widget.existing?.teacherName;
     }
   }
 
-  List<String> get _teachers => _selectedCourse == null
-      ? []
-      : ScheduleDummyData.teachersForCourse(_selectedCourse!['code'] as String);
-
-  void _onCourseChanged(Map<String, dynamic>? course) {
-    final teachers = course == null
-        ? []
-        : ScheduleDummyData.teachersForCourse(course['code'] as String);
-    setState(() {
-      _selectedCourse = course;
-      _selectedTeacher = teachers.isNotEmpty ? teachers.first : null;
-      _checkConflict();
-    });
+  List<String> get _teachers {
+    if (_selectedCourseAssignment == null) return [];
+    return _allAssignments
+        .where((a) => a.course.code == _selectedCourseAssignment!.course.code)
+        .map((a) => a.teacher.fullName)
+        .toSet()
+        .toList();
   }
 
-  void _onTeacherChanged(String? teacher) {
+  void _onCourseChanged(AssignmentModel? a) {
     setState(() {
-      _selectedTeacher = teacher;
+      _selectedCourseAssignment = a;
+      final teachers = _teachers;
+      _selectedTeacher = teachers.isNotEmpty ? teachers.first : null;
       _checkConflict();
     });
   }
@@ -633,35 +675,48 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
       _hasConflict = false;
       return;
     }
-    _hasConflict = ScheduleDummyData.hasConflict(
-      timetableId: widget.timetableId,
-      day: widget.day,
-      periodId: widget.period.id,
-      teacherName: _selectedTeacher!,
-    );
+    _hasConflict = widget.timetable.entries.any((e) =>
+        e.day == widget.day &&
+        e.periodId == widget.period.id &&
+        e.teacherName == _selectedTeacher);
   }
 
-  void _save() {
-    if (_selectedCourse == null || _selectedTeacher == null) return;
-    ScheduleDummyData.updateEntry(
-      widget.timetableId,
-      widget.day,
-      widget.period.id,
-      TimetableEntry(
-        day: widget.day,
-        periodId: widget.period.id,
-        courseCode: _selectedCourse!['code'],
-        courseTitle: _selectedCourse!['title'],
-        teacherName: _selectedTeacher!,
-      ),
+  Future<void> _save() async {
+    if (_selectedCourseAssignment == null || _selectedTeacher == null) return;
+    setState(() => _isSaving = true);
+    final prov = context.read<AdminProvider>();
+    final updated = await prov.assignScheduleEntry(
+      timetableId: widget.timetable.id,
+      day: widget.day,
+      periodId: widget.period.id,
+      courseCode: _selectedCourseAssignment!.course.code,
+      courseTitle: _selectedCourseAssignment!.course.name,
+      teacherName: _selectedTeacher!,
     );
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    if (updated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text(prov.scheduleActionError ?? 'Failed to assign slot.'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
     widget.onSaved();
     Navigator.pop(context);
   }
 
-  void _clear() {
-    ScheduleDummyData.clearEntry(
-        widget.timetableId, widget.day, widget.period.id);
+  Future<void> _clear() async {
+    setState(() => _isSaving = true);
+    final prov = context.read<AdminProvider>();
+    await prov.clearScheduleEntry(
+      timetableId: widget.timetable.id,
+      day: widget.day,
+      periodId: widget.period.id,
+    );
+    if (!mounted) return;
+    setState(() => _isSaving = false);
     widget.onSaved();
     Navigator.pop(context);
   }
@@ -694,7 +749,8 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
             // Slot info banner
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                   color: ColorPallet.primaryBlue.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(14)),
@@ -702,20 +758,22 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
                 const Icon(Icons.access_time_rounded,
                     color: ColorPallet.primaryBlue, size: 18),
                 const SizedBox(width: 12),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${widget.day} · ${widget.period.label}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: ColorPallet.primaryBlue)),
-                  Text(widget.period.timeRange,
-                      style:
-                          TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                ]),
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${widget.day} · ${widget.period.label}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: ColorPallet.primaryBlue)),
+                      Text(widget.period.timeRange,
+                          style: TextStyle(
+                              fontSize: 11, color: Colors.grey.shade600)),
+                    ]),
                 const Spacer(),
                 if (widget.existing != null)
                   GestureDetector(
-                    onTap: _clear,
+                    onTap: _isSaving ? null : _clear,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),
@@ -747,14 +805,39 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                       child: Text(
-                    '${_selectedTeacher ?? "Teacher"} is already scheduled at this time on ${widget.day}.',
-                    style:
-                        TextStyle(color: Colors.orange.shade800, fontSize: 12),
+                    '${_selectedTeacher ?? "Teacher"} is already scheduled at this time.',
+                    style: TextStyle(
+                        color: Colors.orange.shade800, fontSize: 12),
                   )),
                 ]),
               ),
 
             const SizedBox(height: 16),
+
+            // No assignments warning
+            if (_allAssignments.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Row(children: [
+                    Icon(Icons.info_outline,
+                        color: Colors.red.shade400, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        child: Text(
+                      'No course assignments found for this semester/section. '
+                      'Add assignments first.',
+                      style: TextStyle(
+                          color: Colors.red.shade700, fontSize: 12),
+                    )),
+                  ]),
+                ),
+              ),
+
             // Course dropdown
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -767,17 +850,19 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
                     decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButton<Map<String, dynamic>>(
-                      value: _selectedCourse,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12),
+                    child: DropdownButton<AssignmentModel>(
+                      value: _selectedCourseAssignment,
                       isExpanded: true,
                       underline: const SizedBox(),
                       hint: const Text('Choose a course',
                           style: TextStyle(fontSize: 13)),
-                      items: _courses
-                          .map((c) => DropdownMenuItem(
-                                value: c,
-                                child: Text('${c['code']} — ${c['title']}',
+                      items: _uniqueCourses
+                          .map((a) => DropdownMenuItem(
+                                value: a,
+                                child: Text(
+                                    '${a.course.code} — ${a.course.name}',
                                     style: const TextStyle(fontSize: 13)),
                               ))
                           .toList(),
@@ -793,42 +878,59 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
                             ? Colors.grey.shade100
                             : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12),
                     child: DropdownButton<String>(
                       value: _selectedTeacher,
                       isExpanded: true,
                       underline: const SizedBox(),
                       disabledHint: const Text('Select a course first',
-                          style: TextStyle(fontSize: 13, color: Colors.grey)),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey)),
                       items: _teachers
                           .map((t) => DropdownMenuItem(
                               value: t,
                               child: Text(t,
-                                  style: const TextStyle(fontSize: 13))))
+                                  style: const TextStyle(
+                                      fontSize: 13))))
                           .toList(),
-                      onChanged: _teachers.isEmpty ? null : _onTeacherChanged,
+                      onChanged: _teachers.isEmpty
+                          ? null
+                          : (t) {
+                              setState(() => _selectedTeacher = t);
+                              _checkConflict();
+                            },
                     ),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorPallet.primaryBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
                       onPressed:
-                          (_selectedCourse != null && _selectedTeacher != null)
-                              ? _save
-                              : null,
-                      child: const Text('Assign Slot',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15)),
+                          (_selectedCourseAssignment == null ||
+                                  _selectedTeacher == null ||
+                                  _isSaving)
+                              ? null
+                              : _save,
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorPallet.primaryBlue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14)),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2))
+                          : const Text('Assign Slot',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14)),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -849,7 +951,7 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
           letterSpacing: 0.4));
 }
 
-// ── Mutable slot config (shared by create wizard + edit periods screen) ───────
+// ── Local slot config ─────────────────────────────────────────────────────────
 class _SlotConfig {
   final bool isBreak;
   final TimeOfDay start;

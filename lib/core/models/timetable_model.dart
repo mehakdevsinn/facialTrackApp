@@ -45,20 +45,27 @@ class PeriodSlot {
         'id': id,
         'is_break': isBreak,
         'label': label,
-        'start_hour': startTime.hour,
-        'start_minute': startTime.minute,
-        'end_hour': endTime.hour,
-        'end_minute': endTime.minute,
+        'start_time': _fmtTime(startTime),
+        'end_time': _fmtTime(endTime),
       };
 
   factory PeriodSlot.fromJson(Map<String, dynamic> json) => PeriodSlot(
-        id: json['id'],
-        isBreak: json['is_break'],
-        label: json['label'],
-        startTime:
-            TimeOfDay(hour: json['start_hour'], minute: json['start_minute']),
-        endTime: TimeOfDay(hour: json['end_hour'], minute: json['end_minute']),
+        id: json['id'] as String,
+        isBreak: json['is_break'] as bool,
+        label: json['label'] as String,
+        startTime: _parseTime(json['start_time'] as String),
+        endTime: _parseTime(json['end_time'] as String),
       );
+
+  /// Parse "HH:MM" → TimeOfDay
+  static TimeOfDay _parseTime(String t) {
+    final parts = t.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  /// Format TimeOfDay → "HH:MM"
+  static String _fmtTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 }
 
 // ── Timetable cell entry ───────────────────────────────────────────────────

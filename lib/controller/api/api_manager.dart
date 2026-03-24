@@ -1049,4 +1049,228 @@ extension AssignmentApiMethods on ApiManager {
       throw _handleError(e);
     }
   }
+
+  // ─── Schedule Management ─────────────────────────────────────────────────
+
+  /// GET /admin/assignments/?semester_id=&section= — for schedule dropdowns
+  Future<List<AssignmentModel>> getAssignmentsFiltered({
+    String? semesterId,
+    String? section,
+  }) async {
+    try {
+      final url = Endpoints.adminAssignmentsFiltered(
+          semesterId: semesterId, section: section);
+      final response = await http
+          .get(Uri.parse(url), headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => AssignmentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /admin/schedule/ — list all timetables
+  Future<List<TimetableFromApi>> getTimetables() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminSchedule), headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => TimetableFromApi.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /admin/schedule/{id} — single timetable
+  Future<TimetableFromApi> getTimetableById(String id) async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.adminTimetable(id)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return TimetableFromApi.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// POST /admin/schedule/ — create timetable
+  Future<TimetableFromApi> createTimetable({
+    required String semesterId,
+    required String section,
+    required String academicSession,
+    required List<Map<String, dynamic>> periods,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminSchedule),
+            headers: await _authHeaders(),
+            body: jsonEncode({
+              'semester_id': semesterId,
+              'section': section,
+              'academic_session': academicSession,
+              'periods': periods,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return TimetableFromApi.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// PATCH /admin/schedule/{id}/periods — replace period list
+  Future<TimetableFromApi> updateTimetablePeriods({
+    required String id,
+    required List<Map<String, dynamic>> periods,
+  }) async {
+    try {
+      final response = await http
+          .patch(
+            Uri.parse(Endpoints.adminTimetablePeriods(id)),
+            headers: await _authHeaders(),
+            body: jsonEncode({'periods': periods}),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return TimetableFromApi.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// PUT /admin/schedule/{id}/entries — assign or update a slot
+  Future<TimetableFromApi> assignTimetableEntry({
+    required String timetableId,
+    required String day,
+    required String periodId,
+    required String courseCode,
+    required String courseTitle,
+    required String teacherName,
+  }) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse(Endpoints.adminTimetableEntries(timetableId)),
+            headers: await _authHeaders(),
+            body: jsonEncode({
+              'day': day,
+              'period_id': periodId,
+              'course_code': courseCode,
+              'course_title': courseTitle,
+              'teacher_name': teacherName,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return TimetableFromApi.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// DELETE /admin/schedule/{id}/entries — clear a specific slot
+  Future<TimetableFromApi> clearTimetableEntry({
+    required String timetableId,
+    required String day,
+    required String periodId,
+  }) async {
+    try {
+      final request =
+          http.Request('DELETE', Uri.parse(Endpoints.adminTimetableEntries(timetableId)));
+      final headers = await _authHeaders();
+      request.headers.addAll(headers);
+      request.body = jsonEncode({'day': day, 'period_id': periodId});
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
+      _assertSuccess(response);
+      return TimetableFromApi.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// DELETE /admin/schedule/{id} — delete whole timetable
+  Future<void> deleteTimetable(String id) async {
+    try {
+      final response = await http
+          .delete(Uri.parse(Endpoints.adminTimetable(id)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }
+
+// ── Minimal API Timetable model (deserialized directly from JSON) ─────────────
+// Wraps raw JSON parsing — AdminProvider converts this to the UI Timetable model.
+class TimetableFromApi {
+  final String id;
+  final String semesterId;
+  final int semesterNumber;
+  final String academicSession;
+  final String section;
+  final List<Map<String, dynamic>> periods;
+  final List<Map<String, dynamic>> entries;
+
+  TimetableFromApi({
+    required this.id,
+    required this.semesterId,
+    required this.semesterNumber,
+    required this.academicSession,
+    required this.section,
+    required this.periods,
+    required this.entries,
+  });
+
+  factory TimetableFromApi.fromJson(Map<String, dynamic> json) =>
+      TimetableFromApi(
+        id: json['id'] as String,
+        semesterId: json['semester_id'] as String,
+        semesterNumber: (json['semester_number'] as num).toInt(),
+        academicSession: json['academic_session'] as String,
+        section: json['section'] as String,
+        periods: (json['periods'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList(),
+        entries: (json['entries'] as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList(),
+      );
+}
+

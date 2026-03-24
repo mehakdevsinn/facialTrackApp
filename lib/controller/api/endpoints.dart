@@ -49,6 +49,33 @@ class Endpoints {
   /// GET → all assignments  |  POST → create a new assignment
   static const String adminAssignments = '$_admin/assignments';
 
+  /// PUT → update assignment  |  DELETE → remove assignment (keep here for clarity)
+
+  /// GET → assignments filtered by semester + section (for schedule dropdowns)
+  static String adminAssignmentsFiltered({String? semesterId, String? section}) {
+    final params = <String, String>{};
+    if (semesterId != null) params['semester_id'] = semesterId;
+    if (section != null) params['section'] = section;
+    final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
+    return query.isEmpty ? adminAssignments : '$adminAssignments?$query';
+  }
+
+
+  // ── Admin — Schedule ──────────────────────────────────────────────────────
+  /// GET → list all timetables  |  POST → create a new timetable
+  static const String adminSchedule = '$_admin/schedule/';
+
+  /// GET → single timetable  |  DELETE → remove it
+  static String adminTimetable(String id) => '$_admin/schedule/$id';
+
+  /// PATCH → replace period list for a timetable
+  static String adminTimetablePeriods(String id) =>
+      '$_admin/schedule/$id/periods';
+
+  /// PUT → assign/update a slot  |  DELETE → clear a slot
+  static String adminTimetableEntries(String id) =>
+      '$_admin/schedule/$id/entries';
+
   /// PUT → update assignment  |  DELETE → remove assignment
   static String adminAssignment(String assignmentId) =>
       '$_admin/assignments/$assignmentId';

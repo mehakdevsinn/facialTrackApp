@@ -4,6 +4,7 @@ import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/student_model.dart';
+import 'package:facialtrackapp/core/models/timetable_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:flutter/foundation.dart';
 
@@ -67,6 +68,15 @@ class AdminProvider extends ChangeNotifier {
   /// IDs of students currently being rejected.
   final Set<String> _rejectingStudentIds = {};
 
+  // ── Schedule management ──────────────────────────────────────────────
+  List<Timetable> _timetables = [];
+  bool _isTimetablesLoading = false;
+  String? _timetablesError;
+  bool _isScheduleActionLoading = false; // create/update/delete
+  String? _scheduleActionError;
+  // Cache: timetableKey(”semId:section”) → assignments loaded for that scope
+  final Map<String, List<AssignmentModel>> _scheduleAssignments = {};
+
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -127,6 +137,15 @@ class AdminProvider extends ChangeNotifier {
   /// Returns true while ANY action is in progress for the given student.
   bool isStudentProcessing(String studentId) =>
       isStudentApproving(studentId) || isStudentRejecting(studentId);
+
+  // Schedule
+  List<Timetable> get timetables => List.unmodifiable(_timetables);
+  bool get isTimetablesLoading => _isTimetablesLoading;
+  String? get timetablesError => _timetablesError;
+  bool get isScheduleActionLoading => _isScheduleActionLoading;
+  String? get scheduleActionError => _scheduleActionError;
+  List<AssignmentModel> scheduleAssignments(String semesterId, String section) =>
+      _scheduleAssignments['$semesterId:$section'] ?? [];
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   void _setLoading(bool value) {
@@ -813,5 +832,236 @@ class AdminProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  // ── Schedule Methods ──────────────────────────────────────────────
+
+  /// Convert raw API timetable JSON to the UI Timetable model.
+  Timetable _fromApi(TimetableFromApi raw) => Timetable(
+        id: raw.id,
+        semesterNumber: raw.semesterNumber,
+        semesterId: raw.semesterId,
+        academicSession: raw.academicSession,
+        section: raw.section,
+        periods:
+            raw.periods.map((p) => PeriodSlot.fromJson(p)).toList(),
+        entries: raw.entries
+            .map((e) => TimetableEntry(
+                  day: e['day'] as String,
+                  periodId: e['period_id'] as String,
+                  courseCode: e['course_code'] as String,
+                  courseTitle: e['course_title'] as String,
+                  teacherName: e['teacher_name'] as String,
+                ))
+            .toList(),
+      );
+
+  /// GET /admin/schedule/ — fetch all timetables.
+  Future<void> fetchTimetables({bool force = false}) async {
+    if (_timetables.isNotEmpty && !force) return;
+    _isTimetablesLoading = true;
+    _timetablesError = null;
+    notifyListeners();
+    try {
+      final raw = await _api.getTimetables();
+      _timetables = raw.map(_fromApi).toList();
+      _isTimetablesLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      _timetablesError = e.message;
+      _isTimetablesLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _timetablesError = 'An unexpected error occurred.';
+      _isTimetablesLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// POST /admin/schedule/ — create a new timetable.
+  /// Returns the created [Timetable] on success, or null on failure.
+  Future<Timetable?> createTimetable({
+    required String semesterId,
+    required String section,
+    required String academicSession,
+    required List<PeriodSlot> periods,
+  }) async {
+    _isScheduleActionLoading = true;
+    _scheduleActionError = null;
+    notifyListeners();
+    try {
+      final raw = await _api.createTimetable(
+        semesterId: semesterId,
+        section: section,
+        academicSession: academicSession,
+        periods: periods.map((p) => p.toJson()).toList(),
+      );
+      final tt = _fromApi(raw);
+      _timetables = [tt, ..._timetables];
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return tt;
+    } on AuthException catch (e) {
+      _scheduleActionError = e.message;
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _scheduleActionError = 'An unexpected error occurred.';
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// PATCH /admin/schedule/{id}/periods — replace the period list.
+  Future<Timetable?> updateTimetablePeriods({
+    required String timetableId,
+    required List<PeriodSlot> periods,
+  }) async {
+    _isScheduleActionLoading = true;
+    _scheduleActionError = null;
+    notifyListeners();
+    try {
+      final raw = await _api.updateTimetablePeriods(
+        id: timetableId,
+        periods: periods.map((p) => p.toJson()).toList(),
+      );
+      final tt = _fromApi(raw);
+      _timetables = _timetables.map((t) => t.id == timetableId ? tt : t).toList();
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return tt;
+    } on AuthException catch (e) {
+      _scheduleActionError = e.message;
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _scheduleActionError = 'An unexpected error occurred.';
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// PUT /admin/schedule/{id}/entries — assign or update a slot.
+  Future<Timetable?> assignScheduleEntry({
+    required String timetableId,
+    required String day,
+    required String periodId,
+    required String courseCode,
+    required String courseTitle,
+    required String teacherName,
+  }) async {
+    _isScheduleActionLoading = true;
+    _scheduleActionError = null;
+    notifyListeners();
+    try {
+      final raw = await _api.assignTimetableEntry(
+        timetableId: timetableId,
+        day: day,
+        periodId: periodId,
+        courseCode: courseCode,
+        courseTitle: courseTitle,
+        teacherName: teacherName,
+      );
+      final tt = _fromApi(raw);
+      _timetables = _timetables.map((t) => t.id == timetableId ? tt : t).toList();
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return tt;
+    } on AuthException catch (e) {
+      _scheduleActionError = e.message;
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _scheduleActionError = 'An unexpected error occurred.';
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// DELETE /admin/schedule/{id}/entries — clear a slot.
+  Future<Timetable?> clearScheduleEntry({
+    required String timetableId,
+    required String day,
+    required String periodId,
+  }) async {
+    _isScheduleActionLoading = true;
+    _scheduleActionError = null;
+    notifyListeners();
+    try {
+      final raw = await _api.clearTimetableEntry(
+        timetableId: timetableId,
+        day: day,
+        periodId: periodId,
+      );
+      final tt = _fromApi(raw);
+      _timetables = _timetables.map((t) => t.id == timetableId ? tt : t).toList();
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return tt;
+    } on AuthException catch (e) {
+      _scheduleActionError = e.message;
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _scheduleActionError = 'An unexpected error occurred.';
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// DELETE /admin/schedule/{id} — delete a whole timetable.
+  Future<bool> deleteTimetable(String timetableId) async {
+    _isScheduleActionLoading = true;
+    _scheduleActionError = null;
+    notifyListeners();
+    try {
+      await _api.deleteTimetable(timetableId);
+      _timetables.removeWhere((t) => t.id == timetableId);
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _scheduleActionError = e.message;
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _scheduleActionError = 'An unexpected error occurred.';
+      _isScheduleActionLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// GET /admin/assignments/?semester_id=&section= — load course+teacher list
+  /// for the slot assignment dropdown. Results cached by "semesterId:section".
+  Future<void> fetchScheduleAssignments({
+    required String semesterId,
+    required String section,
+    bool force = false,
+  }) async {
+    final key = '$semesterId:$section';
+    if (_scheduleAssignments.containsKey(key) && !force) return;
+    try {
+      final list = await _api.getAssignmentsFiltered(
+          semesterId: semesterId, section: section);
+      _scheduleAssignments[key] = list;
+      notifyListeners();
+    } catch (_) {
+      // Silently ignore — the UI will show an empty dropdown
+    }
+  }
+
+  void clearScheduleActionError() {
+    _scheduleActionError = null;
+    notifyListeners();
   }
 }

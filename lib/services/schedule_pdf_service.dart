@@ -239,9 +239,9 @@ class SchedulePdfService {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'Timetable_Sem${timetable.semesterNumber}_Sec${timetable.section}.pdf',
+    await Printing.sharePdf(
+      bytes: await pdf.save(),
+      filename: 'Timetable_Sem${timetable.semesterNumber}_Sec${timetable.section}.pdf',
     );
   }
 }

@@ -214,22 +214,24 @@ class FaceEnrollmentController extends ChangeNotifier {
     }).catchError((_) {});
   }
 
-  /// Compresses raw JPEG bytes to quality 80 and flips horizontally.
-  /// On Android, the front camera HAL returns selfie-mirrored bytes.
-  /// We flip to produce non-mirrored bytes matching what the backend expects
-  /// (same as the web frontend which sends un-mirrored canvas frames).
+  /// Compresses raw JPEG bytes to quality 80.
+  ///
+  /// **Android**: `takePicture()` returns HAL-mirrored (selfie-style) bytes.
+  /// The backend expects this orientation → do NOT flip.
+  ///
+  /// **Web**: Flutter web camera captures raw canvas bytes (non-mirrored).
+  /// Flip horizontally so the backend receives the same mirrored orientation.
   Future<Uint8List> _compressToJpeg(Uint8List rawBytes) async {
-    return await compute(_compressIsolate, rawBytes);
+    final message = _CompressMessage(bytes: rawBytes, flipHorizontal: kIsWeb);
+    return await compute(_compressIsolate, message);
   }
 
-  static Uint8List _compressIsolate(Uint8List bytes) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) return bytes;
-    // Always flip horizontally: both Android HAL and Flutter-web camera return
-    // mirrored bytes from the front sensor. Flipping produces the non-mirrored
-    // orientation that the backend head-pose model was trained on.
-    final flipped = img.flipHorizontal(decoded);
-    return Uint8List.fromList(img.encodeJpg(flipped, quality: 80));
+  static Uint8List _compressIsolate(_CompressMessage message) {
+    final decoded = img.decodeImage(message.bytes);
+    if (decoded == null) return message.bytes;
+    final output =
+        message.flipHorizontal ? img.flipHorizontal(decoded) : decoded;
+    return Uint8List.fromList(img.encodeJpg(output, quality: 80));
   }
 
   // ─── Analysis result handler ────────────────────────────────────────────────

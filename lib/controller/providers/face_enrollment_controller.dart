@@ -214,23 +214,22 @@ class FaceEnrollmentController extends ChangeNotifier {
     }).catchError((_) {});
   }
 
-  /// Compresses raw JPEG bytes to quality 80.
-  /// On Web the browser mirrors the canvas before sending; the backend expects
-  /// non-mirrored images, so we flip to compensate.
-  /// On native Android/iOS the sensor bytes are already non-mirrored — do NOT flip.
+  /// Compresses raw JPEG bytes to quality 80 and flips horizontally.
+  /// On Android, the front camera HAL returns selfie-mirrored bytes.
+  /// We flip to produce non-mirrored bytes matching what the backend expects
+  /// (same as the web frontend which sends un-mirrored canvas frames).
   Future<Uint8List> _compressToJpeg(Uint8List rawBytes) async {
-    final message = _CompressMessage(bytes: rawBytes, flipHorizontal: kIsWeb);
-    return await compute(_compressIsolate, message);
+    return await compute(_compressIsolate, rawBytes);
   }
 
-  static Uint8List _compressIsolate(_CompressMessage message) {
-    final decoded = img.decodeImage(message.bytes);
-    if (decoded == null) return message.bytes;
-    // On Web, we flip to cancel out the browser's automatic canvas mirroring
-    // so the backend (trained on non-mirrored images) sees correct orientation.
-    // On native Android/iOS, sensor bytes are already non-mirrored — no flip needed.
-    final output = message.flipHorizontal ? img.flipHorizontal(decoded) : decoded;
-    return Uint8List.fromList(img.encodeJpg(output, quality: 80));
+  static Uint8List _compressIsolate(Uint8List bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return bytes;
+    // Always flip horizontally: both Android HAL and Flutter-web camera return
+    // mirrored bytes from the front sensor. Flipping produces the non-mirrored
+    // orientation that the backend head-pose model was trained on.
+    final flipped = img.flipHorizontal(decoded);
+    return Uint8List.fromList(img.encodeJpg(flipped, quality: 80));
   }
 
   // ─── Analysis result handler ────────────────────────────────────────────────

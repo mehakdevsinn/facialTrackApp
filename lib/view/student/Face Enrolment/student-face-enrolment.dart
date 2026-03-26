@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/face_enrollment_controller.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/enrollment-result-screen.dart';
@@ -220,11 +221,21 @@ class _EnrollmentBodyState extends State<_EnrollmentBody> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Camera preview (mirrored for selfie UX — Rule 5: only display flip)
+                    // Camera preview
+                    // On native Android, CameraPreview shows the raw sensor feed
+                    // (not mirrored). Wrap it in Transform.scale(scaleX:-1) to
+                    // produce a selfie-mirror effect so the user sees directions
+                    // naturally (turn left → screen shows left, like a mirror).
+                    // On Web, the browser already mirrors the feed — no extra flip.
                     if (camera != null && camera.value.isInitialized)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(24),
-                        child: CameraPreview(camera),
+                        child: kIsWeb
+                            ? CameraPreview(camera)
+                            : Transform.scale(
+                                scaleX: -1, // horizontal mirror for selfie UX
+                                child: CameraPreview(camera),
+                              ),
                       )
                     else
                       Container(

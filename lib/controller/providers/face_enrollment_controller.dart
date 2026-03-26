@@ -8,6 +8,17 @@ import 'package:facialtrackapp/core/models/frame_analysis_result.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
+// ─── Isolate message ──────────────────────────────────────────────────────────
+
+/// Wraps the bytes + a flip flag so both can be passed to a [compute] isolate.
+/// [kIsWeb] is evaluated on the main thread (unavailable in isolates) and baked
+/// into this object before dispatch.
+class _CompressMessage {
+  final Uint8List bytes;
+  final bool flipHorizontal;
+  const _CompressMessage({required this.bytes, required this.flipHorizontal});
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum EnrollmentPhase {
@@ -203,19 +214,23 @@ class FaceEnrollmentController extends ChangeNotifier {
     }).catchError((_) {});
   }
 
-  /// Compresses raw JPEG bytes to quality 80. Does NOT flip pixels (Rule 5).
+  /// Compresses raw JPEG bytes to quality 80.
+  /// On Web the browser mirrors the canvas before sending; the backend expects
+  /// non-mirrored images, so we flip to compensate.
+  /// On native Android/iOS the sensor bytes are already non-mirrored — do NOT flip.
   Future<Uint8List> _compressToJpeg(Uint8List rawBytes) async {
-    return await compute(_compressIsolate, rawBytes);
+    final message = _CompressMessage(bytes: rawBytes, flipHorizontal: kIsWeb);
+    return await compute(_compressIsolate, message);
   }
 
-  static Uint8List _compressIsolate(Uint8List bytes) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) return bytes;
-    // Flip horizontally: Flutter's front camera takePicture() returns HAL-mirrored
-    // JPEG bytes (selfie-style). The HTML frontend sends original sensor bytes
-    // (non-mirrored canvas). Flipping normalises to match the backend's expectation.
-    final flipped = img.flipHorizontal(decoded);
-    return Uint8List.fromList(img.encodeJpg(flipped, quality: 80));
+  static Uint8List _compressIsolate(_CompressMessage message) {
+    final decoded = img.decodeImage(message.bytes);
+    if (decoded == null) return message.bytes;
+    // On Web, we flip to cancel out the browser's automatic canvas mirroring
+    // so the backend (trained on non-mirrored images) sees correct orientation.
+    // On native Android/iOS, sensor bytes are already non-mirrored — no flip needed.
+    final output = message.flipHorizontal ? img.flipHorizontal(decoded) : decoded;
+    return Uint8List.fromList(img.encodeJpg(output, quality: 80));
   }
 
   // ─── Analysis result handler ────────────────────────────────────────────────

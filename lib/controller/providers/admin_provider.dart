@@ -250,6 +250,26 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
+  /// Deletes a teacher and removes them from the local list.
+  Future<bool> deleteTeacher(String teacherId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      await _api.deleteTeacher(teacherId);
+      _teachers.removeWhere((t) => t.id == teacherId);
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      _setError('An unexpected error occurred.');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ── Semester Methods ───────────────────────────────────────────────────────
 
   /// Fetches all semesters from GET /api/v1/admin/semesters.

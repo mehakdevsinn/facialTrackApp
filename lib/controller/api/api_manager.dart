@@ -446,6 +446,24 @@ class ApiManager {
     }
   }
 
+  // ─── DELETE TEACHER (Admin) ──────────────────────────────────────────────
+  Future<void> deleteTeacher(String teacherId) async {
+    try {
+      final response = await http
+          .delete(Uri.parse(Endpoints.adminTeacher(teacherId)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode != 204) {
+        _assertSuccess(response);
+      }
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // ─── 15. LIST ALL SEMESTERS (Admin) ──────────────────────────────────────
   Future<List<SemesterModel>> getSemesters() async {
     try {

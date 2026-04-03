@@ -112,6 +112,54 @@ class _TeacherDetailScreenState extends State<TeacherDetailScreen> {
     );
   }
 
+  Future<void> _confirmDelete() async {
+    final bool? confirm = await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Teacher'),
+        content: const Text(
+            'Are you sure you want to delete this teacher? This action cannot be undone.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: ColorPallet.primaryBlue)),
+    );
+
+    final admin = context.read<AdminProvider>();
+    final success = await admin.deleteTeacher(_teacher.id);
+    
+    if (!mounted) return;
+    Navigator.pop(context); // Pop loading dialog
+
+    if (success) {
+      _showSnackBar('Teacher deleted successfully.', isError: false);
+      Navigator.pop(context); // Return to list view
+    } else {
+      _showSnackBar(
+        admin.errorMessage ?? 'Failed to delete teacher.',
+        isError: true,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -135,13 +183,18 @@ class _TeacherDetailScreenState extends State<TeacherDetailScreen> {
           ),
           centerTitle: true,
           actions: [
-            if (!_isEditing)
+            if (!_isEditing) ...[
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.white),
+                onPressed: _confirmDelete,
+                tooltip: 'Delete',
+              ),
               IconButton(
                 icon: const Icon(Icons.edit_outlined, color: Colors.white),
                 onPressed: _enterEditMode,
                 tooltip: 'Edit',
-              )
-            else
+              ),
+            ] else
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: _cancelEdit,

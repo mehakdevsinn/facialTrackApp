@@ -450,7 +450,9 @@ class AdminProvider extends ChangeNotifier {
   Future<bool> updateCourse({
     required String courseId,
     required String semesterId,
+    String? code,
     String? name,
+    String? description,
     int? creditHours,
     bool? attendanceRequired,
     bool? isActive,
@@ -460,7 +462,9 @@ class AdminProvider extends ChangeNotifier {
     try {
       final updated = await _api.updateCourse(
         courseId: courseId,
+        code: code,
         name: name,
+        description: description,
         creditHours: creditHours,
         attendanceRequired: attendanceRequired,
         isActive: isActive,

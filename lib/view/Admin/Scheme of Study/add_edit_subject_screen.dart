@@ -87,7 +87,9 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen>
         : await provider.updateCourse(
             courseId: widget.initialCourse!.id,
             semesterId: widget.semesterId,
+            code: _codeController.text.trim(),
             name: _titleController.text.trim(),
+            description: _outlineController.text.trim(),
             creditHours: creditHours,
             attendanceRequired: _attendanceRequired,
             isActive: _isActive,

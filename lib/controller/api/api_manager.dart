@@ -801,14 +801,18 @@ class ApiManager {
   /// PUT /admin/courses/{id}
   Future<CourseModel> updateCourse({
     required String courseId,
+    String? code,
     String? name,
+    String? description,
     int? creditHours,
     bool? attendanceRequired,
     bool? isActive,
   }) async {
     try {
       final Map<String, dynamic> body = {};
+      if (code != null) body['code'] = code;
       if (name != null) body['name'] = name;
+      if (description != null) body['description'] = description;
       if (creditHours != null) body['credit_hours'] = creditHours;
       if (attendanceRequired != null) {
         body['attendance_required'] = attendanceRequired;

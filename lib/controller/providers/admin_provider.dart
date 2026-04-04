@@ -881,9 +881,10 @@ class AdminProvider extends ChangeNotifier {
             .map((e) => TimetableEntry(
                   day: e['day'] as String,
                   periodId: e['period_id'] as String,
-                  courseCode: e['course_code'] as String,
-                  courseTitle: e['course_title'] as String,
-                  teacherName: e['teacher_name'] as String,
+                  assignmentId: e['assignment_id'] as String?,
+                  courseCode: e['course_code'] as String?,
+                  courseTitle: e['course_title'] as String?,
+                  teacherName: e['teacher_name'] as String?,
                 ))
             .toList(),
       );
@@ -982,9 +983,7 @@ class AdminProvider extends ChangeNotifier {
     required String timetableId,
     required String day,
     required String periodId,
-    required String courseCode,
-    required String courseTitle,
-    required String teacherName,
+    required String assignmentId,
   }) async {
     _isScheduleActionLoading = true;
     _scheduleActionError = null;
@@ -994,9 +993,7 @@ class AdminProvider extends ChangeNotifier {
         timetableId: timetableId,
         day: day,
         periodId: periodId,
-        courseCode: courseCode,
-        courseTitle: courseTitle,
-        teacherName: teacherName,
+        assignmentId: assignmentId,
       );
       final tt = _fromApi(raw);
       _timetables = _timetables.map((t) => t.id == timetableId ? tt : t).toList();

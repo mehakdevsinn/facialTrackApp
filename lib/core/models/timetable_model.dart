@@ -71,20 +71,27 @@ class PeriodSlot {
 // ── Timetable cell entry ───────────────────────────────────────────────────
 
 /// Assignment for one cell: a specific day × period.
+/// All content fields are nullable — a ghost slot has assignment_id == null
+/// (the teacher or course was deleted after the slot was saved).
 class TimetableEntry {
   final String day; // "Mon", "Tue", "Wed", "Thu", "Fri"
   final String periodId; // matches PeriodSlot.id
-  final String courseCode;
-  final String courseTitle;
-  final String teacherName;
+  final String? assignmentId; // null for ghost/unassigned slots
+  final String? courseCode;
+  final String? courseTitle;
+  final String? teacherName;
 
   const TimetableEntry({
     required this.day,
     required this.periodId,
-    required this.courseCode,
-    required this.courseTitle,
-    required this.teacherName,
+    this.assignmentId,
+    this.courseCode,
+    this.courseTitle,
+    this.teacherName,
   });
+
+  /// True when the slot has a valid assignment still linked.
+  bool get isAssigned => assignmentId != null;
 
   TimetableEntry copyWith({
     String? courseCode,
@@ -94,6 +101,7 @@ class TimetableEntry {
     return TimetableEntry(
       day: day,
       periodId: periodId,
+      assignmentId: assignmentId,
       courseCode: courseCode ?? this.courseCode,
       courseTitle: courseTitle ?? this.courseTitle,
       teacherName: teacherName ?? this.teacherName,
@@ -103,17 +111,19 @@ class TimetableEntry {
   Map<String, dynamic> toJson() => {
         'day': day,
         'period_id': periodId,
-        'course_code': courseCode,
-        'course_title': courseTitle,
-        'teacher_name': teacherName,
+        if (assignmentId != null) 'assignment_id': assignmentId,
+        if (courseCode != null) 'course_code': courseCode,
+        if (courseTitle != null) 'course_title': courseTitle,
+        if (teacherName != null) 'teacher_name': teacherName,
       };
 
   factory TimetableEntry.fromJson(Map<String, dynamic> json) => TimetableEntry(
-        day: json['day'],
-        periodId: json['period_id'],
-        courseCode: json['course_code'],
-        courseTitle: json['course_title'],
-        teacherName: json['teacher_name'],
+        day: json['day'] as String,
+        periodId: json['period_id'] as String,
+        assignmentId: json['assignment_id'] as String?,
+        courseCode: json['course_code'] as String?,
+        courseTitle: json['course_title'] as String?,
+        teacherName: json['teacher_name'] as String?,
       );
 }
 

@@ -1187,9 +1187,7 @@ extension AssignmentApiMethods on ApiManager {
     required String timetableId,
     required String day,
     required String periodId,
-    required String courseCode,
-    required String courseTitle,
-    required String teacherName,
+    required String assignmentId,
   }) async {
     try {
       final response = await http
@@ -1199,9 +1197,7 @@ extension AssignmentApiMethods on ApiManager {
             body: jsonEncode({
               'day': day,
               'period_id': periodId,
-              'course_code': courseCode,
-              'course_title': courseTitle,
-              'teacher_name': teacherName,
+              'assignment_id': assignmentId,
             }),
           )
           .timeout(const Duration(seconds: 30));

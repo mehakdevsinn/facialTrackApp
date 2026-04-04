@@ -144,16 +144,16 @@ class SchedulePdfService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          entry.courseCode,
+                          entry.courseCode ?? '—',
                           style: pw.TextStyle(
                             fontSize: 10,
                             fontWeight: pw.FontWeight.bold,
-                            decoration: pw.TextDecoration.underline, // Exactly like image
+                            decoration: pw.TextDecoration.underline,
                           ),
                         ),
                         pw.SizedBox(height: 2),
                         pw.Text(
-                          entry.teacherName,
+                          entry.teacherName ?? 'Unassigned',
                           style: const pw.TextStyle(fontSize: 9),
                           maxLines: 2,
                         ),

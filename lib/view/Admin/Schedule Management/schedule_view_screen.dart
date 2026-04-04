@@ -226,6 +226,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                       width: periodColW,
                       height: rowH,
                       hasEntry: entry != null,
+                      isGhost: entry != null && !entry.isAssigned,
                       child: entry != null
                           ? _entryContent(entry)
                           : _emptyCell(),
@@ -245,11 +246,13 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     bool isHeader = false,
     bool isBreak = false,
     bool hasEntry = false,
+    bool isGhost = false, // slot exists but assignment was deleted
   }) {
     Color bg = Colors.white;
     if (isHeader) bg = Colors.grey.shade50;
     if (isBreak) bg = Colors.orange.shade50;
-    if (hasEntry) bg = ColorPallet.primaryBlue.withOpacity(0.04);
+    if (hasEntry && !isGhost) bg = ColorPallet.primaryBlue.withOpacity(0.04);
+    if (isGhost) bg = Colors.orange.shade50;
 
     return Container(
       width: width,
@@ -257,34 +260,58 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: bg,
-        border: Border.all(color: Colors.grey.shade200, width: 0.8),
+        border: Border.all(
+          color: isGhost ? Colors.orange.shade200 : Colors.grey.shade200,
+          width: isGhost ? 1.2 : 0.8,
+        ),
       ),
       padding: const EdgeInsets.all(5),
       child: child,
     );
   }
 
-  Widget _entryContent(TimetableEntry entry) => Column(
+  Widget _entryContent(TimetableEntry entry) {
+    // Ghost slot — assignment was deleted after the slot was created.
+    if (!entry.isAssigned) {
+      return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            entry.courseCode,
-            style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 11.5,
-                color: ColorPallet.primaryBlue),
-            textAlign: TextAlign.center,
-          ),
+          Icon(Icons.warning_amber_rounded,
+              color: Colors.orange.shade400, size: 14),
           const SizedBox(height: 2),
           Text(
-            entry.teacherName,
-            style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600),
+            'Unassigned',
+            style: TextStyle(
+                fontSize: 9,
+                color: Colors.orange.shade600,
+                fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       );
+    }
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          entry.courseCode ?? '',
+          style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 11.5,
+              color: ColorPallet.primaryBlue),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          entry.teacherName ?? '',
+          style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
 
   Widget _emptyCell() => Icon(Icons.add_circle_outline_rounded,
       color: Colors.grey.shade300, size: 20);
@@ -621,77 +648,71 @@ class _AssignSlotSheet extends StatefulWidget {
 }
 
 class _AssignSlotSheetState extends State<_AssignSlotSheet> {
-  List<AssignmentModel> _allAssignments = [];
-
-  // Unique courses in these assignments
-  List<AssignmentModel> get _uniqueCourses {
-    final seen = <String>{};
-    return _allAssignments
-        .where((a) => seen.add(a.course.code))
-        .toList();
-  }
-
   AssignmentModel? _selectedCourseAssignment;
   String? _selectedTeacher;
   bool _hasConflict = false;
   bool _isSaving = false;
+  bool _selectionInitialised = false; // guard so we only pre-fill once
 
   @override
   void initState() {
     super.initState();
-    final prov = context.read<AdminProvider>();
-    _allAssignments = prov.scheduleAssignments(
-        widget.timetable.semesterId, widget.timetable.section);
-
-    if (widget.existing != null) {
-      try {
-        _selectedCourseAssignment = _uniqueCourses
-            .firstWhere((a) => a.course.code == widget.existing!.courseCode);
-      } catch (_) {}
-      _selectedTeacher = widget.existing?.teacherName;
-    }
-  }
-
-  List<String> get _teachers {
-    if (_selectedCourseAssignment == null) return [];
-    return _allAssignments
-        .where((a) => a.course.code == _selectedCourseAssignment!.course.code)
-        .map((a) => a.teacher.fullName)
-        .toSet()
-        .toList();
-  }
-
-  void _onCourseChanged(AssignmentModel? a) {
-    setState(() {
-      _selectedCourseAssignment = a;
-      final teachers = _teachers;
-      _selectedTeacher = teachers.isNotEmpty ? teachers.first : null;
-      _checkConflict();
+    // Always trigger a fresh fetch when the sheet opens.
+    // This ensures we get data even if the background fetch hasn't finished.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AdminProvider>().fetchScheduleAssignments(
+            semesterId: widget.timetable.semesterId,
+            section: widget.timetable.section,
+            force: true, // Always fetch fresh — avoids showing deleted assignments
+          );
     });
   }
 
+  /// Called from build() the first time assignments are available, so that
+  /// we can pre-select the existing assignment without a race condition.
+  void _tryPreselect(List<AssignmentModel> assignments) {
+    if (_selectionInitialised) return;
+    _selectionInitialised = true;
+    if (widget.existing == null || !widget.existing!.isAssigned) return;
+    try {
+      final match =
+          assignments.firstWhere((a) => a.id == widget.existing!.assignmentId);
+      // Use post-frame so we don't call setState during build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _selectedCourseAssignment = match;
+          _selectedTeacher = match.teacher.fullName;
+        });
+      });
+    } catch (_) {
+      // Assignment no longer exists — leave both null.
+    }
+  }
+
+
   void _checkConflict() {
-    if (_selectedTeacher == null) {
+    if (_selectedCourseAssignment == null) {
       _hasConflict = false;
       return;
     }
+    final assignId = _selectedCourseAssignment!.id;
     _hasConflict = widget.timetable.entries.any((e) =>
         e.day == widget.day &&
         e.periodId == widget.period.id &&
-        e.teacherName == _selectedTeacher);
+        e.assignmentId == assignId);
   }
 
   Future<void> _save() async {
-    if (_selectedCourseAssignment == null || _selectedTeacher == null) return;
+    if (_selectedCourseAssignment == null) return;
     setState(() => _isSaving = true);
     final prov = context.read<AdminProvider>();
     final updated = await prov.assignScheduleEntry(
       timetableId: widget.timetable.id,
       day: widget.day,
       periodId: widget.period.id,
-      courseCode: _selectedCourseAssignment!.course.code,
-      courseTitle: _selectedCourseAssignment!.course.name,
-      teacherName: _selectedTeacher!,
+      assignmentId: _selectedCourseAssignment!.id,
     );
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -723,6 +744,15 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Reactively read assignments so we update when the fetch completes.
+    final allAssignments = context
+        .watch<AdminProvider>()
+        .scheduleAssignments(
+            widget.timetable.semesterId, widget.timetable.section);
+
+    // Pre-fill selection once data is available.
+    _tryPreselect(allAssignments);
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -815,7 +845,7 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
             const SizedBox(height: 16),
 
             // No assignments warning
-            if (_allAssignments.isEmpty)
+            if (allAssignments.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
@@ -844,7 +874,7 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _label('SELECT COURSE'),
+                  _label('SELECT ASSIGNMENT (COURSE — TEACHER)'),
                   const SizedBox(height: 6),
                   Container(
                     decoration: BoxDecoration(
@@ -856,50 +886,25 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
                       value: _selectedCourseAssignment,
                       isExpanded: true,
                       underline: const SizedBox(),
-                      hint: const Text('Choose a course',
+                      hint: const Text('Choose a course & teacher',
                           style: TextStyle(fontSize: 13)),
-                      items: _uniqueCourses
+                      items: allAssignments
                           .map((a) => DropdownMenuItem(
                                 value: a,
                                 child: Text(
-                                    '${a.course.code} — ${a.course.name}',
-                                    style: const TextStyle(fontSize: 13)),
+                                  '${a.course.code} — ${a.teacher.fullName}',
+                                  style: const TextStyle(fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ))
                           .toList(),
-                      onChanged: _onCourseChanged,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _label('SELECT TEACHER'),
-                  const SizedBox(height: 6),
-                  Container(
-                    decoration: BoxDecoration(
-                        color: _teachers.isEmpty
-                            ? Colors.grey.shade100
-                            : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12)),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12),
-                    child: DropdownButton<String>(
-                      value: _selectedTeacher,
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      disabledHint: const Text('Select a course first',
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.grey)),
-                      items: _teachers
-                          .map((t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(t,
-                                  style: const TextStyle(
-                                      fontSize: 13))))
-                          .toList(),
-                      onChanged: _teachers.isEmpty
-                          ? null
-                          : (t) {
-                              setState(() => _selectedTeacher = t);
-                              _checkConflict();
-                            },
+                      onChanged: (a) {
+                        setState(() {
+                          _selectedCourseAssignment = a;
+                          _selectedTeacher = a?.teacher.fullName;
+                        });
+                        _checkConflict();
+                      },
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -907,9 +912,7 @@ class _AssignSlotSheetState extends State<_AssignSlotSheet> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed:
-                          (_selectedCourseAssignment == null ||
-                                  _selectedTeacher == null ||
-                                  _isSaving)
+                          (_selectedCourseAssignment == null || _isSaving)
                               ? null
                               : _save,
                       style: ElevatedButton.styleFrom(

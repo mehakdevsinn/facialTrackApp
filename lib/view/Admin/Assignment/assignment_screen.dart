@@ -357,7 +357,7 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
                                           fontSize: 13,
                                           color: Color(0xFF334155))),
                                   Text(
-                                    "Section ${a.section}",
+                                    'Sem ${a.course.semesterNumber} · Section ${a.section}',
                                     style: TextStyle(
                                         color: Colors.grey.shade500,
                                         fontSize: 10,

@@ -262,7 +262,8 @@ class _EditWorkloadScreenState extends State<EditWorkloadScreen> {
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                     color: Color(0xFF1E293B))),
-            subtitle: Text("${a.course.code} • Section ${a.section}",
+            subtitle: Text(
+                '${a.course.code} · Sem ${a.course.semesterNumber} · Section ${a.section}',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,

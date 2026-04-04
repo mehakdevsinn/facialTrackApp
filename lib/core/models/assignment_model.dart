@@ -30,6 +30,7 @@ class AssignmentCourse {
   final String name;
   final int creditHours;
   final String semesterId;
+  final int semesterNumber;
 
   const AssignmentCourse({
     required this.id,
@@ -37,6 +38,7 @@ class AssignmentCourse {
     required this.name,
     required this.creditHours,
     required this.semesterId,
+    required this.semesterNumber,
   });
 
   factory AssignmentCourse.fromJson(Map<String, dynamic> json) =>
@@ -46,6 +48,7 @@ class AssignmentCourse {
         name: json['name'] as String,
         creditHours: json['credit_hours'] as int,
         semesterId: json['semester_id'] as String,
+        semesterNumber: json['semester_number'] as int,
       );
 }
 

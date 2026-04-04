@@ -1,13 +1,25 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/view/student/Approval%20Status/enrollment_closed_screen.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:flutter/material.dart';
 
-/// Entry point shown after login when the student needs face enrollment.
-/// Calls /students/face/status on load:
-///   • imageCount >= 3  → skip directly to the dashboard (already enrolled)
-///   • imageCount == 0  → show enrollment prompt (mandatory)
+/// Entry point shown after login when `user.faceVerified == false`.
+///
+/// Calls GET /students/face/enrollment-window and routes based on:
+///
+///   enrollment_open == true
+///     → Face Enrollment Screen  (window open, student not yet enrolled)
+///
+///   enrollment_open == false + student_enrolled == true
+///     → Student Dashboard       (already enrolled)
+///
+///   enrollment_open == false + student_enrolled == false + deadline set
+///     → Enrollment Closed Screen (deadline passed, never enrolled)
+///
+///   enrollment_open == false + student_enrolled == false + no deadline
+///     → Student Dashboard       (no deadline configured by admin)
 class FaceVerificationPrompt extends StatefulWidget {
   const FaceVerificationPrompt({super.key});
 
@@ -22,27 +34,44 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
   @override
   void initState() {
     super.initState();
-    _checkStatus();
+    _checkEnrollmentWindow();
   }
 
-  Future<void> _checkStatus() async {
+  Future<void> _checkEnrollmentWindow() async {
     setState(() {
       _checking = true;
       _error = null;
     });
     try {
-      final status = await ApiManager.instance.getFaceStatus();
+      final window = await ApiManager.instance.getEnrollmentWindow();
       if (!mounted) return;
 
-      if (status.isFullyEnrolled) {
-        // Already has all 3 angles — go straight to dashboard
+      if (window.enrollmentOpen) {
+        // ── Case 2: window open → show enrollment prompt ──────────────────
+        setState(() => _checking = false);
+        return;
+      }
+
+      if (window.studentEnrolled) {
+        // ── Case 1: already enrolled → go to dashboard ────────────────────
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const StudentRootScreen()),
           (route) => false,
         );
+        return;
+      }
+
+      // student NOT enrolled, window NOT open
+      if (window.deadline != null) {
+        // ── Case 3: deadline passed, never enrolled → blocked ─────────────
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const EnrollmentClosedScreen()),
+          (route) => false,
+        );
       } else {
-        // Needs enrollment
+        // ── Case 4: No deadline configured → force them to enroll ──────────
         setState(() => _checking = false);
       }
     } catch (e) {
@@ -110,7 +139,6 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
             ),
             const SizedBox(height: 32),
 
-            // Title
             const Text(
               'Face Enrollment Required',
               textAlign: TextAlign.center,
@@ -122,7 +150,6 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
             ),
             const SizedBox(height: 14),
 
-            // Description
             Text(
               'To use the attendance system, you need to complete a one-time face enrollment. '
               'We\'ll capture 3 photos from different angles — this takes less than a minute.',
@@ -135,7 +162,6 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
             ),
             const SizedBox(height: 28),
 
-            // Steps preview
             _buildStepRow(Icons.filter_center_focus_rounded, 'Center',
                 'Look straight at the camera'),
             const SizedBox(height: 10),
@@ -168,7 +194,7 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
                       ),
                     ),
                     TextButton(
-                      onPressed: _checkStatus,
+                      onPressed: _checkEnrollmentWindow,
                       child: const Text('Retry'),
                     ),
                   ],

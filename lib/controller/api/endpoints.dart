@@ -120,4 +120,16 @@ class Endpoints {
 
   /// GET → check if the student already has face images uploaded
   static const String faceStatus = '$_face/students/face/status';
+
+  // ── Student — Enrollment Window ──────────────────────────────────────────
+  /// GET → returns enrollment_open flag + deadline + student_enrolled status
+  static const String enrollmentWindow =
+      '$_face/students/face/enrollment-window';
+
+  // ── Admin — Enrollment Deadline Settings ─────────────────────────────────
+  static const String _adminSettings = '$_admin/settings';
+
+  /// GET  → fetch current deadline  |  PUT → set / update deadline
+  static const String enrollmentDeadline =
+      '$_adminSettings/enrollment-deadline';
 }

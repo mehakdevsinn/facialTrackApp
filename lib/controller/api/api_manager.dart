@@ -7,6 +7,7 @@ import 'package:facialtrackapp/controller/api/endpoints.dart';
 import 'package:facialtrackapp/core/models/assignment_model.dart';
 import 'package:facialtrackapp/core/models/course_model.dart';
 import 'package:facialtrackapp/core/models/enrollment_config_model.dart';
+import 'package:facialtrackapp/core/models/enrollment_window_model.dart';
 import 'package:facialtrackapp/core/models/face_status_model.dart';
 import 'package:facialtrackapp/core/models/frame_analysis_result.dart';
 import 'package:facialtrackapp/core/models/pending_student_model.dart';
@@ -1247,6 +1248,66 @@ extension AssignmentApiMethods on ApiManager {
               headers: await _authHeaders())
           .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── STUDENT: Check Enrollment Window ────────────────────────────────────
+  /// GET /api/v1/students/face/enrollment-window
+  /// Returns whether the enrollment screen should be shown.
+  Future<EnrollmentWindowModel> getEnrollmentWindow() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.enrollmentWindow),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 15));
+      _assertSuccess(response);
+      return EnrollmentWindowModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── ADMIN: Get Enrollment Deadline ──────────────────────────────────────
+  /// GET /api/v1/admin/settings/enrollment-deadline
+  /// Pre-fills the date picker on the settings screen.
+  Future<EnrollmentDeadlineModel> getEnrollmentDeadline() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.enrollmentDeadline),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 15));
+      _assertSuccess(response);
+      return EnrollmentDeadlineModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── ADMIN: Set Enrollment Deadline ──────────────────────────────────────
+  /// PUT /api/v1/admin/settings/enrollment-deadline
+  /// [deadline] must be formatted as 'YYYY-MM-DD'.
+  Future<EnrollmentDeadlineModel> setEnrollmentDeadline(String deadline) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse(Endpoints.enrollmentDeadline),
+            headers: await _authHeaders(),
+            body: jsonEncode({'enrollment_deadline': deadline}),
+          )
+          .timeout(const Duration(seconds: 15));
+      _assertSuccess(response);
+      return EnrollmentDeadlineModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
     } on AuthException {
       rethrow;
     } catch (e) {

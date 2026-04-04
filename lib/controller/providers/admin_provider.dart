@@ -77,6 +77,12 @@ class AdminProvider extends ChangeNotifier {
   // Cache: timetableKey(”semId:section”) → assignments loaded for that scope
   final Map<String, List<AssignmentModel>> _scheduleAssignments = {};
 
+  // ── Enrollment deadline settings ──────────────────────────────────────────
+  DateTime? _enrollmentDeadline;
+  bool _isDeadlineLoading = false;
+  bool _isDeadlineSaving = false;
+  String? _deadlineError;
+
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -137,6 +143,12 @@ class AdminProvider extends ChangeNotifier {
   /// Returns true while ANY action is in progress for the given student.
   bool isStudentProcessing(String studentId) =>
       isStudentApproving(studentId) || isStudentRejecting(studentId);
+
+  // Enrollment deadline
+  DateTime? get enrollmentDeadline => _enrollmentDeadline;
+  bool get isDeadlineLoading => _isDeadlineLoading;
+  bool get isDeadlineSaving => _isDeadlineSaving;
+  String? get deadlineError => _deadlineError;
 
   // Schedule
   List<Timetable> get timetables => List.unmodifiable(_timetables);
@@ -1083,5 +1095,54 @@ class AdminProvider extends ChangeNotifier {
   void clearScheduleActionError() {
     _scheduleActionError = null;
     notifyListeners();
+  }
+
+  // ── Enrollment Deadline Methods ───────────────────────────────────────────
+
+  /// Fetches the current enrollment deadline and caches it.
+  Future<void> fetchEnrollmentDeadline() async {
+    _isDeadlineLoading = true;
+    _deadlineError = null;
+    notifyListeners();
+    try {
+      final model = await _api.getEnrollmentDeadline();
+      _enrollmentDeadline = model.deadlineDate;
+      _isDeadlineLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      _deadlineError = e.message;
+      _isDeadlineLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _deadlineError = 'Failed to load enrollment deadline.';
+      _isDeadlineLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Saves the chosen deadline to the backend. Returns true on success.
+  Future<bool> saveEnrollmentDeadline(DateTime deadline) async {
+    _isDeadlineSaving = true;
+    _deadlineError = null;
+    notifyListeners();
+    final formatted =
+        '${deadline.year}-${deadline.month.toString().padLeft(2, '0')}-${deadline.day.toString().padLeft(2, '0')}';
+    try {
+      final model = await _api.setEnrollmentDeadline(formatted);
+      _enrollmentDeadline = model.deadlineDate;
+      _isDeadlineSaving = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _deadlineError = e.message;
+      _isDeadlineSaving = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _deadlineError = 'Failed to save enrollment deadline.';
+      _isDeadlineSaving = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

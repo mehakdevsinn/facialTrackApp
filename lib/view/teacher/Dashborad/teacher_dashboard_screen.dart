@@ -179,31 +179,27 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                               );
                             },
                           ),
-                          _AnimatedDashboardCard(
-                            color: Colors.orange,
-                            icon: Icons.stop,
-                            title: 'End Attendance',
-                            ontap: () {
-                              final session =
-                                  context.read<SessionProvider>().currentSession;
-                              if (session != null) {
-                                // An active session exists — go to Live screen to end it.
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => LiveSessionScreen(
-                                      sessionId: session.id,
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text('No active session to end!'),
-                                  ),
-                                );
-                              }
+                          Consumer<SessionProvider>(
+                            builder: (context, provider, _) {
+                              final session = provider.currentSession;
+                              final hasActiveSession = session != null && session.isActive;
+                              return _AnimatedDashboardCard(
+                                color: Colors.orange,
+                                icon: Icons.stop,
+                                title: 'End Attendance',
+                                subtitle: hasActiveSession
+                                    ? null
+                                    : 'No active session',
+                                ontap: hasActiveSession
+                                    ? () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => LiveSessionScreen(
+                                                sessionId: session.id),
+                                          ),
+                                        )
+                                    : null,
+                              );
                             },
                           ),
                           _AnimatedDashboardCard(
@@ -426,12 +422,14 @@ class _AnimatedDashboardCard extends StatefulWidget {
   final Color color;
   final IconData icon;
   final String title;
-  final ontap;
+  final String? subtitle; // shown when disabled
+  final VoidCallback? ontap;
 
   const _AnimatedDashboardCard({
     required this.color,
     required this.icon,
     required this.title,
+    this.subtitle,
     this.ontap,
   });
 
@@ -444,65 +442,118 @@ class _AnimatedDashboardCardState extends State<_AnimatedDashboardCard> {
 
   @override
   Widget build(BuildContext context) {
-    Color shadowColor = Colors.black.withOpacity(0.1); // uniform shadow
+    final bool disabled = widget.ontap == null;
+    final Color effectiveColor =
+        disabled ? Colors.grey.shade400 : widget.color;
+    final Color shadowColor = Colors.black.withOpacity(0.1);
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
+      onTapDown: disabled ? null : (_) => setState(() => _isPressed = true),
+      onTapUp: disabled ? null : (_) => setState(() => _isPressed = false),
+      onTapCancel:
+          disabled ? null : () => setState(() => _isPressed = false),
       child: InkWell(
         onTap: widget.ontap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
-          transform: _isPressed
-              ? (Matrix4.identity()..scale(0.95))
-              : Matrix4.identity(),
-          decoration: BoxDecoration(
-            color: _isPressed ? widget.color.withOpacity(0.2) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 12,
-                spreadRadius: 2,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: widget.color.withOpacity(0.15),
-                  shape: BoxShape.circle,
+        child: Opacity(
+          opacity: disabled ? 0.55 : 1.0,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            transform: _isPressed
+                ? (Matrix4.identity()..scale(0.95))
+                : Matrix4.identity(),
+            decoration: BoxDecoration(
+              color: _isPressed
+                  ? effectiveColor.withOpacity(0.2)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: disabled ? 4 : 12,
+                  spreadRadius: disabled ? 0 : 2,
+                  offset: Offset(0, disabled ? 2 : 6),
                 ),
-                child: Icon(widget.icon, color: widget.color, size: 32),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                widget.title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: effectiveColor.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(widget.icon,
+                          color: effectiveColor, size: 32),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: disabled
+                            ? Colors.grey.shade500
+                            : Colors.grey[800],
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (disabled && widget.subtitle != null) ...
+                    [
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.subtitle!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 3,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: disabled ? Colors.grey.shade300 : null,
+                        gradient: disabled
+                            ? null
+                            : LinearGradient(
+                                colors: [
+                                  effectiveColor.withOpacity(0.5),
+                                  effectiveColor,
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                height: 3,
-                width: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  gradient: LinearGradient(
-                    colors: [widget.color.withOpacity(0.5), widget.color],
+                // Lock badge in top-right when disabled
+                if (disabled)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.lock_outline,
+                        size: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

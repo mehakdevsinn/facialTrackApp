@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/controller/providers/admin_provider.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/view/Splash%20Screen/splash_screen.dart';
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => TeacherProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => SessionProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

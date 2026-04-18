@@ -1,187 +1,202 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/session_provider.dart';
+import 'package:facialtrackapp/core/models/semester_model.dart';
+import 'package:facialtrackapp/core/models/teacher_course_model.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class StartSessionScreen extends StatefulWidget {
   final bool showBackButton;
 
-  // Constructor bilkul aise likhein
   const StartSessionScreen({super.key, this.showBackButton = false});
 
-  @override // Yeh line 'createState' se upar honi chahiye
+  @override
   State<StartSessionScreen> createState() => _StartSessionScreenState();
 }
 
 class _StartSessionScreenState extends State<StartSessionScreen> {
-  String? selectedSemester;
-  String? selectedSubject;
+  static const primaryColor = Color.fromARGB(255, 35, 4, 170);
 
-  final List<String> classes = [
-    'Semester 2',
-    'Semester 4',
-    'Semester 6',
-    'Semester 8',
-  ];
-  final List<String> subjects = [
-    'OOP',
-    'Computer architecture',
-    'wireless network',
-    'Information Security',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Load real courses once; use post-frame so provider is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SessionProvider>().loadCourses();
+    });
+  }
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  Future<void> _onStartSession(SessionProvider provider) async {
+    final success = await provider.createSession();
+    if (!mounted) return;
+    if (success && provider.currentSession != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LiveSessionScreen(
+            sessionId: provider.currentSession!.id,
+          ),
+        ),
+      );
+    } else if (provider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage!),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+      provider.clearError();
+    }
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    bool isReady = selectedSemester != null && selectedSubject != null;
-    const primaryColor = Color.fromARGB(255, 35, 4, 170);
+    return Consumer<SessionProvider>(
+      builder: (context, provider, _) {
+        final semesters = provider.distinctSemesters;
+        final courses =
+            provider.coursesForSemester(provider.selectedSemesterId);
+        final isReady =
+            provider.selectedSemesterId != null &&
+            provider.selectedCourseId != null;
 
-    return PopScope(
-      // Agar dashboard se aaye hain toh pop hona chahiye (true)
-      // Agar bottom nav se aaye hain toh pop nahi hona chahiye (false)
-      canPop: widget.showBackButton,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-      },
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Colors.grey[100],
-          // StartSessionScreen ke build method mein
-          appBar: AppBar(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            automaticallyImplyLeading: false,
-
-            // Logic update: showBackButton check karein
-            leading: widget.showBackButton
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  )
-                : null,
-
-            title: Row(
-              children: [
-                // Logo se pehle space sirf tab jab back button na ho
-                if (!widget.showBackButton) const SizedBox(width: 8),
-
-                const CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.white24,
-                  backgroundImage: AssetImage('assets/logo.png'),
-                ),
-                SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    "Start Attendance Session",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      overflow: TextOverflow.ellipsis,
+        return PopScope(
+          canPop: widget.showBackButton,
+          onPopInvokedWithResult: (didPop, _) {},
+          child: SafeArea(
+            child: Scaffold(
+              backgroundColor: Colors.grey[100],
+              appBar: AppBar(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                automaticallyImplyLeading: false,
+                leading: widget.showBackButton
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.pop(context),
+                      )
+                    : null,
+                title: Row(
+                  children: [
+                    if (!widget.showBackButton) const SizedBox(width: 8),
+                    const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white24,
+                      backgroundImage: AssetImage('assets/logo.png'),
                     ),
-                  ),
-                ),
-                // ... baki title ka code
-              ],
-            ),
-          ),
-          body: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Center(
-                    child: Text(
-                      "Start New Session",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Center(
-                    child: Text(
-                      "Select semester and subject to begin attendance",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  _buildLabel("Select Semester", primaryColor),
-                  _buildCustomDropdown(
-                    hint: "Choose semester...",
-                    icon: Icons.groups,
-                    value: selectedSemester,
-                    items: classes,
-                    color: primaryColor,
-                    onChanged: (val) => setState(() => selectedSemester = val),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  _buildLabel("Select Subject", primaryColor),
-                  _buildCustomDropdown(
-                    hint: "Choose subject...",
-                    icon: Icons.book,
-                    value: selectedSubject,
-                    items: subjects,
-                    color: primaryColor,
-                    onChanged: (val) => setState(() => selectedSubject = val),
-                  ),
-
-                  const SizedBox(height: 100),
-
-                  Opacity(
-                    opacity: isReady ? 1.0 : 0.5,
-                    child: ElevatedButton(
-                      onPressed: isReady
-                          ? () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LiveSessionScreen(
-                                    autoStart: true,
-                                  ), // Signal: START
-                                ),
-                              );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF81C784),
-                        disabledBackgroundColor: const Color(
-                          0xFF81C784,
-                        ).withOpacity(0.5),
-                        minimumSize: const Size(double.infinity, 55),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        "Start Session",
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Start Attendance Session',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              body: provider.isLoading && provider.courses.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Center(
+                              child: Text(
+                                'Start New Session',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Center(
+                              child: Text(
+                                'Select semester and subject to begin attendance',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+
+                            // ── Semester dropdown ────────────────────────
+                            _buildLabel('Select Semester', primaryColor),
+                            _buildSemesterDropdown(semesters, provider),
+
+                            const SizedBox(height: 25),
+
+                            // ── Subject dropdown ─────────────────────────
+                            _buildLabel('Select Subject', primaryColor),
+                            _buildCourseDropdown(courses, provider),
+
+                            const SizedBox(height: 100),
+
+                            // ── Start button ─────────────────────────────
+                            Opacity(
+                              opacity: isReady ? 1.0 : 0.5,
+                              child: ElevatedButton(
+                                onPressed: isReady && !provider.isLoading
+                                    ? () => _onStartSession(provider)
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF81C784),
+                                  disabledBackgroundColor:
+                                      const Color(0xFF81C784).withOpacity(0.5),
+                                  minimumSize:
+                                      const Size(double.infinity, 55),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: provider.isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Start Session',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+
+  // ── Widgets ────────────────────────────────────────────────────────────────
 
   Widget _buildLabel(String text, Color color) {
     return Padding(
@@ -193,85 +208,161 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
     );
   }
 
-  Widget _buildCustomDropdown({
-    required String hint,
-    required IconData icon,
-    required String? value,
-    required List<String> items,
-    required Color color,
-    required ValueChanged<String?> onChanged,
-  }) {
-    bool hasData = value != null;
+  Widget _buildSemesterDropdown(
+      List<SemesterModel> semesters, SessionProvider provider) {
+    final value = provider.selectedSemesterId;
+    final hasData = value != null;
 
+    return _dropdownContainer(
+      hasData: hasData,
+      child: DropdownButtonFormField<String>(
+        value: value,
+        hint: const Text('Choose semester...'),
+        isExpanded: true,
+        icon: const SizedBox.shrink(),
+        selectedItemBuilder: (_) => semesters
+            .map((s) => Text(
+                  'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
+                  style: const TextStyle(
+                      color: Colors.black87, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ))
+            .toList(),
+        decoration: _dropdownDecoration(
+          primaryColor,
+          Icons.groups,
+          hasData,
+        ),
+        items: semesters
+            .map((s) => DropdownMenuItem<String>(
+                  value: s.id,
+                  child: Row(
+                    children: [
+                      Icon(
+                        value == s.id
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        color: value == s.id ? primaryColor : Colors.grey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ))
+            .toList(),
+        onChanged: (id) => provider.setSelectedSemester(id),
+      ),
+    );
+  }
+
+  Widget _buildCourseDropdown(
+      List<TeacherCourseModel> courses, SessionProvider provider) {
+    final value = provider.selectedCourseId;
+    final hasData = value != null;
+    final enabled = provider.selectedSemesterId != null;
+
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.4,
+      child: IgnorePointer(
+        ignoring: !enabled,
+        child: _dropdownContainer(
+          hasData: hasData,
+          child: DropdownButtonFormField<String>(
+            value: courses.any((c) => c.id == value) ? value : null,
+            hint: Text(
+                enabled ? 'Choose subject...' : 'Select semester first'),
+            isExpanded: true,
+            icon: const SizedBox.shrink(),
+            selectedItemBuilder: (_) => courses
+                .map((c) => Text(
+                      c.displayName,
+                      style: const TextStyle(
+                          color: Colors.black87, fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ))
+                .toList(),
+            decoration: _dropdownDecoration(
+              primaryColor,
+              Icons.book,
+              hasData,
+            ),
+            items: courses
+                .map((c) => DropdownMenuItem<String>(
+                      value: c.id,
+                      child: Row(
+                        children: [
+                          Icon(
+                            value == c.id
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            color: value == c.id
+                                ? primaryColor
+                                : Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              c.displayName,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ))
+                .toList(),
+            onChanged: (id) => provider.setSelectedCourse(id),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdownContainer({
+    required bool hasData,
+    required Widget child,
+  }) {
     return Container(
-      // Shadow remove kar di gayi hai taake field clean dikhe
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [],
       ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        hint: Text(hint),
-        isExpanded: true,
-        icon: const SizedBox.shrink(),
-        selectedItemBuilder: (BuildContext context) {
-          return items.map((String item) {
-            return Text(
-              item,
-              style: const TextStyle(color: Colors.black87, fontSize: 16),
-            );
-          }).toList();
-        },
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: color),
-          suffixIcon: SizedBox(
-            width: 70,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (hasData)
-                  const Icon(Icons.check_circle, color: Colors.teal, size: 20),
-                const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                const SizedBox(width: 8),
-              ],
-            ),
-          ),
-          filled: true,
-          // Fill color ab fixed hai, selection se pehle aur baad same rahega
-          fillColor: color.withOpacity(0.08),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              // Border ko mazeed light kar diya gaya hai constant look ke liye
-              color: color.withOpacity(0.2),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: color, width: 2),
-            borderRadius: BorderRadius.circular(12),
-          ),
+      child: child,
+    );
+  }
+
+  InputDecoration _dropdownDecoration(
+      Color color, IconData icon, bool hasData) {
+    return InputDecoration(
+      prefixIcon: Icon(icon, color: color),
+      suffixIcon: SizedBox(
+        width: 70,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (hasData)
+              const Icon(Icons.check_circle, color: Colors.teal, size: 20),
+            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            const SizedBox(width: 8),
+          ],
         ),
-        items: items.map((String item) {
-          bool isSelected = (value == item);
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Row(
-              children: [
-                Icon(
-                  isSelected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  color: isSelected ? color : Colors.grey,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(item),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: onChanged,
+      ),
+      filled: true,
+      fillColor: color.withOpacity(0.08),
+      enabledBorder: OutlineInputBorder(
+        borderSide:
+            BorderSide(color: color.withOpacity(0.2), width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: color, width: 2),
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }

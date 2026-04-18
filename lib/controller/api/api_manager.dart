@@ -14,6 +14,10 @@ import 'package:facialtrackapp/core/models/pending_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/student_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
+import 'package:facialtrackapp/core/models/teacher_course_model.dart';
+import 'package:facialtrackapp/core/models/session_model.dart';
+import 'package:facialtrackapp/core/models/roster_student_model.dart';
+import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1353,3 +1357,197 @@ class TimetableFromApi {
       );
 }
 
+// ── Teacher Session API ────────────────────────────────────────────────────────
+extension TeacherSessionApiMethods on ApiManager {
+  // ─── 1. GET teacher's active courses ─────────────────────────────────────
+  /// GET /teachers/{teacher_id}/courses
+  Future<List<TeacherCourseModel>> getTeacherCourses(String teacherId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.teacherCourses(teacherId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => TeacherCourseModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 2. GET roster students for a course ────────────────────────────────
+  /// GET /teachers/{teacher_id}/courses/{course_id}/students
+  Future<List<RosterStudentModel>> getTeacherCourseStudents(
+      String teacherId, String courseId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.teacherCourseStudents(teacherId, courseId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => RosterStudentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 3. POST create session ──────────────────────────────────────────────
+  /// POST /teachers/sessions
+  Future<SessionModel> createSession({
+    required String courseId,
+    required String startTime,
+    required String endTime,
+    String? notes,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {
+        'course_id': courseId,
+        'start_time': startTime,
+        'end_time': endTime,
+      };
+      if (notes != null && notes.isNotEmpty) body['notes'] = notes;
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherSessions),
+            headers: await _authHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return SessionModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 4. GET session attendance list ─────────────────────────────────────
+  /// GET /teachers/sessions/{session_id}/attendance
+  Future<List<AttendanceRecordModel>> getSessionAttendance(
+      String sessionId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.teacherSessionAttendance(sessionId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) =>
+              AttendanceRecordModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 5. POST mark student present ───────────────────────────────────────
+  /// POST /teachers/sessions/{session_id}/attendance
+  /// Throws [AuthException] with backend message on 400 duplicate.
+  Future<AttendanceRecordModel> markAttendance(
+    String sessionId,
+    String studentId, {
+    String? notes,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {'student_id': studentId};
+      if (notes != null && notes.isNotEmpty) body['notes'] = notes;
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherSessionAttendance(sessionId)),
+            headers: await _authHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return AttendanceRecordModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 6. DELETE remove attendance (mark absent) ──────────────────────────
+  /// DELETE /teachers/sessions/{session_id}/attendance/{student_id}
+  /// 204 = success ; 404 = already absent (no-op).
+  Future<void> removeAttendance(String sessionId, String studentId) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse(Endpoints.teacherSessionAttendanceStudent(
+                sessionId, studentId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 204 || response.statusCode == 404) return;
+      _assertSuccess(response);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 7. POST stop session ────────────────────────────────────────────────
+  /// POST /teachers/sessions/{session_id}/stop → 200 + SessionResponse.
+  Future<SessionModel> stopSession(String sessionId) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherSessionStop(sessionId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return SessionModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 8. GET active sessions ──────────────────────────────────────────────
+  /// GET /teachers/sessions/active
+  Future<List<SessionModel>> getActiveSessions() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.teacherActiveSessions),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => SessionModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+}

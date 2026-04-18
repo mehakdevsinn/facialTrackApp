@@ -1,0 +1,312 @@
+import 'dart:async';
+
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/attendance_record_model.dart';
+import 'package:facialtrackapp/core/models/roster_student_model.dart';
+import 'package:facialtrackapp/core/models/semester_model.dart';
+import 'package:facialtrackapp/core/models/session_model.dart';
+import 'package:facialtrackapp/core/models/teacher_course_model.dart';
+import 'package:facialtrackapp/services/storage_service.dart';
+import 'package:flutter/foundation.dart';
+
+/// Owns all state for the teacher session flow:
+///   StartSessionScreen → LiveSessionScreen → AttendanceLogsScreen
+///
+/// Register in main.dart:
+///   ChangeNotifierProvider(create: (_) => SessionProvider())
+class SessionProvider extends ChangeNotifier {
+  final ApiManager _api = ApiManager.instance;
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<TeacherCourseModel> _courses = [];
+  String? _selectedSemesterId;
+  String? _selectedCourseId;
+
+  SessionModel? _currentSession;
+  List<RosterStudentModel> _rosterStudents = [];
+  List<AttendanceRecordModel> _attendanceRecords = [];
+
+  /// Set of student IDs being optimistically marked (shows spinner in avatar).
+  final Set<String> _pendingMarkIds = {};
+
+  Timer? _pollTimer;
+
+  // ── Getters ───────────────────────────────────────────────────────────────
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  List<TeacherCourseModel> get courses => _courses;
+  String? get selectedSemesterId => _selectedSemesterId;
+  String? get selectedCourseId => _selectedCourseId;
+  SessionModel? get currentSession => _currentSession;
+  List<RosterStudentModel> get rosterStudents => _rosterStudents;
+  List<AttendanceRecordModel> get attendanceRecords => _attendanceRecords;
+  bool isPending(String studentId) => _pendingMarkIds.contains(studentId);
+
+  // ── Computed ──────────────────────────────────────────────────────────────
+
+  /// Deduplicated, sorted list of semesters from [_courses].
+  List<SemesterModel> get distinctSemesters {
+    final seen = <String>{};
+    final result = <SemesterModel>[];
+    for (final c in _courses) {
+      if (c.semester != null && seen.add(c.semester!.id)) {
+        result.add(c.semester!);
+      }
+    }
+    // Sort by start date ascending.
+    result.sort((a, b) => a.startDate.compareTo(b.startDate));
+    return result;
+  }
+
+  /// Courses filtered by the given [semesterId].
+  List<TeacherCourseModel> coursesForSemester(String? semesterId) {
+    if (semesterId == null) return [];
+    return _courses.where((c) => c.semesterId == semesterId).toList();
+  }
+
+  /// The currently selected [TeacherCourseModel], or null.
+  TeacherCourseModel? get selectedCourse {
+    if (_selectedCourseId == null) return null;
+    try {
+      return _courses.firstWhere((c) => c.id == _selectedCourseId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Set of student IDs that already have an attendance record.
+  Set<String> get presentStudentIds =>
+      _attendanceRecords.map((r) => r.studentId).toSet();
+
+  /// Students from the roster who are NOT yet marked present.
+  List<RosterStudentModel> get absentStudents => _rosterStudents
+      .where((s) => !presentStudentIds.contains(s.id))
+      .toList();
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  void _setLoading(bool v) {
+    _isLoading = v;
+    notifyListeners();
+  }
+
+  void _setError(String? msg) {
+    _errorMessage = msg;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void setSelectedSemester(String? id) {
+    _selectedSemesterId = id;
+    _selectedCourseId = null; // reset subject when semester changes
+    notifyListeners();
+  }
+
+  void setSelectedCourse(String? id) {
+    _selectedCourseId = id;
+    notifyListeners();
+  }
+
+  // ── 1. Load courses (called on Start Screen open) ─────────────────────────
+  Future<void> loadCourses() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final teacherId = await StorageService.getUserId();
+      if (teacherId == null) throw Exception('Not logged in');
+      _courses = await _api.getTeacherCourses(teacherId);
+      notifyListeners();
+    } on AuthException catch (e) {
+      _setError(e.message);
+    } catch (e) {
+      _setError('Failed to load courses: ${e.toString()}');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ── 2. Create session ─────────────────────────────────────────────────────
+  /// Creates a session for [_selectedCourseId] starting now (±2 hours window).
+  /// Returns true on success.
+  Future<bool> createSession() async {
+    if (_selectedCourseId == null) return false;
+    _setLoading(true);
+    _setError(null);
+    try {
+      final now = DateTime.now().toUtc();
+      final end = now.add(const Duration(hours: 2));
+      _currentSession = await _api.createSession(
+        courseId: _selectedCourseId!,
+        startTime: now.toIso8601String(),
+        endTime: end.toIso8601String(),
+      );
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Failed to create session: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ── 3. Load roster for the selected course ────────────────────────────────
+  Future<void> loadRoster() async {
+    if (_selectedCourseId == null) return;
+    try {
+      final teacherId = await StorageService.getUserId();
+      if (teacherId == null) return;
+      _rosterStudents = await _api.getTeacherCourseStudents(
+          teacherId, _selectedCourseId!);
+      notifyListeners();
+    } on AuthException catch (e) {
+      _setError(e.message);
+    } catch (e) {
+      _setError('Failed to load students: ${e.toString()}');
+    }
+  }
+
+  // ── 4. Load / refresh attendance for the current session ──────────────────
+  Future<void> loadAttendance() async {
+    if (_currentSession == null) return;
+    try {
+      _attendanceRecords =
+          await _api.getSessionAttendance(_currentSession!.id);
+      notifyListeners();
+    } catch (_) {
+      // Silent poll — don't show error on background refresh.
+    }
+  }
+
+  // ── 5. Start live polling (10 s interval) ─────────────────────────────────
+  void startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      loadAttendance();
+    });
+  }
+
+  void stopPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  // ── 6. Mark student present ───────────────────────────────────────────────
+  /// Returns true on success, false if already marked (400) or other error.
+  Future<bool> markPresent(String studentId) async {
+    if (_currentSession == null) return false;
+    _pendingMarkIds.add(studentId);
+    notifyListeners();
+    try {
+      await _api.markAttendance(_currentSession!.id, studentId);
+      await loadAttendance(); // refresh list
+      return true;
+    } on AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('already')) {
+        // Already marked — just refresh, not an error for the user.
+        await loadAttendance();
+        return false;
+      }
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Could not mark attendance.');
+      return false;
+    } finally {
+      _pendingMarkIds.remove(studentId);
+      notifyListeners();
+    }
+  }
+
+  // ── 7. Remove attendance (toggle absent) ──────────────────────────────────
+  Future<bool> markAbsent(String studentId) async {
+    if (_currentSession == null) return false;
+    _pendingMarkIds.add(studentId);
+    notifyListeners();
+    try {
+      await _api.removeAttendance(_currentSession!.id, studentId);
+      // Update list locally (optimistic) then confirm with server.
+      _attendanceRecords.removeWhere((r) => r.studentId == studentId);
+      notifyListeners();
+      await loadAttendance();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Could not remove attendance.');
+      return false;
+    } finally {
+      _pendingMarkIds.remove(studentId);
+      notifyListeners();
+    }
+  }
+
+  // ── 8. End / stop session ─────────────────────────────────────────────────
+  /// Calls the stop endpoint. Returns the stopped [SessionModel] (is_active=false).
+  Future<SessionModel?> endSession() async {
+    if (_currentSession == null) return null;
+    _setLoading(true);
+    _setError(null);
+    try {
+      stopPolling();
+      final stopped = await _api.stopSession(_currentSession!.id);
+      _currentSession = stopped;
+      notifyListeners();
+      return stopped;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return null;
+    } catch (e) {
+      _setError('Failed to end session.');
+      return null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ── 9. Load attendance by session ID (for Logs screen re-entry) ───────────
+  /// If the session stored in [_currentSession] already matches [sessionId],
+  /// attendance may already be loaded. Otherwise fetches fresh data.
+  Future<void> ensureAttendanceLoaded(String sessionId) async {
+    if (_currentSession?.id == sessionId && _attendanceRecords.isNotEmpty) {
+      return; // already have data
+    }
+    try {
+      _attendanceRecords = await _api.getSessionAttendance(sessionId);
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to load attendance logs.');
+    }
+  }
+
+  // ── Reset (logout / new flow) ─────────────────────────────────────────────
+  void clear() {
+    stopPolling();
+    _courses = [];
+    _selectedSemesterId = null;
+    _selectedCourseId = null;
+    _currentSession = null;
+    _rosterStudents = [];
+    _attendanceRecords = [];
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+}

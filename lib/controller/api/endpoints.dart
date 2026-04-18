@@ -132,4 +132,35 @@ class Endpoints {
   /// GET  → fetch current deadline  |  PUT → set / update deadline
   static const String enrollmentDeadline =
       '$_adminSettings/enrollment-deadline';
+
+  // ── Teacher — Session Flow ────────────────────────────────────────────────
+  static const String _teacher = '$baseUrl/api/v1/teachers';
+
+  /// GET → active courses for this teacher (with nested semester object).
+  static String teacherCourses(String teacherId) =>
+      '$_teacher/$teacherId/courses';
+
+  /// GET → approved students whose semester matches the course's semester ordinal.
+  static String teacherCourseStudents(String teacherId, String courseId) =>
+      '$_teacher/$teacherId/courses/$courseId/students';
+
+  /// POST → create a new session  |  GET → all sessions (optional ?active_only=true)
+  static const String teacherSessions = '$_teacher/sessions';
+
+  /// GET → sessions for this teacher that are currently inside [start_time, end_time].
+  static const String teacherActiveSessions = '$_teacher/sessions/active';
+
+  /// GET → all attendance records for a session
+  /// POST → mark a student present manually
+  static String teacherSessionAttendance(String sessionId) =>
+      '$_teacher/sessions/$sessionId/attendance';
+
+  /// DELETE → remove a student's attendance row (mark absent after the fact).
+  static String teacherSessionAttendanceStudent(
+          String sessionId, String studentId) =>
+      '$_teacher/sessions/$sessionId/attendance/$studentId';
+
+  /// POST → stop/finalise a session → 200 + SessionResponse (is_active = false).
+  static String teacherSessionStop(String sessionId) =>
+      '$_teacher/sessions/$sessionId/stop';
 }

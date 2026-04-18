@@ -1,11 +1,11 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_side_complain_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_profile_screen.dart';
-import 'package:facialtrackapp/view/teacher/Attendence%20Report/select_date_range.dart';
 import 'package:facialtrackapp/view/teacher/Report/report_options_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/start_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
@@ -183,26 +183,24 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             color: Colors.orange,
                             icon: Icons.stop,
                             title: 'End Attendance',
-                            // Dashboard Screen
                             ontap: () {
-                              if (SessionManager.isLive) {
-                                // Agar session chal raha hai, seedha Live screen par le jao
+                              final session =
+                                  context.read<SessionProvider>().currentSession;
+                              if (session != null) {
+                                // An active session exists — go to Live screen to end it.
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => LiveSessionScreen(
-                                      autoStart:
-                                          false, // Dobara start nahi karna, sirf view karna hai
-                                      isResume:
-                                          true, // Naya parameter taake purana time uthaye
+                                    builder: (_) => LiveSessionScreen(
+                                      sessionId: session.id,
                                     ),
                                   ),
                                 );
                               } else {
-                                // Agar koi session nahi chal raha toh error ya message dikhaein
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("No active session to end!"),
+                                    content:
+                                        Text('No active session to end!'),
                                   ),
                                 );
                               }
@@ -213,13 +211,24 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             icon: Icons.calendar_today,
                             title: "Today's Logs",
                             ontap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AttendanceLogsScreen(),
-                                ),
-                              );
+                              final session =
+                                  context.read<SessionProvider>().currentSession;
+                              if (session != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AttendanceLogsScreen(
+                                        sessionId: session.id),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'No session available. Start a session first.'),
+                                  ),
+                                );
+                              }
                             },
                           ),
                           // _AnimatedDashboardCard(

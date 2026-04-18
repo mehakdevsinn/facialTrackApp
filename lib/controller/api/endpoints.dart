@@ -163,4 +163,10 @@ class Endpoints {
   /// POST → stop/finalise a session → 200 + SessionResponse (is_active = false).
   static String teacherSessionStop(String sessionId) =>
       '$_teacher/sessions/$sessionId/stop';
+
+  /// GET → teacher's timetable slots.
+  /// Pass [semesterId]+[section] together, or [timetableId] alone.
+  /// Optional [forDate] ("YYYY-MM-DD") filters by calendar weekday.
+  static String teacherSchedule(String teacherId) =>
+      '$_teacher/$teacherId/schedule';
 }

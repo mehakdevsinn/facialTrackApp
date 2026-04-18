@@ -6,6 +6,7 @@ import 'package:facialtrackapp/core/models/roster_student_model.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/teacher_course_model.dart';
+import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -29,6 +30,11 @@ class SessionProvider extends ChangeNotifier {
   List<RosterStudentModel> _rosterStudents = [];
   List<AttendanceRecordModel> _attendanceRecords = [];
 
+  // ── Schedule (timetable tab) ───────────────────────────────────────────────
+  List<TeacherScheduleSlotModel> _scheduleSlots = [];
+  bool _scheduleLoading = false;
+  String? _selectedSection;
+
   /// Set of student IDs being optimistically marked (shows spinner in avatar).
   final Set<String> _pendingMarkIds = {};
 
@@ -44,6 +50,9 @@ class SessionProvider extends ChangeNotifier {
   List<RosterStudentModel> get rosterStudents => _rosterStudents;
   List<AttendanceRecordModel> get attendanceRecords => _attendanceRecords;
   bool isPending(String studentId) => _pendingMarkIds.contains(studentId);
+  List<TeacherScheduleSlotModel> get scheduleSlots => _scheduleSlots;
+  bool get scheduleLoading => _scheduleLoading;
+  String? get selectedSection => _selectedSection;
 
   // ── Computed ──────────────────────────────────────────────────────────────
 
@@ -105,11 +114,18 @@ class SessionProvider extends ChangeNotifier {
   void setSelectedSemester(String? id) {
     _selectedSemesterId = id;
     _selectedCourseId = null; // reset subject when semester changes
+    _scheduleSlots = [];     // reset schedule when semester changes
     notifyListeners();
   }
 
   void setSelectedCourse(String? id) {
     _selectedCourseId = id;
+    notifyListeners();
+  }
+
+  void setSelectedSection(String? section) {
+    _selectedSection = section;
+    _scheduleSlots = []; // reset schedule when section changes
     notifyListeners();
   }
 
@@ -131,7 +147,7 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
-  // ── 2. Create session ─────────────────────────────────────────────────────
+  // ── 2. Create session (manual) ────────────────────────────────────────────
   /// Creates a session for [_selectedCourseId] starting now (±2 hours window).
   /// Returns true on success.
   Future<bool> createSession() async {
@@ -146,6 +162,34 @@ class SessionProvider extends ChangeNotifier {
         startTime: now.toIso8601String(),
         endTime: end.toIso8601String(),
       );
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Failed to create session: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ── 2b. Create session from timetable slot ────────────────────────────────
+  /// Creates a session using [slot]'s course_id and scheduled start/end times.
+  /// Returns true on success.
+  Future<bool> createSessionFromSlot(TeacherScheduleSlotModel slot) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final today = DateTime.now();
+      _currentSession = await _api.createSession(
+        courseId: slot.courseId,
+        startTime: slot.startIso(today),
+        endTime: slot.endIso(today),
+      );
+      // Keep selectedCourseId in sync so selectedCourse getter works on Live screen.
+      _selectedCourseId = slot.courseId;
       notifyListeners();
       return true;
     } on AuthException catch (e) {
@@ -198,6 +242,58 @@ class SessionProvider extends ChangeNotifier {
   void stopPolling() {
     _pollTimer?.cancel();
     _pollTimer = null;
+  }
+
+  // ── 10. Fetch currently active sessions (for resume banner) ───────────────
+  /// Returns sessions that are both is_active and currently within their
+  /// time window. Wraps [ApiManager.getActiveSessions].
+  Future<List<SessionModel>> getActiveSessions() =>
+      _api.getActiveSessions();
+
+  // ── 10. Load today's schedule slots ───────────────────────────────────────
+  /// Requires [_selectedSemesterId] + [_selectedSection] to be set.
+  Future<void> loadSchedule() async {
+    if (_selectedSemesterId == null || _selectedSection == null) return;
+    _scheduleLoading = true;
+    notifyListeners();
+    try {
+      final teacherId = await StorageService.getUserId();
+      if (teacherId == null) return;
+      final today = DateTime.now();
+
+      // Only send for_date on Mon–Fri (weekday 1–5).
+      // On weekends the backend returns an empty list for that date,
+      // so we omit it to receive the full week of slots instead.
+      final isWeekday = today.weekday >= DateTime.monday &&
+          today.weekday <= DateTime.friday;
+      final forDate = isWeekday
+          ? '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}'
+          : null;
+
+      _scheduleSlots = await _api.getTeacherSchedule(
+        teacherId,
+        semesterId: _selectedSemesterId,
+        section: _selectedSection,
+        forDate: forDate,
+      );
+      notifyListeners();
+    } on AuthException catch (e) {
+      _setError(e.message);
+    } catch (e) {
+      _setError('Failed to load schedule: ${e.toString()}');
+    } finally {
+      _scheduleLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ── 11. Resume an already-active session (from banner) ────────────────────
+  /// Restores [_currentSession] and [_selectedCourseId] so LiveSessionScreen
+  /// can fully function after app resume.
+  void resumeSession(SessionModel session) {
+    _currentSession = session;
+    _selectedCourseId = session.courseId;
+    notifyListeners();
   }
 
   // ── 6. Mark student present ───────────────────────────────────────────────
@@ -299,6 +395,8 @@ class SessionProvider extends ChangeNotifier {
     _currentSession = null;
     _rosterStudents = [];
     _attendanceRecords = [];
+    _scheduleSlots = [];
+    _selectedSection = null;
     _errorMessage = null;
     _isLoading = false;
     notifyListeners();

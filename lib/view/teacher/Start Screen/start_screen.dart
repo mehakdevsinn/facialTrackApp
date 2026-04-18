@@ -1,55 +1,83 @@
-import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/teacher_course_model.dart';
+import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class StartSessionScreen extends StatefulWidget {
   final bool showBackButton;
-
   const StartSessionScreen({super.key, this.showBackButton = false});
 
   @override
   State<StartSessionScreen> createState() => _StartSessionScreenState();
 }
 
-class _StartSessionScreenState extends State<StartSessionScreen> {
-  static const primaryColor = Color.fromARGB(255, 35, 4, 170);
+class _StartSessionScreenState extends State<StartSessionScreen>
+    with SingleTickerProviderStateMixin {
+  static const _primaryColor = Color.fromARGB(255, 35, 4, 170);
+
+  late TabController _tabController;
+
+  static const _sections = ['A', 'B', 'C', 'D', 'E'];
 
   @override
   void initState() {
     super.initState();
-    // Load real courses once; use post-frame so provider is available.
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SessionProvider>().loadCourses();
     });
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  Future<void> _onStartSession(SessionProvider provider) async {
+  Future<void> _onStartManual(SessionProvider provider) async {
     final success = await provider.createSession();
     if (!mounted) return;
     if (success && provider.currentSession != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LiveSessionScreen(
-            sessionId: provider.currentSession!.id,
-          ),
-        ),
-      );
+      _navigateToLive(provider.currentSession!.id);
     } else if (provider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage!),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      _showError(provider.errorMessage!);
       provider.clearError();
     }
+  }
+
+  Future<void> _onStartFromSlot(
+      SessionProvider provider, TeacherScheduleSlotModel slot) async {
+    final success = await provider.createSessionFromSlot(slot);
+    if (!mounted) return;
+    if (success && provider.currentSession != null) {
+      _navigateToLive(provider.currentSession!.id);
+    } else if (provider.errorMessage != null) {
+      _showError(provider.errorMessage!);
+      provider.clearError();
+    }
+  }
+
+  void _navigateToLive(String sessionId) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LiveSessionScreen(sessionId: sessionId),
+      ),
+    );
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red.shade700,
+      ),
+    );
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -58,13 +86,6 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
   Widget build(BuildContext context) {
     return Consumer<SessionProvider>(
       builder: (context, provider, _) {
-        final semesters = provider.distinctSemesters;
-        final courses =
-            provider.coursesForSemester(provider.selectedSemesterId);
-        final isReady =
-            provider.selectedSemesterId != null &&
-            provider.selectedCourseId != null;
-
         return PopScope(
           canPop: widget.showBackButton,
           onPopInvokedWithResult: (didPop, _) {},
@@ -72,7 +93,7 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
             child: Scaffold(
               backgroundColor: Colors.grey[100],
               appBar: AppBar(
-                backgroundColor: primaryColor,
+                backgroundColor: _primaryColor,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 automaticallyImplyLeading: false,
@@ -104,90 +125,42 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
                     ),
                   ],
                 ),
+                bottom: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.white,
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white60,
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                  tabs: const [
+                    Tab(icon: Icon(Icons.tune), text: 'Manual'),
+                    Tab(
+                        icon: Icon(Icons.calendar_today),
+                        text: "Today's Schedule"),
+                  ],
+                ),
               ),
               body: provider.isLoading && provider.courses.isEmpty
                   ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Center(
-                              child: Text(
-                                'Start New Session',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Center(
-                              child: Text(
-                                'Select semester and subject to begin attendance',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-
-                            // ── Semester dropdown ────────────────────────
-                            _buildLabel('Select Semester', primaryColor),
-                            _buildSemesterDropdown(semesters, provider),
-
-                            const SizedBox(height: 25),
-
-                            // ── Subject dropdown ─────────────────────────
-                            _buildLabel('Select Subject', primaryColor),
-                            _buildCourseDropdown(courses, provider),
-
-                            const SizedBox(height: 100),
-
-                            // ── Start button ─────────────────────────────
-                            Opacity(
-                              opacity: isReady ? 1.0 : 0.5,
-                              child: ElevatedButton(
-                                onPressed: isReady && !provider.isLoading
-                                    ? () => _onStartSession(provider)
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF81C784),
-                                  disabledBackgroundColor:
-                                      const Color(0xFF81C784).withOpacity(0.5),
-                                  minimumSize:
-                                      const Size(double.infinity, 55),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: provider.isLoading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Start Session',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ],
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _ManualTab(
+                          provider: provider,
+                          primaryColor: _primaryColor,
+                          onStart: () => _onStartManual(provider),
                         ),
-                      ),
+                        _ScheduleTab(
+                          provider: provider,
+                          primaryColor: _primaryColor,
+                          sections: _sections,
+                          onStart: (slot) =>
+                              _onStartFromSlot(provider, slot),
+                        ),
+                      ],
                     ),
             ),
           ),
@@ -195,175 +168,632 @@ class _StartSessionScreenState extends State<StartSessionScreen> {
       },
     );
   }
+}
 
-  // ── Widgets ────────────────────────────────────────────────────────────────
+// ── Tab 1: Manual ─────────────────────────────────────────────────────────────
 
-  Widget _buildLabel(String text, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(fontWeight: FontWeight.bold, color: color),
+class _ManualTab extends StatelessWidget {
+  final SessionProvider provider;
+  final Color primaryColor;
+  final VoidCallback onStart;
+
+  const _ManualTab({
+    required this.provider,
+    required this.primaryColor,
+    required this.onStart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final semesters = provider.distinctSemesters;
+    final courses =
+        provider.coursesForSemester(provider.selectedSemesterId);
+    final isReady = provider.selectedSemesterId != null &&
+        provider.selectedCourseId != null;
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _SectionHeader(
+            icon: Icons.tune,
+            title: 'Manual Selection',
+            subtitle: 'Choose semester and subject to begin',
+          ),
+          const SizedBox(height: 32),
+
+          _buildLabel('Select Semester', primaryColor),
+          _buildSemesterDropdown(semesters, provider, primaryColor),
+          const SizedBox(height: 24),
+
+          _buildLabel('Select Subject', primaryColor),
+          _buildCourseDropdown(courses, provider, primaryColor),
+          const SizedBox(height: 48),
+
+          Opacity(
+            opacity: isReady ? 1.0 : 0.5,
+            child: ElevatedButton.icon(
+              onPressed:
+                  isReady && !provider.isLoading ? onStart : null,
+              icon: provider.isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Icon(Icons.play_arrow, color: Colors.white),
+              label: Text(
+                provider.isLoading ? 'Starting…' : 'Start Session',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF34A853),
+                disabledBackgroundColor:
+                    const Color(0xFF34A853).withOpacity(0.5),
+                minimumSize: const Size(double.infinity, 55),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSemesterDropdown(
-      List<SemesterModel> semesters, SessionProvider provider) {
-    final value = provider.selectedSemesterId;
-    final hasData = value != null;
+  Widget _buildLabel(String text, Color color) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          text,
+          style:
+              TextStyle(fontWeight: FontWeight.bold, color: color),
+        ),
+      );
 
-    return _dropdownContainer(
-      hasData: hasData,
+  Widget _buildSemesterDropdown(
+      List<SemesterModel> semesters,
+      SessionProvider provider,
+      Color color) {
+    final value = provider.selectedSemesterId;
+    return _DropdownCard(
       child: DropdownButtonFormField<String>(
         value: value,
-        hint: const Text('Choose semester...'),
+        hint: const Text('Choose semester…'),
         isExpanded: true,
         icon: const SizedBox.shrink(),
         selectedItemBuilder: (_) => semesters
             .map((s) => Text(
-                  'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
-                  style: const TextStyle(
-                      color: Colors.black87, fontSize: 14),
+                  'Semester ${s.semesterNumber} — ${s.termLabel}',
                   overflow: TextOverflow.ellipsis,
                 ))
             .toList(),
-        decoration: _dropdownDecoration(
-          primaryColor,
-          Icons.groups,
-          hasData,
-        ),
+        decoration: _deco(color, Icons.groups, value != null),
         items: semesters
             .map((s) => DropdownMenuItem<String>(
                   value: s.id,
-                  child: Row(
-                    children: [
-                      Icon(
-                        value == s.id
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                        color: value == s.id ? primaryColor : Colors.grey,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  child: _DropdownItem(
+                    label:
+                        'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
+                    selected: value == s.id,
+                    color: color,
                   ),
                 ))
             .toList(),
-        onChanged: (id) => provider.setSelectedSemester(id),
+        onChanged: provider.setSelectedSemester,
       ),
     );
   }
 
   Widget _buildCourseDropdown(
-      List<TeacherCourseModel> courses, SessionProvider provider) {
+      List<TeacherCourseModel> courses,
+      SessionProvider provider,
+      Color color) {
     final value = provider.selectedCourseId;
-    final hasData = value != null;
     final enabled = provider.selectedSemesterId != null;
-
     return Opacity(
       opacity: enabled ? 1.0 : 0.4,
       child: IgnorePointer(
         ignoring: !enabled,
-        child: _dropdownContainer(
-          hasData: hasData,
+        child: _DropdownCard(
           child: DropdownButtonFormField<String>(
             value: courses.any((c) => c.id == value) ? value : null,
-            hint: Text(
-                enabled ? 'Choose subject...' : 'Select semester first'),
+            hint: Text(enabled
+                ? 'Choose subject…'
+                : 'Select semester first'),
             isExpanded: true,
             icon: const SizedBox.shrink(),
             selectedItemBuilder: (_) => courses
                 .map((c) => Text(
                       c.displayName,
-                      style: const TextStyle(
-                          color: Colors.black87, fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ))
                 .toList(),
-            decoration: _dropdownDecoration(
-              primaryColor,
-              Icons.book,
-              hasData,
-            ),
+            decoration: _deco(color, Icons.book, value != null),
             items: courses
                 .map((c) => DropdownMenuItem<String>(
                       value: c.id,
-                      child: Row(
-                        children: [
-                          Icon(
-                            value == c.id
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off,
-                            color: value == c.id
-                                ? primaryColor
-                                : Colors.grey,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              c.displayName,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      child: _DropdownItem(
+                        label: c.displayName,
+                        selected: value == c.id,
+                        color: color,
                       ),
                     ))
                 .toList(),
-            onChanged: (id) => provider.setSelectedCourse(id),
+            onChanged: provider.setSelectedCourse,
           ),
         ),
       ),
     );
   }
 
-  Widget _dropdownContainer({
-    required bool hasData,
-    required Widget child,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [],
+  InputDecoration _deco(Color color, IconData icon, bool hasData) =>
+      InputDecoration(
+        prefixIcon: Icon(icon, color: color),
+        suffixIcon: SizedBox(
+          width: 56,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (hasData)
+                const Icon(Icons.check_circle,
+                    color: Colors.teal, size: 18),
+              const Icon(Icons.arrow_drop_down, color: Colors.grey),
+              const SizedBox(width: 6),
+            ],
+          ),
+        ),
+        filled: true,
+        fillColor: color.withOpacity(0.07),
+        enabledBorder: OutlineInputBorder(
+          borderSide:
+              BorderSide(color: color.withOpacity(0.2), width: 1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: color, width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      );
+}
+
+// ── Tab 2: Today's Schedule ───────────────────────────────────────────────────
+
+class _ScheduleTab extends StatelessWidget {
+  final SessionProvider provider;
+  final Color primaryColor;
+  final List<String> sections;
+  final void Function(TeacherScheduleSlotModel slot) onStart;
+
+  const _ScheduleTab({
+    required this.provider,
+    required this.primaryColor,
+    required this.sections,
+    required this.onStart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final semesters = provider.distinctSemesters;
+    final canLoad = provider.selectedSemesterId != null &&
+        provider.selectedSection != null;
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _SectionHeader(
+            icon: Icons.calendar_today,
+            title: "Today's Schedule",
+            subtitle: 'Pick semester + section to load your slots',
+          ),
+          const SizedBox(height: 24),
+
+          // ── Semester picker ──────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Semester',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, color: primaryColor),
+            ),
+          ),
+          _DropdownCard(
+            child: DropdownButtonFormField<String>(
+              value: provider.selectedSemesterId,
+              hint: const Text('Choose semester…'),
+              isExpanded: true,
+              icon: const SizedBox.shrink(),
+              selectedItemBuilder: (_) => semesters
+                  .map((s) => Text(
+                        'Semester ${s.semesterNumber} — ${s.termLabel}',
+                        overflow: TextOverflow.ellipsis,
+                      ))
+                  .toList(),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.groups, color: primaryColor),
+                suffixIcon: const Icon(Icons.arrow_drop_down,
+                    color: Colors.grey),
+                filled: true,
+                fillColor: primaryColor.withOpacity(0.07),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: primaryColor.withOpacity(0.2), width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: primaryColor, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: semesters
+                  .map((s) => DropdownMenuItem<String>(
+                        value: s.id,
+                        child: _DropdownItem(
+                          label:
+                              'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
+                          selected:
+                              provider.selectedSemesterId == s.id,
+                          color: primaryColor,
+                        ),
+                      ))
+                  .toList(),
+              onChanged: provider.setSelectedSemester,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Section picker ───────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Section',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, color: primaryColor),
+            ),
+          ),
+          _DropdownCard(
+            child: DropdownButtonFormField<String>(
+              value: provider.selectedSection,
+              hint: const Text('Choose section…'),
+              isExpanded: true,
+              icon: const SizedBox.shrink(),
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.people_alt, color: primaryColor),
+                suffixIcon: const Icon(Icons.arrow_drop_down,
+                    color: Colors.grey),
+                filled: true,
+                fillColor: primaryColor.withOpacity(0.07),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: primaryColor.withOpacity(0.2), width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: primaryColor, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: sections
+                  .map((s) => DropdownMenuItem<String>(
+                        value: s,
+                        child: _DropdownItem(
+                          label: 'Section $s',
+                          selected: provider.selectedSection == s,
+                          color: primaryColor,
+                        ),
+                      ))
+                  .toList(),
+              onChanged: provider.setSelectedSection,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Load slots button ────────────────────────────────────
+          ElevatedButton.icon(
+            onPressed: canLoad && !provider.scheduleLoading
+                ? () => provider.loadSchedule()
+                : null,
+            icon: provider.scheduleLoading
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : const Icon(Icons.search, color: Colors.white),
+            label: Text(
+              provider.scheduleLoading
+                  ? 'Loading…'
+                  : "Load Today's Slots",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              disabledBackgroundColor: primaryColor.withOpacity(0.4),
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Slot cards ───────────────────────────────────────────
+          if (!provider.scheduleLoading) ...[
+            if (provider.scheduleSlots.isEmpty &&
+                provider.selectedSemesterId != null &&
+                provider.selectedSection != null)
+              _EmptySlots(primaryColor: primaryColor)
+            else
+              ...provider.scheduleSlots.map(
+                (slot) => _SlotCard(
+                  slot: slot,
+                  primaryColor: primaryColor,
+                  isLoading: provider.isLoading,
+                  onTap: () => onStart(slot),
+                ),
+              ),
+          ],
+        ],
       ),
-      child: child,
     );
   }
+}
 
-  InputDecoration _dropdownDecoration(
-      Color color, IconData icon, bool hasData) {
-    return InputDecoration(
-      prefixIcon: Icon(icon, color: color),
-      suffixIcon: SizedBox(
-        width: 70,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+// ── Slot Card ─────────────────────────────────────────────────────────────────
+
+class _SlotCard extends StatelessWidget {
+  final TeacherScheduleSlotModel slot;
+  final Color primaryColor;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _SlotCard({
+    required this.slot,
+    required this.primaryColor,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.access_time, color: primaryColor),
+        ),
+        title: Text(
+          slot.courseName,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (hasData)
-              const Icon(Icons.check_circle, color: Colors.teal, size: 20),
-            const Icon(Icons.arrow_drop_down, color: Colors.grey),
-            const SizedBox(width: 8),
+            const SizedBox(height: 2),
+            Text(
+              slot.periodLabel,
+              style:
+                  const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.schedule,
+                    size: 13, color: primaryColor),
+                const SizedBox(width: 4),
+                Text(
+                  slot.displayTime,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Section ${slot.section}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.teal,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
+        trailing: isLoading
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              )
+            : ElevatedButton(
+                onPressed: isLoading ? null : onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF34A853),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: const Size(60, 36),
+                ),
+                child: const Text(
+                  'Start',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
       ),
-      filled: true,
-      fillColor: color.withOpacity(0.08),
-      enabledBorder: OutlineInputBorder(
-        borderSide:
-            BorderSide(color: color.withOpacity(0.2), width: 1),
-        borderRadius: BorderRadius.circular(12),
+    );
+  }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+class _EmptySlots extends StatelessWidget {
+  final Color primaryColor;
+  const _EmptySlots({required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(16),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: color, width: 2),
-        borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          Icon(Icons.event_busy, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 12),
+          const Text(
+            'No classes scheduled for today',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Try the Manual tab to start a session anyway',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 35, 4, 170).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon,
+              color: const Color.fromARGB(255, 35, 4, 170), size: 22),
+        ),
+        const SizedBox(width: 14),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900, fontSize: 16)),
+            Text(subtitle,
+                style:
+                    const TextStyle(color: Colors.grey, fontSize: 12)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DropdownCard extends StatelessWidget {
+  final Widget child;
+  const _DropdownCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) => child;
+}
+
+class _DropdownItem extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  const _DropdownItem(
+      {required this.label,
+      required this.selected,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          selected ? Icons.radio_button_checked : Icons.radio_button_off,
+          color: selected ? color : Colors.grey,
+          size: 18,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(label, overflow: TextOverflow.ellipsis),
+        ),
+      ],
     );
   }
 }

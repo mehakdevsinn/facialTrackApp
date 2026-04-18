@@ -18,6 +18,7 @@ import 'package:facialtrackapp/core/models/teacher_course_model.dart';
 import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
 import 'package:facialtrackapp/core/models/attendance_record_model.dart';
+import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1543,6 +1544,46 @@ extension TeacherSessionApiMethods on ApiManager {
       final List data = jsonDecode(response.body) as List;
       return data
           .map((e) => SessionModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── 9. GET teacher schedule (timetable slots) ───────────────────────────
+  /// GET /teachers/{teacher_id}/schedule
+  ///
+  /// Requires EITHER [timetableId] OR both [semesterId] + [section].
+  /// Optional [forDate] ("YYYY-MM-DD") filters by weekday.
+  Future<List<TeacherScheduleSlotModel>> getTeacherSchedule(
+    String teacherId, {
+    String? semesterId,
+    String? section,
+    String? timetableId,
+    String? forDate,
+  }) async {
+    try {
+      final params = <String, String>{};
+      if (timetableId != null) {
+        params['timetable_id'] = timetableId;
+      } else {
+        if (semesterId != null) params['semester_id'] = semesterId;
+        if (section != null) params['section'] = section;
+      }
+      if (forDate != null) params['for_date'] = forDate;
+
+      final uri = Uri.parse(Endpoints.teacherSchedule(teacherId))
+          .replace(queryParameters: params.isEmpty ? null : params);
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) =>
+              TeacherScheduleSlotModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on AuthException {
       rethrow;

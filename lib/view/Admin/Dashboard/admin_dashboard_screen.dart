@@ -10,6 +10,7 @@ import 'package:facialtrackapp/view/Admin/Semester%20Management/individual_semes
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_screen.dart';
 import 'package:facialtrackapp/view/Admin/Schedule%20Management/schedule_list_screen.dart';
 import 'package:facialtrackapp/view/Admin/Settings/face_enrollment_settings_screen.dart';
+import 'package:facialtrackapp/view/Admin/Settings/attendance_criteria_settings_screen.dart';
 import 'package:facialtrackapp/view/Admin/Profile/admin_profile_screen.dart';
 import 'package:facialtrackapp/view/Role Selection/role_selcetion_screen.dart';
 import 'package:flutter/material.dart';
@@ -345,6 +346,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.insights_rounded,
+                    color: Colors.deepOrange,
+                    title: 'Attendance Criteria',
+                    subtitle: 'Set minimum attendance percentage threshold',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const AttendanceCriteriaSettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   _buildMenuItem(
                     context,
                     icon: Icons.face_retouching_natural_rounded,

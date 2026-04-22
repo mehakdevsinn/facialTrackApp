@@ -1,5 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/admin_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AttendanceCriteriaSettingsScreen extends StatefulWidget {
   const AttendanceCriteriaSettingsScreen({super.key});
@@ -12,18 +14,38 @@ class AttendanceCriteriaSettingsScreen extends StatefulWidget {
 class _AttendanceCriteriaSettingsScreenState
     extends State<AttendanceCriteriaSettingsScreen> {
   double _threshold = 75;
+  bool _isInitializedFromApi = false;
 
   int get _thresholdPercent => _threshold.round();
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      if (!mounted) return;
+      await context.read<AdminProvider>().fetchAttendanceCriteria();
+      if (!mounted) return;
+      final fetched = context.read<AdminProvider>().attendanceCriteria;
+      setState(() {
+        _threshold = fetched.toDouble();
+        _isInitializedFromApi = true;
+      });
+    });
+  }
+
   Future<void> _save() async {
+    final admin = context.read<AdminProvider>();
+    final success = await admin.saveAttendanceCriteria(_thresholdPercent);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Attendance criteria set to $_thresholdPercent%. '
-          'Backend integration will be added later.',
+          success
+              ? 'Attendance criteria set to $_thresholdPercent%.'
+              : (admin.attendanceCriteriaError ??
+                  'Failed to save attendance criteria.'),
         ),
-        backgroundColor: Colors.green.shade600,
+        backgroundColor: success ? Colors.green.shade600 : Colors.red.shade600,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
@@ -50,11 +72,27 @@ class _AttendanceCriteriaSettingsScreenState
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        body: Consumer<AdminProvider>(
+          builder: (context, admin, _) {
+            final isLoading = admin.isAttendanceCriteriaLoading;
+            final isSaving = admin.isAttendanceCriteriaSaving;
+            final canEdit = !isLoading && !isSaving;
+
+            if (!_isInitializedFromApi && !isLoading) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() {
+                  _threshold = admin.attendanceCriteria.toDouble();
+                  _isInitializedFromApi = true;
+                });
+              });
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -124,6 +162,13 @@ class _AttendanceCriteriaSettingsScreenState
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                     ),
                     const SizedBox(height: 20),
+                    if (isLoading)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorPallet.primaryBlue,
+                        ),
+                      )
+                    else ...[
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -173,9 +218,9 @@ class _AttendanceCriteriaSettingsScreenState
                         divisions: 50,
                         value: _threshold,
                         label: '$_thresholdPercent%',
-                        onChanged: (value) {
+                        onChanged: canEdit ? (value) {
                           setState(() => _threshold = value);
-                        },
+                        } : null,
                       ),
                     ),
                     Row(
@@ -193,6 +238,7 @@ class _AttendanceCriteriaSettingsScreenState
                         ),
                       ],
                     ),
+                    ],
                   ],
                 ),
               ),
@@ -201,14 +247,23 @@ class _AttendanceCriteriaSettingsScreenState
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    'Save Settings',
-                    style: TextStyle(
+                  onPressed: canEdit ? _save : null,
+                  icon: isSaving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.white,
+                        ),
+                  label: Text(
+                    isSaving ? 'Saving...' : 'Save Settings',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -216,6 +271,8 @@ class _AttendanceCriteriaSettingsScreenState
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorPallet.primaryBlue,
+                    disabledBackgroundColor:
+                        ColorPallet.primaryBlue.withOpacity(0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -223,8 +280,10 @@ class _AttendanceCriteriaSettingsScreenState
                   ),
                 ),
               ),
-            ],
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

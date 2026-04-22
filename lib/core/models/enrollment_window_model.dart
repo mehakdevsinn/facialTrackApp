@@ -45,3 +45,26 @@ class EnrollmentDeadlineModel {
     return DateTime.tryParse(enrollmentDeadline!);
   }
 }
+
+/// Model for GET/PUT /api/v1/admin/settings/attendance-criteria
+class AttendanceCriteriaModel {
+  final int attendanceThresholdPercent;
+  final String? updatedAt;
+  final String? updatedBy;
+
+  const AttendanceCriteriaModel({
+    required this.attendanceThresholdPercent,
+    this.updatedAt,
+    this.updatedBy,
+  });
+
+  factory AttendanceCriteriaModel.fromJson(Map<String, dynamic> json) {
+    final raw = json['attendance_threshold_percent'];
+    final parsed = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+    return AttendanceCriteriaModel(
+      attendanceThresholdPercent: (parsed ?? 75).clamp(50, 100),
+      updatedAt: json['updated_at'] as String?,
+      updatedBy: json['updated_by'] as String?,
+    );
+  }
+}

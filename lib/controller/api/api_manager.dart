@@ -1319,6 +1319,45 @@ extension AssignmentApiMethods on ApiManager {
       throw _handleError(e);
     }
   }
+
+  // ─── ADMIN: Get Attendance Criteria ───────────────────────────────────────
+  /// GET /api/v1/admin/settings/attendance-criteria
+  Future<AttendanceCriteriaModel> getAttendanceCriteria() async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.attendanceCriteria),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 15));
+      _assertSuccess(response);
+      return AttendanceCriteriaModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── ADMIN: Set Attendance Criteria ───────────────────────────────────────
+  /// PUT /api/v1/admin/settings/attendance-criteria
+  Future<AttendanceCriteriaModel> setAttendanceCriteria(int threshold) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse(Endpoints.attendanceCriteria),
+            headers: await _authHeaders(),
+            body: jsonEncode({'attendance_threshold_percent': threshold}),
+          )
+          .timeout(const Duration(seconds: 15));
+      _assertSuccess(response);
+      return AttendanceCriteriaModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
 }
 
 // ── Minimal API Timetable model (deserialized directly from JSON) ─────────────

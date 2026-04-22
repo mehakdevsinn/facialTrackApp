@@ -133,6 +133,10 @@ class Endpoints {
   static const String enrollmentDeadline =
       '$_adminSettings/enrollment-deadline';
 
+  /// GET → fetch attendance threshold  |  PUT → set/update threshold
+  static const String attendanceCriteria =
+      '$_adminSettings/attendance-criteria';
+
   // ── Teacher — Session Flow ────────────────────────────────────────────────
   static const String _teacher = '$baseUrl/api/v1/teachers';
 

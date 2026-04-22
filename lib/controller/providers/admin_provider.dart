@@ -83,6 +83,12 @@ class AdminProvider extends ChangeNotifier {
   bool _isDeadlineSaving = false;
   String? _deadlineError;
 
+  // ── Attendance criteria settings ───────────────────────────────────────────
+  int _attendanceCriteria = 75;
+  bool _isAttendanceCriteriaLoading = false;
+  bool _isAttendanceCriteriaSaving = false;
+  String? _attendanceCriteriaError;
+
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -149,6 +155,12 @@ class AdminProvider extends ChangeNotifier {
   bool get isDeadlineLoading => _isDeadlineLoading;
   bool get isDeadlineSaving => _isDeadlineSaving;
   String? get deadlineError => _deadlineError;
+
+  // Attendance criteria
+  int get attendanceCriteria => _attendanceCriteria;
+  bool get isAttendanceCriteriaLoading => _isAttendanceCriteriaLoading;
+  bool get isAttendanceCriteriaSaving => _isAttendanceCriteriaSaving;
+  String? get attendanceCriteriaError => _attendanceCriteriaError;
 
   // Schedule
   List<Timetable> get timetables => List.unmodifiable(_timetables);
@@ -788,6 +800,11 @@ class AdminProvider extends ChangeNotifier {
     _isSemestersLoading = false;
     _isPendingStudentsLoading = false;
     _isAssignmentsLoading = false;
+
+    _attendanceCriteria = 75;
+    _isAttendanceCriteriaLoading = false;
+    _isAttendanceCriteriaSaving = false;
+    _attendanceCriteriaError = null;
     notifyListeners();
   }
 
@@ -1142,6 +1159,51 @@ class AdminProvider extends ChangeNotifier {
     } catch (_) {
       _deadlineError = 'Failed to save enrollment deadline.';
       _isDeadlineSaving = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Fetches the current attendance threshold and caches it.
+  Future<void> fetchAttendanceCriteria() async {
+    _isAttendanceCriteriaLoading = true;
+    _attendanceCriteriaError = null;
+    notifyListeners();
+    try {
+      final model = await _api.getAttendanceCriteria();
+      _attendanceCriteria = model.attendanceThresholdPercent;
+      _isAttendanceCriteriaLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      _attendanceCriteriaError = e.message;
+      _isAttendanceCriteriaLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _attendanceCriteriaError = 'Failed to load attendance criteria.';
+      _isAttendanceCriteriaLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Saves the chosen attendance threshold. Returns true on success.
+  Future<bool> saveAttendanceCriteria(int threshold) async {
+    _isAttendanceCriteriaSaving = true;
+    _attendanceCriteriaError = null;
+    notifyListeners();
+    try {
+      final model = await _api.setAttendanceCriteria(threshold);
+      _attendanceCriteria = model.attendanceThresholdPercent;
+      _isAttendanceCriteriaSaving = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _attendanceCriteriaError = e.message;
+      _isAttendanceCriteriaSaving = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _attendanceCriteriaError = 'Failed to save attendance criteria.';
+      _isAttendanceCriteriaSaving = false;
       notifyListeners();
       return false;
     }

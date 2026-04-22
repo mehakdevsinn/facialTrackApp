@@ -154,7 +154,7 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                   ],
                   const SizedBox(height: 16),
                   if (data != null) ...[
-                    _summaryCard(data),
+                    _summaryCard(data, report.attendanceThreshold),
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,
@@ -273,7 +273,7 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
     );
   }
 
-  Widget _summaryCard(data) {
+  Widget _summaryCard(data, int threshold) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -291,6 +291,15 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
           Text(
             '${DateFormat('MMMM').format(DateTime(0, data.month))} ${data.year}',
             style: const TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Current criterion: $threshold%',
+            style: const TextStyle(
+              color: Colors.blueGrey,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 14),
           Row(

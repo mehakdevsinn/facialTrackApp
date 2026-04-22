@@ -151,7 +151,9 @@ class AttendanceReportScreen extends StatelessWidget {
     CourseReportStudent student,
     int courseTotalSessions,
   ) {
-    final isLow = student.attendancePercentage < 75;
+    final threshold =
+        context.read<TeacherReportProvider>().attendanceThreshold.toDouble();
+    final isLow = student.attendancePercentage < threshold;
     return InkWell(
       onTap: () {
         Navigator.push(

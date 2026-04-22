@@ -10,6 +10,7 @@ class TeacherReportProvider extends ChangeNotifier {
   bool _isLoadingCourses = false;
   bool _isGenerating = false;
   String? _errorMessage;
+  int _attendanceThreshold = 75;
 
   List<TeacherCourseModel> _courses = [];
   String? _selectedSemesterId;
@@ -30,6 +31,7 @@ class TeacherReportProvider extends ChangeNotifier {
   MonthlyReportResponse? get monthlyReport => _monthlyReport;
   DailyReportResponse? get dailyReport => _dailyReport;
   List<LowAttendanceStudent> get lowAttendance => _lowAttendance;
+  int get attendanceThreshold => _attendanceThreshold;
 
   List<SemesterOption> get semesterOptions {
     final map = <String, SemesterOption>{};
@@ -84,6 +86,7 @@ class TeacherReportProvider extends ChangeNotifier {
       final teacherId = await StorageService.getUserId();
       if (teacherId == null) throw Exception('Not logged in');
       _courses = await _api.getTeacherCourses(teacherId);
+      await _loadAttendanceThreshold();
       if (_selectedSemesterId == null && _courses.isNotEmpty) {
         _selectedSemesterId = _courses.first.semesterId;
       }
@@ -95,6 +98,15 @@ class TeacherReportProvider extends ChangeNotifier {
     } catch (_) {
       _isLoadingCourses = false;
       _setError('Failed to load courses.');
+    }
+  }
+
+  Future<void> _loadAttendanceThreshold() async {
+    try {
+      final criteria = await _api.getAttendanceCriteria();
+      _attendanceThreshold = criteria.attendanceThresholdPercent;
+    } catch (_) {
+      // Keep default threshold (75) if this setting endpoint is unavailable.
     }
   }
 

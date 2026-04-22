@@ -33,9 +33,10 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
         final semesters = report.semesterOptions;
         final courses = report.filteredCourses;
         final data = report.monthlyReport;
+        final threshold = report.attendanceThreshold.toDouble();
         final students = (showOnlyLow && data != null)
             ? data.students
-                .where((s) => s.attendancePercentage < 75)
+                .where((s) => s.attendancePercentage < threshold)
                 .toList()
             : (data?.students ?? []);
 
@@ -159,7 +160,8 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                       alignment: Alignment.centerRight,
                       child: FilterChip(
                         selected: showOnlyLow,
-                        label: const Text('Low Attendance (<75%)'),
+                        label: Text(
+                            'Low Attendance (<${report.attendanceThreshold}%)'),
                         onSelected: (v) => setState(() => showOnlyLow = v),
                       ),
                     ),
@@ -202,7 +204,7 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                               Text(
                                 '${s.attendancePercentage.toStringAsFixed(1)}%',
                                 style: TextStyle(
-                                  color: s.attendancePercentage < 75
+                                  color: s.attendancePercentage < threshold
                                       ? Colors.red
                                       : Colors.green,
                                   fontWeight: FontWeight.bold,

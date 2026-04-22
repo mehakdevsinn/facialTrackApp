@@ -1,8 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/attendence_report_screen.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/date_range.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class SelectionScreen extends StatefulWidget {
   const SelectionScreen({super.key});
@@ -12,316 +13,219 @@ class SelectionScreen extends StatefulWidget {
 }
 
 class _SelectionScreenState extends State<SelectionScreen> {
-  String? selectedSemester;
-  String? selectedSubject;
   DateTime? startDate;
   DateTime? endDate;
 
-  final List<String> semesters = [
-    'Semester 1',
-    'Semester 2',
-    'Semester 3',
-    'Semester 4',
-  ];
-  final List<String> subjects = [
-    'Mathematics',
-    'Computer Science',
-    'Physics',
-    'History',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<TeacherReportProvider>().loadCourses();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFF), // Ultra light blue-grey
-        appBar: AppBar(
-          backgroundColor: ColorPallet.primaryBlue,
-          foregroundColor: ColorPallet.white,
-          elevation: 0,
-          centerTitle: true,
-          title: const Text(
-            "Academic Selection",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              color: Colors.white,
-            ),
-          ),
-          // shape: const RoundedRectangleBorder(
-          //   borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-          // ),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Analyze Reports",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF2D3142),
-                ),
-              ),
-              const Text(
-                "Select details to generate analytics",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-              const SizedBox(height: 35),
+    return Consumer<TeacherReportProvider>(
+      builder: (context, report, _) {
+        final semesterItems = report.semesterOptions;
+        final courses = report.filteredCourses;
+        final canGenerate = report.selectedSemesterId != null &&
+            report.selectedCourseId != null &&
+            startDate != null &&
+            !report.isGenerating;
 
-              // --- Semester Selection ---
-              _buildSectionHeader(
-                "Academic Semester",
-                Icons.auto_awesome_mosaic_rounded,
-              ),
-              _buildCustomDropdown(
-                hint: "Choose Semester",
-                value: selectedSemester,
-                items: semesters,
-                onChanged: (val) => setState(() => selectedSemester = val),
-                icon: Icons.school_rounded,
-              ),
-
-              const SizedBox(height: 25),
-
-              // --- Subject Selection ---
-              _buildSectionHeader("Course Subject", Icons.menu_book_rounded),
-              _buildCustomDropdown(
-                hint: "Choose Subject",
-                value: selectedSubject,
-                items: subjects,
-                onChanged: (val) => setState(() => selectedSubject = val),
-                icon: Icons.subject_rounded,
-              ),
-
-              const SizedBox(height: 25),
-
-              _buildSectionHeader("Time Period", Icons.calendar_today_rounded),
-              _buildDateTile(),
-
-              const SizedBox(height: 50),
-
-              _buildContinueButton(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: ColorPallet.primaryBlue),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomDropdown({
-    required String hint,
-    String? value,
-    required List<String> items,
-    required Function(String?) onChanged,
-    required IconData icon,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          prefixIcon: Icon(
-            icon,
-            color: ColorPallet.primaryBlue.withOpacity(0.7),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-        items: items
-            .map(
-              (s) => DropdownMenuItem(
-                value: s,
-                child: Text(s, style: const TextStyle(fontSize: 15)),
-              ),
-            )
-            .toList(),
-        onChanged: onChanged,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-    );
-  }
-
-  Widget _buildDateTile() {
-    return InkWell(
-      onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const TimeframeScreen()),
-        );
-        if (result != null && result is Map<String, DateTime?>) {
-          setState(() {
-            startDate = result['start'];
-            endDate = result['end'];
-          });
-        }
-      },
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.blue.withOpacity(0.05)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: startDate == null
-                ? Colors.transparent
-                : ColorPallet.primaryBlue.withOpacity(0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: ColorPallet.primaryBlue.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.date_range_rounded,
-                color: ColorPallet.primaryBlue,
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF8FAFF),
+            appBar: AppBar(
+              backgroundColor: ColorPallet.primaryBlue,
+              foregroundColor: Colors.white,
+              centerTitle: true,
+              title: const Text(
+                'Academic Selection',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
-            const SizedBox(width: 15),
-            Expanded(
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    startDate == null ? "Select Date Range" : "Selected Period",
+                  const Text(
+                    'Analyze Reports',
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF2D3142),
                     ),
                   ),
-                  Text(
-                    startDate == null
-                        ? "Not Selected"
-                        : "${DateFormat('MMM d, y').format(startDate!)} - ${DateFormat('MMM d, y').format(endDate!)}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF2D3142),
+                  const Text(
+                    'Select details to generate analytics',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 30),
+                  _label('Academic Semester'),
+                  _dropdown(
+                    value: report.selectedSemesterId,
+                    hint: report.isLoadingCourses ? 'Loading...' : 'Choose Semester',
+                    items: semesterItems.map((s) => s.id).toList(),
+                    labels: {for (final s in semesterItems) s.id: s.label},
+                    onChanged: report.isLoadingCourses
+                        ? null
+                        : (v) => report.setSelectedSemester(v),
+                  ),
+                  const SizedBox(height: 20),
+                  _label('Course Subject'),
+                  _dropdown(
+                    value: report.selectedCourseId,
+                    hint: 'Choose Subject',
+                    items: courses.map((c) => c.id).toList(),
+                    labels: {for (final c in courses) c.id: '${c.code} - ${c.name}'},
+                    onChanged: (v) => report.setSelectedCourse(v),
+                  ),
+                  const SizedBox(height: 20),
+                  _label('Time Period'),
+                  InkWell(
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TimeframeScreen(),
+                        ),
+                      );
+                      if (result is Map<String, DateTime?>) {
+                        setState(() {
+                          startDate = result['start'];
+                          endDate = result['end'];
+                        });
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Text(
+                        startDate == null
+                            ? 'Select Date Range'
+                            : '${startDate!.toIso8601String().split('T').first} - ${(endDate ?? startDate!).toIso8601String().split('T').first}',
+                        style: TextStyle(
+                          color: startDate == null ? Colors.grey : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (report.errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      report.errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                  ],
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canGenerate
+                            ? ColorPallet.primaryBlue
+                            : Colors.grey.shade400,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      onPressed: canGenerate
+                          ? () async {
+                              final start =
+                                  startDate!.toIso8601String().split('T').first;
+                              final end = (endDate ?? startDate!)
+                                  .toIso8601String()
+                                  .split('T')
+                                  .first;
+                              final ok = await context
+                                  .read<TeacherReportProvider>()
+                                  .generateDateRangeReport(
+                                    startDate: start,
+                                    endDate: end,
+                                  );
+                              if (!mounted) return;
+                              if (!ok) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AttendanceReportScreen(
+                                    startDate: startDate,
+                                    endDate: endDate ?? startDate,
+                                  ),
+                                ),
+                              );
+                            }
+                          : null,
+                      child: Text(
+                        report.isGenerating ? 'Generating...' : 'Generate Report',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: Colors.grey,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildContinueButton() {
-    bool isReady =
-        selectedSemester != null &&
-        selectedSubject != null &&
-        startDate != null;
-    return Container(
-      width: double.infinity,
-      height: 58,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: isReady
-            ? LinearGradient(
-                colors: [ColorPallet.primaryBlue, const Color(0xFF6A85E6)],
-              )
-            : const LinearGradient(colors: [Colors.grey, Colors.blueGrey]),
-        boxShadow: isReady
-            ? [
-                BoxShadow(
-                  color: ColorPallet.primaryBlue.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : [],
-      ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8, left: 2),
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
-        onPressed: isReady
-            ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AttendanceReportScreen(
-                      startDate: startDate,
-                      endDate: endDate,
-                    ),
+      );
+
+  Widget _dropdown({
+    required String? value,
+    required String hint,
+    required List<String> items,
+    required Map<String, String> labels,
+    required ValueChanged<String?>? onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: value,
+          hint: Text(hint),
+          items: items
+              .map(
+                (id) => DropdownMenuItem<String>(
+                  value: id,
+                  child: Text(
+                    labels[id] ?? id,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                );
-              }
-            : null,
-        child: const Text(
-          "Generate Report",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
         ),
       ),
     );

@@ -1,131 +1,349 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/attendence_summary_card_widget.dart';
-import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/monthly_trend_chart_widget.dart';
-import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/performance_list_card_widget.dart';
-import 'package:facialtrackapp/utils/widgets/teacher%20side%20report%20screen%20widget/report_dropdown_widget.dart';
+import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class MonthlyAttendanceReport extends StatefulWidget {
   final bool showBackButton;
   const MonthlyAttendanceReport({super.key, this.showBackButton = false});
 
   @override
-  State<MonthlyAttendanceReport> createState() =>
-      _MonthlyAttendanceReportState();
+  State<MonthlyAttendanceReport> createState() => _MonthlyAttendanceReportState();
 }
 
 class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
-  final Color primaryDark = const Color(0xFF1A4B8F);
-
-  final Color accentTeal = const Color(0xFF26A69A);
-
-  final Color accentOrange = const Color(0xFFFF8A65);
   bool showOnlyLow = false;
-  String selectedSemester = "Semester 2";
-  String selectedMonth = "October 2025";
-  String selectedSubject = "Computer Science";
+  int selectedMonth = DateTime.now().month;
+  int selectedYear = DateTime.now().year;
 
-  // Even Semesters
-  final List<String> semesters = [
-    "Semester 2",
-    "Semester 4",
-    "Semester 6",
-    "Semester 8",
-  ];
-
-  // Full list of 12 Months
-  final List<String> months = [
-    "January 2025",
-    "February 2025",
-    "March 2025",
-    "April 2025",
-    "May 2025",
-    "June 2025",
-    "July 2025",
-    "August 2025",
-    "September 2025",
-    "October 2025",
-    "November 2025",
-    "December 2025",
-  ];
-
-  // Subjects for the teacher
-  final List<String> subjects = [
-    "Computer Science",
-    "Software Engineering",
-    "Information Technology",
-    "Artificial Intelligence",
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<TeacherReportProvider>().loadCourses();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: widget.showBackButton,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
+    return Consumer<TeacherReportProvider>(
+      builder: (context, report, _) {
+        final semesters = report.semesterOptions;
+        final courses = report.filteredCourses;
+        final data = report.monthlyReport;
+        final students = (showOnlyLow && data != null)
+            ? data.students
+                .where((s) => s.attendancePercentage < 75)
+                .toList()
+            : (data?.students ?? []);
+
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.grey[100],
+            appBar: AppBar(
+              foregroundColor: Colors.white,
+              backgroundColor: ColorPallet.primaryBlue,
+              leading: widget.showBackButton
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  : null,
+              title: const Text('Monthly Report'),
+              centerTitle: true,
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _dropdownCard(
+                    title: 'Semester',
+                    child: _dropdown(
+                      value: report.selectedSemesterId,
+                      hint: report.isLoadingCourses ? 'Loading...' : 'Select',
+                      items: semesters.map((s) => s.id).toList(),
+                      labels: {for (final s in semesters) s.id: s.label},
+                      onChanged: (v) => report.setSelectedSemester(v),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _dropdownCard(
+                    title: 'Subject',
+                    child: _dropdown(
+                      value: report.selectedCourseId,
+                      hint: 'Select',
+                      items: courses.map((c) => c.id).toList(),
+                      labels: {for (final c in courses) c.id: '${c.code} - ${c.name}'},
+                      onChanged: (v) => report.setSelectedCourse(v),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _dropdownCard(
+                          title: 'Month',
+                          child: _dropdown(
+                            value: selectedMonth.toString(),
+                            hint: 'Month',
+                            items: List.generate(12, (i) => '${i + 1}'),
+                            labels: {
+                              for (int i = 1; i <= 12; i++)
+                                '$i': DateFormat('MMMM').format(DateTime(0, i)),
+                            },
+                            onChanged: (v) =>
+                                setState(() => selectedMonth = int.parse(v!)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _dropdownCard(
+                          title: 'Year',
+                          child: _dropdown(
+                            value: selectedYear.toString(),
+                            hint: 'Year',
+                            items: List.generate(6, (i) => '${DateTime.now().year - 2 + i}'),
+                            labels: {
+                              for (int i = 0; i < 6; i++)
+                                '${DateTime.now().year - 2 + i}':
+                                    '${DateTime.now().year - 2 + i}',
+                            },
+                            onChanged: (v) =>
+                                setState(() => selectedYear = int.parse(v!)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorPallet.primaryBlue,
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor: Colors.white70,
+                      ),
+                      onPressed: report.selectedCourseId == null || report.isGenerating
+                          ? null
+                          : () {
+                              report.generateMonthlyReport(
+                                year: selectedYear,
+                                month: selectedMonth,
+                              );
+                            },
+                      child: Text(
+                        report.isGenerating ? 'Generating...' : 'Generate',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (report.errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      report.errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  if (data != null) ...[
+                    _summaryCard(data),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilterChip(
+                        selected: showOnlyLow,
+                        label: const Text('Low Attendance (<75%)'),
+                        onSelected: (v) => setState(() => showOnlyLow = v),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _sectionTitle('Class Performance'),
+                    const SizedBox(height: 8),
+                    if (students.isEmpty)
+                      const _EmptyBox(message: 'No students match this filter.')
+                    else
+                      ...students.map(
+                        (s) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      s.studentName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      s.rollNumber,
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${s.attendancePercentage.toStringAsFixed(1)}%',
+                                style: TextStyle(
+                                  color: s.attendancePercentage < 75
+                                      ? Colors.red
+                                      : Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
       },
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Colors.grey[100],
-          appBar: AppBar(
-            foregroundColor: ColorPallet.white,
-            automaticallyImplyLeading: false,
-            backgroundColor: ColorPallet.primaryBlue,
-            leading: widget.showBackButton
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  )
-                : null,
-            title: Column(
-              children: [
-                const Text(
-                  'Monthly Report',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
-                Text(
-                  "$selectedSubject • $selectedSemester",
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
-                ),
-              ],
-            ),
-            centerTitle: true,
+    );
+  }
+
+  Widget _dropdownCard({required String title, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                ReportDropdowns(
-                  selectedSemester: selectedSemester,
-                  selectedMonth: selectedMonth,
-                  selectedSubject: selectedSubject,
-                  semesters: semesters,
-                  months: months,
-                  subjects: subjects,
-                  onSemesterChanged: (val) =>
-                      setState(() => selectedSemester = val!),
-                  onMonthChanged: (val) => setState(() => selectedMonth = val!),
-                  onSubjectChanged: (val) =>
-                      setState(() => selectedSubject = val!),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required String? value,
+    required String hint,
+    required List<String> items,
+    required Map<String, String> labels,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        isExpanded: true,
+        value: value,
+        hint: Text(hint),
+        items: items
+            .map(
+              (id) => DropdownMenuItem<String>(
+                value: id,
+                child: Text(
+                  labels[id] ?? id,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 16),
-                AttendanceSummaryCard(
-                  showOnlyLow: showOnlyLow,
-                  onToggleLow: () => setState(() => showOnlyLow = !showOnlyLow),
-                ),
-                const SizedBox(height: 16),
-                PerformanceListCard(
-                  showOnlyLow: showOnlyLow,
-                  selectedSemester: selectedSemester,
-                  selectedMonth: selectedMonth,
-                  selectedSubject: selectedSubject,
-                ),
-                const SizedBox(height: 16),
-                MonthlyTrendChart(showOnlyLow: showOnlyLow),
-              ],
-            ),
+              ),
+            )
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _summaryCard(data) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(
+            data.courseName,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(height: 8),
+          Text(
+            '${DateFormat('MMMM').format(DateTime(0, data.month))} ${data.year}',
+            style: const TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _metric('Overall', '${data.overallAttendancePercentage.toStringAsFixed(1)}%'),
+              _metric('Present', '${data.totalPresentAcrossSessions}'),
+              _metric('Absent', '${data.totalAbsentAcrossSessions}'),
+              _metric('Sessions', '${data.totalSessions}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metric(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+      ],
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    );
+  }
+}
+
+class _EmptyBox extends StatelessWidget {
+  final String message;
+  const _EmptyBox({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(color: Colors.grey),
       ),
     );
   }

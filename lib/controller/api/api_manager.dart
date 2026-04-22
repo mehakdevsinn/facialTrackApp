@@ -20,6 +20,7 @@ import 'package:facialtrackapp/core/models/roster_student_model.dart';
 import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
+import 'package:facialtrackapp/core/models/report_models.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1677,6 +1678,109 @@ extension TeacherSessionApiMethods on ApiManager {
       _assertSuccess(response);
       return TeacherProfileSummaryModel.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+}
+
+// ── Reports API ────────────────────────────────────────────────────────────────
+extension ReportsApiMethods on ApiManager {
+  Future<CourseReportResponse> getCourseReport(
+    String courseId, {
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final params = <String, String>{};
+      if (startDate != null && startDate.isNotEmpty) {
+        params['start_date'] = startDate;
+      }
+      if (endDate != null && endDate.isNotEmpty) {
+        params['end_date'] = endDate;
+      }
+      final uri = Uri.parse(Endpoints.reportCourse(courseId))
+          .replace(queryParameters: params.isEmpty ? null : params);
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return CourseReportResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<MonthlyReportResponse> getMonthlyReport(
+    String courseId, {
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final uri = Uri.parse(Endpoints.reportCourseMonthly(courseId)).replace(
+        queryParameters: {
+          'year': year.toString(),
+          'month': month.toString(),
+        },
+      );
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return MonthlyReportResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<DailyReportResponse> getDailyReport(
+    String courseId, {
+    required String reportDate,
+  }) async {
+    try {
+      final uri = Uri.parse(Endpoints.reportCourseDaily(courseId)).replace(
+        queryParameters: {'report_date': reportDate},
+      );
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return DailyReportResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<LowAttendanceStudent>> getLowAttendanceAlerts({
+    required String courseId,
+    double? threshold,
+  }) async {
+    try {
+      final params = <String, String>{'course_id': courseId};
+      if (threshold != null) params['threshold'] = threshold.toString();
+
+      final uri = Uri.parse(Endpoints.reportLowAttendance)
+          .replace(queryParameters: params);
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) =>
+              LowAttendanceStudent.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on AuthException {
       rethrow;
     } catch (e) {

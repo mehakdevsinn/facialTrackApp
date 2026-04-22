@@ -3,6 +3,7 @@ import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
+import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/view/Splash%20Screen/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => TeacherProvider()),
+        ChangeNotifierProvider(create: (_) => TeacherReportProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
         ChangeNotifierProvider(create: (_) => SessionProvider()),
       ],

@@ -181,4 +181,21 @@ class Endpoints {
   /// GET → profile summary stats + assigned subjects list.
   static String teacherProfileSummary(String teacherId) =>
       '$_teacher/$teacherId/profile-summary';
+
+  // ── Reports ────────────────────────────────────────────────────────────────
+  static const String _reports = '$baseUrl/api/v1/reports';
+
+  /// GET /reports/courses/{course_id}?start_date=&end_date=
+  static String reportCourse(String courseId) => '$_reports/courses/$courseId';
+
+  /// GET /reports/courses/{course_id}/monthly?year=&month=
+  static String reportCourseMonthly(String courseId) =>
+      '$_reports/courses/$courseId/monthly';
+
+  /// GET /reports/courses/{course_id}/daily?report_date=
+  static String reportCourseDaily(String courseId) =>
+      '$_reports/courses/$courseId/daily';
+
+  /// GET /reports/low-attendance?course_id=&threshold=
+  static const String reportLowAttendance = '$_reports/low-attendance';
 }

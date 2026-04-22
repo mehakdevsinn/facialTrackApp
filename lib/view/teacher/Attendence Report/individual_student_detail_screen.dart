@@ -1,17 +1,20 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/core/models/report_models.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/student_day_by_day_attendence_report.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/student_percenatge_screen.dart'; // Ensure correct path
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class StudentDetailOptionsScreen extends StatelessWidget {
-  final String studentName;
+  final CourseReportStudent student;
+  final int courseTotalSessions;
   final DateTime? startDate;
   final DateTime? endDate;
 
   const StudentDetailOptionsScreen({
     super.key,
-    required this.studentName,
+    required this.student,
+    required this.courseTotalSessions,
     this.startDate,
     this.endDate,
   });
@@ -22,7 +25,7 @@ class StudentDetailOptionsScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFF),
         appBar: AppBar(
-          title: Text("$studentName Attendance"),
+          title: Text("${student.studentName} Attendance"),
           backgroundColor: ColorPallet.primaryBlue,
           foregroundColor: Colors.white,
           centerTitle: true,
@@ -91,7 +94,8 @@ class StudentDetailOptionsScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => DayByDayReportScreen(
-                        studentName: studentName,
+                        student: student,
+                        courseTotalSessions: courseTotalSessions,
                         startDate: startDate,
                         endDate: endDate,
                       ),
@@ -113,7 +117,8 @@ class StudentDetailOptionsScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => StudentPercentageScreen(
-                        studentName: studentName,
+                        student: student,
+                        courseTotalSessions: courseTotalSessions,
                         startDate: startDate,
                         endDate: endDate,
                       ),

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 class OverviewCard extends StatelessWidget {
-  const OverviewCard({super.key});
+  final int subjectsAssignedCount;
+  final int totalClassesHandled;
+  final int activeSessionsCount;
+
+  const OverviewCard({
+    super.key,
+    required this.subjectsAssignedCount,
+    required this.totalClassesHandled,
+    required this.activeSessionsCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +22,15 @@ class OverviewCard extends StatelessWidget {
         children: [
           const Text("Overview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          _rowInfo(Icons.group, "Subjects assigned", "4"),
+          _rowInfo(Icons.group, "Subjects assigned", '$subjectsAssignedCount'),
           const Divider(height: 30),
-          _rowInfo(Icons.access_time, "Total classes handled", "13"),
+          _rowInfo(
+              Icons.access_time, "Total classes handled", '$totalClassesHandled'),
+          if (activeSessionsCount > 0) ...[
+            const Divider(height: 30),
+            _rowInfo(Icons.play_circle_fill_rounded, "Active now",
+                '$activeSessionsCount'),
+          ],
         ],
       ),
     );

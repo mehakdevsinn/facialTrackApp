@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 
 class SubjectsCard extends StatelessWidget {
-  const SubjectsCard({super.key});
+  final List<TeacherAssignedSubject> subjects;
+  const SubjectsCard({super.key, required this.subjects});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -26,23 +29,34 @@ class SubjectsCard extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 15),
-          
-          // Subject 1
-          _subjectTile(
-            Icons.book,
-            "Computer Science",
-            "BSCS - Semester 5",
-            Colors.blue,
-          ),
-          const Divider(),
-          
-          // Subject 2
-          _subjectTile(
-            Icons.menu_book,
-            "Data Structures",
-            "BSCS - Semester 5",
-            Colors.green,
-          ),
+          if (subjects.isEmpty)
+            Text(
+              'No subjects assigned yet.',
+              style: TextStyle(color: Colors.grey.shade600),
+            )
+          else
+            ...List.generate(subjects.length, (index) {
+              final subject = subjects[index];
+              final palette = [
+                Colors.blue,
+                Colors.green,
+                Colors.deepPurple,
+                Colors.orange,
+                Colors.teal,
+              ];
+              final color = palette[index % palette.length];
+              return Column(
+                children: [
+                  _subjectTile(
+                    Icons.book,
+                    '${subject.courseCode} - ${subject.courseName}',
+                    'Section ${subject.section} • ${subject.semesterLabel} • ${subject.academicSession}',
+                    color,
+                  ),
+                  if (index != subjects.length - 1) const Divider(),
+                ],
+              );
+            }),
         ],
       ),
     );

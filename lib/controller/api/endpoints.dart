@@ -173,4 +173,12 @@ class Endpoints {
   /// Optional [forDate] ("YYYY-MM-DD") filters by calendar weekday.
   static String teacherSchedule(String teacherId) =>
       '$_teacher/$teacherId/schedule';
+
+  /// GET → all assigned schedule slots for teacher.
+  static String teacherScheduleAll(String teacherId) =>
+      '$_teacher/$teacherId/schedule/all';
+
+  /// GET → profile summary stats + assigned subjects list.
+  static String teacherProfileSummary(String teacherId) =>
+      '$_teacher/$teacherId/profile-summary';
 }

@@ -19,6 +19,7 @@ import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
 import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
+import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1624,6 +1625,58 @@ extension TeacherSessionApiMethods on ApiManager {
           .map((e) =>
               TeacherScheduleSlotModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /teachers/{teacher_id}/schedule/all
+  /// Optional filters:
+  ///   [forDate] -> YYYY-MM-DD (today or specific date)
+  ///   [day] -> Mon/Tue/Wed/Thu/Fri...
+  Future<List<TeacherScheduleSlotModel>> getTeacherScheduleAll(
+    String teacherId, {
+    String? forDate,
+    String? day,
+  }) async {
+    try {
+      final params = <String, String>{};
+      if (forDate != null && forDate.isNotEmpty) params['for_date'] = forDate;
+      if (day != null && day.isNotEmpty) params['day'] = day;
+
+      final uri = Uri.parse(Endpoints.teacherScheduleAll(teacherId))
+          .replace(queryParameters: params.isEmpty ? null : params);
+
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) =>
+              TeacherScheduleSlotModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /teachers/{teacher_id}/profile-summary
+  Future<TeacherProfileSummaryModel> getTeacherProfileSummary(
+      String teacherId) async {
+    try {
+      final response = await http
+          .get(Uri.parse(Endpoints.teacherProfileSummary(teacherId)),
+              headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return TeacherProfileSummaryModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
     } on AuthException {
       rethrow;
     } catch (e) {

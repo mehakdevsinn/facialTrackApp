@@ -39,6 +39,8 @@ class SessionProvider extends ChangeNotifier {
   final Set<String> _pendingMarkIds = {};
 
   Timer? _pollTimer;
+  Timer? _activeSessionsPollTimer;
+  List<SessionModel> _activeSessions = [];
 
   // ── Getters ───────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
@@ -53,6 +55,7 @@ class SessionProvider extends ChangeNotifier {
   List<TeacherScheduleSlotModel> get scheduleSlots => _scheduleSlots;
   bool get scheduleLoading => _scheduleLoading;
   String? get selectedSection => _selectedSection;
+  List<SessionModel> get activeSessions => _activeSessions;
 
   // ── Computed ──────────────────────────────────────────────────────────────
 
@@ -81,6 +84,15 @@ class SessionProvider extends ChangeNotifier {
     if (_selectedCourseId == null) return null;
     try {
       return _courses.firstWhere((c) => c.id == _selectedCourseId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  SessionModel? activeSessionForCourse(String courseId) {
+    try {
+      return _activeSessions.firstWhere(
+          (s) => s.isActive && s.courseId == courseId);
     } catch (_) {
       return null;
     }
@@ -165,7 +177,14 @@ class SessionProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } on AuthException catch (e) {
-      _setError(e.message);
+      final lower = e.message.toLowerCase();
+      if (lower.contains('already an active session') ||
+          lower.contains('already active session')) {
+        _setError(
+            'A session is already active for this class. You can view it from active sessions.');
+      } else {
+        _setError(e.message);
+      }
       return false;
     } catch (e) {
       _setError('Failed to create session: ${e.toString()}');
@@ -193,7 +212,14 @@ class SessionProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } on AuthException catch (e) {
-      _setError(e.message);
+      final lower = e.message.toLowerCase();
+      if (lower.contains('already an active session') ||
+          lower.contains('already active session')) {
+        _setError(
+            'A session is already active for this class. You can view it from active sessions.');
+      } else {
+        _setError(e.message);
+      }
       return false;
     } catch (e) {
       _setError('Failed to create session: ${e.toString()}');
@@ -250,6 +276,35 @@ class SessionProvider extends ChangeNotifier {
   Future<List<SessionModel>> getActiveSessions() =>
       _api.getActiveSessions();
 
+  Future<void> refreshActiveSessions() async {
+    try {
+      _activeSessions = await _api.getActiveSessions();
+      if (_currentSession != null) {
+        final match = _activeSessions.where((s) => s.id == _currentSession!.id);
+        if (match.isEmpty) {
+          // session no longer active (possibly auto-stopped)
+          _currentSession = null;
+        }
+      }
+      notifyListeners();
+    } catch (_) {
+      // non-blocking background refresh
+    }
+  }
+
+  void startActiveSessionsPolling() {
+    _activeSessionsPollTimer?.cancel();
+    _activeSessionsPollTimer =
+        Timer.periodic(const Duration(seconds: 20), (_) {
+      refreshActiveSessions();
+    });
+  }
+
+  void stopActiveSessionsPolling() {
+    _activeSessionsPollTimer?.cancel();
+    _activeSessionsPollTimer = null;
+  }
+
   // ── 10. Load today's schedule slots ───────────────────────────────────────
   /// Requires [_selectedSemesterId] + [_selectedSection] to be set.
   Future<void> loadSchedule() async {
@@ -276,6 +331,7 @@ class SessionProvider extends ChangeNotifier {
         section: _selectedSection,
         forDate: forDate,
       );
+      await refreshActiveSessions();
       notifyListeners();
     } on AuthException catch (e) {
       _setError(e.message);
@@ -389,6 +445,7 @@ class SessionProvider extends ChangeNotifier {
   // ── Reset (logout / new flow) ─────────────────────────────────────────────
   void clear() {
     stopPolling();
+    stopActiveSessionsPolling();
     _courses = [];
     _selectedSemesterId = null;
     _selectedCourseId = null;
@@ -397,6 +454,7 @@ class SessionProvider extends ChangeNotifier {
     _attendanceRecords = [];
     _scheduleSlots = [];
     _selectedSection = null;
+    _activeSessions = [];
     _errorMessage = null;
     _isLoading = false;
     notifyListeners();
@@ -405,6 +463,7 @@ class SessionProvider extends ChangeNotifier {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _activeSessionsPollTimer?.cancel();
     super.dispose();
   }
 }

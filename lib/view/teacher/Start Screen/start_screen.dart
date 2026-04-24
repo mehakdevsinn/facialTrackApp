@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
+import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/teacher_course_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
@@ -27,7 +28,10 @@ class _StartSessionScreenState extends State<StartSessionScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SessionProvider>().loadCourses();
+      final provider = context.read<SessionProvider>();
+      provider.loadCourses();
+      provider.refreshActiveSessions();
+      provider.startActiveSessionsPolling();
     });
   }
 
@@ -549,7 +553,8 @@ class _ScheduleTab extends StatelessWidget {
                   slot: slot,
                   primaryColor: primaryColor,
                   isLoading: provider.isLoading,
-                  onTap: () => onStart(slot),
+                  activeSession: provider.activeSessionForCourse(slot.courseId),
+                  onStart: () => onStart(slot),
                 ),
               ),
           ],
@@ -565,17 +570,22 @@ class _SlotCard extends StatelessWidget {
   final TeacherScheduleSlotModel slot;
   final Color primaryColor;
   final bool isLoading;
-  final VoidCallback onTap;
+  final VoidCallback onStart;
+  final SessionModel? activeSession;
 
   const _SlotCard({
     required this.slot,
     required this.primaryColor,
     required this.isLoading,
-    required this.onTap,
+    required this.onStart,
+    required this.activeSession,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasActive = activeSession != null;
+    final isAuto = (activeSession?.notes ?? '').toLowerCase() ==
+        'auto-created from timetable';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -650,6 +660,25 @@ class _SlotCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (hasActive && isAuto) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Auto (Timetable)',
+                  style: TextStyle(
+                    color: Colors.deepOrange,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
         trailing: isLoading
@@ -659,9 +688,27 @@ class _SlotCard extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
             : ElevatedButton(
-                onPressed: isLoading ? null : onTap,
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        if (hasActive) {
+                          context
+                              .read<SessionProvider>()
+                              .resumeSession(activeSession!);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  LiveSessionScreen(sessionId: activeSession!.id),
+                            ),
+                          );
+                          return;
+                        }
+                        onStart();
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF34A853),
+                  backgroundColor:
+                      hasActive ? Colors.orange.shade700 : const Color(0xFF34A853),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -669,15 +716,21 @@ class _SlotCard extends StatelessWidget {
                   ),
                   minimumSize: const Size(60, 36),
                 ),
-                child: const Text(
-                  'Start',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                child: Text(
+                  hasActive ? 'View' : 'Start',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13),
                 ),
               ),
+        isThreeLine: hasActive && isAuto,
+        subtitleTextStyle: const TextStyle(color: Colors.grey, fontSize: 12),
+        titleTextStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 15,
+          color: Colors.black,
+        ),
       ),
     );
   }

@@ -114,6 +114,8 @@ class _TeacherRootScreenState extends State<TeacherRootScreen>
           if (showBanner)
             _ResumeBanner(
               session: _resumableSession!,
+              isAutoCreated: (_resumableSession!.notes ?? '').toLowerCase() ==
+                  'auto-created from timetable',
               onResume: () => _resumeSession(_resumableSession!),
               onDismiss: _dismissBanner,
             ),
@@ -187,11 +189,13 @@ class _TeacherRootScreenState extends State<TeacherRootScreen>
 
 class _ResumeBanner extends StatelessWidget {
   final SessionModel session;
+  final bool isAutoCreated;
   final VoidCallback onResume;
   final VoidCallback onDismiss;
 
   const _ResumeBanner({
     required this.session,
+    required this.isAutoCreated,
     required this.onResume,
     required this.onDismiss,
   });
@@ -229,14 +233,31 @@ class _ResumeBanner extends StatelessWidget {
                 color: Colors.white, size: 10),
           ),
           const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'You have an active class session. Tap to resume.',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'You have an active class session. Tap to resume.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                if (isAutoCreated)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Auto-created from timetable',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           TextButton(

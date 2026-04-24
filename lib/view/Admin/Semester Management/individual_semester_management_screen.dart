@@ -60,6 +60,15 @@ class _IndividualSemesterManagementScreenState
 
   Color _statusColor(SemesterModel sem) => sem.statusColor;
 
+  bool _belongsToSpringTab(SemesterModel sem) {
+    final normalizedTerm = sem.termType.trim().toLowerCase();
+    if (normalizedTerm == 'spring') return true;
+    if (normalizedTerm == 'fall') return false;
+    return sem.semesterNumber.isEven;
+  }
+
+  bool _belongsToFallTab(SemesterModel sem) => !_belongsToSpringTab(sem);
+
   Future<void> _openAddScreen({SemesterModel? semester}) async {
     final result = await Navigator.push<bool>(
       context,
@@ -76,151 +85,206 @@ class _IndividualSemesterManagementScreenState
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          title: const Text(
-            'Semester Management',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              letterSpacing: 0.5,
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          appBar: AppBar(
+            title: const Text(
+              'Semester Management',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                letterSpacing: 0.5,
+              ),
+            ),
+            backgroundColor: ColorPallet.primaryBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh',
+                onPressed: () =>
+                    context.read<AdminProvider>().fetchSemesters(force: true),
+              ),
+            ],
+            bottom: const TabBar(
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              labelStyle: TextStyle(fontWeight: FontWeight.w700),
+              unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500),
+              tabs: [
+                Tab(text: 'Spring Semester'),
+                Tab(text: 'Fall Semester'),
+              ],
             ),
           ),
-          backgroundColor: ColorPallet.primaryBlue,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh',
-              onPressed: () =>
-                  context.read<AdminProvider>().fetchSemesters(force: true),
-            ),
-          ],
-        ),
-        body: Consumer<AdminProvider>(
-          builder: (context, admin, _) {
-            // ── Loading ──────────────────────────────────────────────────
-            if (admin.isSemestersLoading) {
-              return const Center(
-                child:
-                    CircularProgressIndicator(color: ColorPallet.primaryBlue),
-              );
-            }
+          body: Consumer<AdminProvider>(
+            builder: (context, admin, _) {
+              // ── Loading ──────────────────────────────────────────────────
+              if (admin.isSemestersLoading) {
+                return const Center(
+                  child:
+                      CircularProgressIndicator(color: ColorPallet.primaryBlue),
+                );
+              }
 
-            // ── Error ────────────────────────────────────────────────────
-            if (admin.semestersError != null) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
+              // ── Error ────────────────────────────────────────────────────
+              if (admin.semestersError != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.error_outline,
+                            color: Colors.red.shade300, size: 52),
+                        const SizedBox(height: 16),
+                        Text(
+                          admin.semestersError!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () => admin.fetchSemesters(force: true),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorPallet.primaryBlue,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              // ── Empty ────────────────────────────────────────────────────
+              if (admin.semesters.isEmpty) {
+                return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline,
-                          color: Colors.red.shade300, size: 52),
+                      Icon(Icons.calendar_today_outlined,
+                          size: 72, color: Colors.grey.shade300),
                       const SizedBox(height: 16),
                       Text(
-                        admin.semestersError!,
+                        'No semesters found.\nTap "New Term" to create one.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: () => admin.fetchSemesters(force: true),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorPallet.primaryBlue,
-                          foregroundColor: Colors.white,
-                        ),
+                        style: TextStyle(color: Colors.grey.shade500),
                       ),
                     ],
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            // ── Empty ────────────────────────────────────────────────────
-            if (admin.semesters.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.calendar_today_outlined,
-                        size: 72, color: Colors.grey.shade300),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No semesters found.\nTap "New Term" to create one.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade500),
-                    ),
-                  ],
-                ),
-              );
-            }
+              final springSemesters =
+                  admin.semesters.where(_belongsToSpringTab).toList();
+              final fallSemesters =
+                  admin.semesters.where(_belongsToFallTab).toList();
 
-            // ── List ─────────────────────────────────────────────────────
-            return RefreshIndicator(
-              color: ColorPallet.primaryBlue,
-              onRefresh: () => admin.fetchSemesters(force: true),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Term Records',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'Monitor and customize academic timelines for each session independently.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: admin.semesters.length,
-                      itemBuilder: (context, index) {
-                        final sem = admin.semesters[index];
-                        final color = _statusColor(sem);
-                        return _buildSemesterCard(
-                          sem,
-                          color,
-                          onTap: () => _openAddScreen(semester: sem),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _openAddScreen,
-          backgroundColor: ColorPallet.primaryBlue,
-          icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: const Text(
-            'New Term',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              // ── Tabbed Lists ───────────────────────────────────────────────
+              return TabBarView(
+                children: [
+                  _buildTermTabContent(
+                    semesters: springSemesters,
+                    emptyMessage:
+                        'No spring semesters found.\nTap "New Term" to create one.',
+                  ),
+                  _buildTermTabContent(
+                    semesters: fallSemesters,
+                    emptyMessage:
+                        'No fall semesters found.\nTap "New Term" to create one.',
+                  ),
+                ],
+              );
+            },
           ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _openAddScreen,
+            backgroundColor: ColorPallet.primaryBlue,
+            icon: const Icon(Icons.add_rounded, color: Colors.white),
+            label: const Text(
+              'New Term',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTermTabContent({
+    required List<SemesterModel> semesters,
+    required String emptyMessage,
+  }) {
+    if (semesters.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            emptyMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade500),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: ColorPallet.primaryBlue,
+      onRefresh: () =>
+          context.read<AdminProvider>().fetchSemesters(force: true),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Term Records',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Monitor and customize academic timelines for each session independently.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 25),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: semesters.length,
+              itemBuilder: (context, index) {
+                final sem = semesters[index];
+                final color = _statusColor(sem);
+                return _buildSemesterCard(
+                  sem,
+                  color,
+                  onTap: () => _openAddScreen(semester: sem),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

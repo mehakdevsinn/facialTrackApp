@@ -66,7 +66,12 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                       hint: report.isLoadingCourses ? 'Loading...' : 'Select',
                       items: semesters.map((s) => s.id).toList(),
                       labels: {for (final s in semesters) s.id: s.label},
-                      onChanged: (v) => report.setSelectedSemester(v),
+                      isLoading: report.isLoadingCourses,
+                      emptyMessage:
+                          'No course assignments yet. Ask an administrator to assign subjects before you can run reports.',
+                      onChanged: report.isLoadingCourses
+                          ? null
+                          : (v) => report.setSelectedSemester(v),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -77,7 +82,14 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                       hint: 'Select',
                       items: courses.map((c) => c.id).toList(),
                       labels: {for (final c in courses) c.id: '${c.code} - ${c.name}'},
-                      onChanged: (v) => report.setSelectedCourse(v),
+                      isLoading: report.isLoadingCourses,
+                      emptyMessage: report.selectedSemesterId == null
+                          ? 'Choose a semester first.'
+                          : 'No subjects for this semester. Check your assignments or pick another semester.',
+                      onChanged: report.selectedSemesterId == null ||
+                              report.isLoadingCourses
+                          ? null
+                          : (v) => report.setSelectedCourse(v),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -250,12 +262,53 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
     required String hint,
     required List<String> items,
     required Map<String, String> labels,
-    required ValueChanged<String?> onChanged,
+    required ValueChanged<String?>? onChanged,
+    bool isLoading = false,
+    String? emptyMessage,
   }) {
+    if (isLoading && items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading…', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, color: Colors.blueGrey.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                emptyMessage ?? 'Nothing to select yet.',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final safeValue = (value != null && items.contains(value)) ? value : null;
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         isExpanded: true,
-        value: value,
+        value: safeValue,
         hint: Text(hint),
         items: items
             .map(

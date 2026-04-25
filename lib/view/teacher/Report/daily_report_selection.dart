@@ -93,6 +93,9 @@ class _DailyReportSelectionScreenState extends State<DailyReportSelectionScreen>
                     items: semesterItems.map((s) => s.id).toList(),
                     labelsByValue: {for (final s in semesterItems) s.id: s.label},
                     icon: Icons.school_outlined,
+                    isLoading: report.isLoadingCourses,
+                    emptyMessage:
+                        'No course assignments yet. Ask an administrator to assign subjects before you can run reports.',
                     onChanged: report.isLoadingCourses
                         ? null
                         : (value) => report.setSelectedSemester(value),
@@ -107,7 +110,14 @@ class _DailyReportSelectionScreenState extends State<DailyReportSelectionScreen>
                       for (final c in courses) c.id: '${c.code} - ${c.name}',
                     },
                     icon: Icons.auto_stories_outlined,
-                    onChanged: (value) => report.setSelectedCourse(value),
+                    isLoading: report.isLoadingCourses,
+                    emptyMessage: report.selectedSemesterId == null
+                        ? 'Choose a semester first.'
+                        : 'No subjects for this semester. Check your assignments or pick another semester.',
+                    onChanged: report.selectedSemesterId == null ||
+                            report.isLoadingCourses
+                        ? null
+                        : (value) => report.setSelectedCourse(value),
                   ),
                   const SizedBox(height: 25),
                   _buildLabel('Select Date'),
@@ -238,24 +248,51 @@ class _DailyReportSelectionScreenState extends State<DailyReportSelectionScreen>
     required Map<String, String> labelsByValue,
     required IconData icon,
     required ValueChanged<String?>? onChanged,
+    bool isLoading = false,
+    String? emptyMessage,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DropdownButtonHideUnderline(
+    Widget inner;
+    if (isLoading && items.isEmpty) {
+      inner = const Padding(
+        padding: EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading…', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    } else if (items.isEmpty) {
+      inner = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: ColorPallet.primaryBlue.withOpacity(0.5), size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                emptyMessage ?? 'Nothing to select yet.',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      final safeValue = (value != null && items.contains(value)) ? value : null;
+      inner = DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: safeValue,
           hint: Text(hint, style: const TextStyle(color: Colors.grey)),
           isExpanded: true,
           icon: const Icon(
@@ -287,7 +324,23 @@ class _DailyReportSelectionScreenState extends State<DailyReportSelectionScreen>
               .toList(),
           onChanged: onChanged,
         ),
+      );
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: inner,
     );
   }
 }

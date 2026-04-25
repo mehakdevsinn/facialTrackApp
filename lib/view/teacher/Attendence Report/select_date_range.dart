@@ -72,6 +72,9 @@ class _SelectionScreenState extends State<SelectionScreen> {
                     hint: report.isLoadingCourses ? 'Loading...' : 'Choose Semester',
                     items: semesterItems.map((s) => s.id).toList(),
                     labels: {for (final s in semesterItems) s.id: s.label},
+                    isLoading: report.isLoadingCourses,
+                    emptyMessage:
+                        'No course assignments yet. Ask an administrator to assign subjects before you can run reports.',
                     onChanged: report.isLoadingCourses
                         ? null
                         : (v) => report.setSelectedSemester(v),
@@ -83,7 +86,14 @@ class _SelectionScreenState extends State<SelectionScreen> {
                     hint: 'Choose Subject',
                     items: courses.map((c) => c.id).toList(),
                     labels: {for (final c in courses) c.id: '${c.code} - ${c.name}'},
-                    onChanged: (v) => report.setSelectedCourse(v),
+                    isLoading: report.isLoadingCourses,
+                    emptyMessage: report.selectedSemesterId == null
+                        ? 'Choose a semester first.'
+                        : 'No subjects for this semester. Check your assignments or pick another semester.',
+                    onChanged: report.selectedSemesterId == null ||
+                            report.isLoadingCourses
+                        ? null
+                        : (v) => report.setSelectedCourse(v),
                   ),
                   const SizedBox(height: 20),
                   _label('Time Period'),
@@ -201,18 +211,52 @@ class _SelectionScreenState extends State<SelectionScreen> {
     required List<String> items,
     required Map<String, String> labels,
     required ValueChanged<String?>? onChanged,
+    bool isLoading = false,
+    String? emptyMessage,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: DropdownButtonHideUnderline(
+    Widget inner;
+    if (isLoading && items.isEmpty) {
+      inner = const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading…', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    } else if (items.isEmpty) {
+      inner = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, color: Colors.blueGrey.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                emptyMessage ?? 'Nothing to select yet.',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      final safeValue = (value != null && items.contains(value)) ? value : null;
+      inner = DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          value: value,
+          value: safeValue,
           hint: Text(hint),
           items: items
               .map(
@@ -227,7 +271,16 @@ class _SelectionScreenState extends State<SelectionScreen> {
               .toList(),
           onChanged: onChanged,
         ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
       ),
+      child: inner,
     );
   }
 }

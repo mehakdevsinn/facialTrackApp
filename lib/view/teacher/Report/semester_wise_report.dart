@@ -42,105 +42,119 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
 
         return SafeArea(
           child: Scaffold(
-            backgroundColor: const Color(0xFFF8F9FE),
+            backgroundColor: Colors.grey[100],
             appBar: AppBar(
               title: const Text('Semester Report'),
+              centerTitle: true,
               backgroundColor: ColorPallet.primaryBlue,
               foregroundColor: Colors.white,
             ),
             body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-                    decoration: const BoxDecoration(
-                      color: ColorPallet.primaryBlue,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(32),
-                        bottomRight: Radius.circular(32),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        _dropdown(
-                          title: 'Academic Semester',
-                          value: report.selectedSemesterId,
-                          items: semesters.map((s) => s.id).toList(),
-                          labels: {for (final s in semesters) s.id: s.label},
-                          onChanged: (v) {
-                            report.setSelectedSemester(v);
-                            setState(() => _selectedStudentId = null);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _dropdown(
-                          title: 'Target Course',
-                          value: report.selectedCourseId,
-                          items: courses.map((c) => c.id).toList(),
-                          labels: {for (final c in courses) c.id: '${c.code} - ${c.name}'},
-                          onChanged: (v) {
-                            report.setSelectedCourse(v);
-                            setState(() => _selectedStudentId = null);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _dropdown(
-                          title: 'Student Filter',
-                          value: data == null ? null : (_selectedStudentId ?? 'all'),
-                          items: [
-                            'all',
-                            ...(data?.students.map((s) => s.studentId) ?? []),
-                          ],
-                          labels: {
-                            'all': 'All Students',
-                            for (final s in data?.students ?? [])
-                              s.studentId: '${s.studentName} (${s.rollNumber})',
-                          },
-                          onChanged: (v) {
-                            setState(() => _selectedStudentId = v == 'all' ? null : v);
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: ColorPallet.primaryBlue,
-                            ),
-                            onPressed: report.selectedCourseId == null ||
-                                    report.isGenerating
-                                ? null
-                                : () async {
-                                    await report.generateSemesterReport();
-                                    if (!mounted) return;
-                                    setState(() => _selectedStudentId = null);
-                                  },
-                            child: Text(
-                              report.isGenerating ? 'Generating...' : 'Generate',
-                            ),
-                          ),
-                        ),
-                      ],
+                  _dropdownCard(
+                    title: 'Semester',
+                    child: _dropdown(
+                      value: report.selectedSemesterId,
+                      hint: report.isLoadingCourses ? 'Loading...' : 'Select',
+                      items: semesters.map((s) => s.id).toList(),
+                      labels: {for (final s in semesters) s.id: s.label},
+                      isLoading: report.isLoadingCourses,
+                      emptyMessage:
+                          'No course assignments yet. Ask an administrator to assign subjects before you can run reports.',
+                      onChanged: report.isLoadingCourses
+                          ? null
+                          : (v) {
+                              report.setSelectedSemester(v);
+                              setState(() => _selectedStudentId = null);
+                            },
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  if (report.errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                  const SizedBox(height: 10),
+                  _dropdownCard(
+                    title: 'Subject',
+                    child: _dropdown(
+                      value: report.selectedCourseId,
+                      hint: 'Select',
+                      items: courses.map((c) => c.id).toList(),
+                      labels: {
+                        for (final c in courses) c.id: '${c.code} - ${c.name}',
+                      },
+                      isLoading: report.isLoadingCourses,
+                      emptyMessage: report.selectedSemesterId == null
+                          ? 'Choose a semester first.'
+                          : 'No subjects for this semester. Check your assignments or pick another semester.',
+                      onChanged: report.selectedSemesterId == null ||
+                              report.isLoadingCourses
+                          ? null
+                          : (v) {
+                              report.setSelectedCourse(v);
+                              setState(() => _selectedStudentId = null);
+                            },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _dropdownCard(
+                    title: 'Student filter',
+                    child: _dropdown(
+                      value: data == null ? null : (_selectedStudentId ?? 'all'),
+                      hint: 'Select',
+                      items: [
+                        'all',
+                        ...(data?.students.map((s) => s.studentId) ?? []),
+                      ],
+                      labels: {
+                        'all': 'All Students',
+                        for (final s in data?.students ?? [])
+                          s.studentId: '${s.studentName} (${s.rollNumber})',
+                      },
+                      onChanged: (v) {
+                        setState(
+                            () => _selectedStudentId = v == 'all' ? null : v);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorPallet.primaryBlue,
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor: Colors.white70,
+                        disabledBackgroundColor:
+                            ColorPallet.primaryBlue.withOpacity(0.45),
+                        surfaceTintColor: Colors.transparent,
+                      ),
+                      onPressed: report.selectedCourseId == null ||
+                              report.isGenerating
+                          ? null
+                          : () async {
+                              await report.generateSemesterReport();
+                              if (!mounted) return;
+                              setState(() => _selectedStudentId = null);
+                            },
                       child: Text(
-                        report.errorMessage!,
-                        style: TextStyle(color: Colors.red.shade700),
+                        report.isGenerating ? 'Generating...' : 'Generate',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  if (data != null)
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: _statsCard(
-                        selectedStudent ?? _aggregate(data),
-                      ),
+                  ),
+                  if (report.errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      report.errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
                     ),
+                  ],
+                  if (data != null) ...[
+                    const SizedBox(height: 16),
+                    _statsCard(selectedStudent ?? _aggregate(data)),
+                  ],
                 ],
               ),
             ),
@@ -172,7 +186,7 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,44 +219,92 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
     );
   }
 
-  Widget _dropdown({
-    required String title,
-    required String? value,
-    required List<String> items,
-    required Map<String, String> labels,
-    required ValueChanged<String?> onChanged,
-  }) {
+  Widget _dropdownCard({required String title, required Widget child}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(fontSize: 11, color: Colors.blueGrey),
+            style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
           ),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              hint: const Text('Select'),
-              items: items
-                  .map(
-                    (id) => DropdownMenuItem<String>(
-                      value: id,
-                      child: Text(labels[id] ?? id, overflow: TextOverflow.ellipsis),
-                    ),
-                  )
-                  .toList(),
-              onChanged: onChanged,
-            ),
-          ),
+          child,
         ],
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required String? value,
+    required String hint,
+    required List<String> items,
+    required Map<String, String> labels,
+    required ValueChanged<String?>? onChanged,
+    bool isLoading = false,
+    String? emptyMessage,
+  }) {
+    if (isLoading && items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading…', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, color: Colors.blueGrey.shade400, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                emptyMessage ?? 'Nothing to select yet.',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final safeValue = (value != null && items.contains(value)) ? value : null;
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        isExpanded: true,
+        value: safeValue,
+        hint: Text(hint),
+        items: items
+            .map(
+              (id) => DropdownMenuItem<String>(
+                value: id,
+                child: Text(
+                  labels[id] ?? id,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: onChanged,
       ),
     );
   }

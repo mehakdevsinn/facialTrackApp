@@ -7,6 +7,23 @@ import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.d
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// Border/fill for empty-state fields (no prefix icon).
+InputDecoration _emptySessionFieldDecoration(Color color) => InputDecoration(
+      isDense: true,
+      filled: true,
+      fillColor: color.withOpacity(0.07),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: color.withOpacity(0.2), width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: color, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+
 class StartSessionScreen extends StatefulWidget {
   final bool showBackButton;
   const StartSessionScreen({super.key, this.showBackButton = false});
@@ -109,13 +126,7 @@ class _StartSessionScreenState extends State<StartSessionScreen>
                     : null,
                 title: Row(
                   children: [
-                    if (!widget.showBackButton) const SizedBox(width: 8),
-                    const CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.white24,
-                      backgroundImage: AssetImage('assets/logo.png'),
-                    ),
-                    const SizedBox(width: 12),
+                    if (!widget.showBackButton) const SizedBox(width: 4),
                     const Expanded(
                       child: Text(
                         'Start Attendance Session',
@@ -268,6 +279,21 @@ class _ManualTab extends StatelessWidget {
       List<SemesterModel> semesters,
       SessionProvider provider,
       Color color) {
+    if (semesters.isEmpty) {
+      final message = provider.errorMessage != null
+          ? 'Could not load your courses. Try again in a moment or contact support if this continues.'
+          : 'You have no course assignments yet. Ask an administrator to assign subjects before you can pick a semester here.';
+      return _DropdownCard(
+        child: InputDecorator(
+          decoration: _emptySessionFieldDecoration(color),
+          child: _EmptyDropdownNotice(
+            accentColor: color,
+            icon: Icons.info_outline_rounded,
+            message: message,
+          ),
+        ),
+      );
+    }
     final value = provider.selectedSemesterId;
     return _DropdownCard(
       child: DropdownButtonFormField<String>(
@@ -304,6 +330,19 @@ class _ManualTab extends StatelessWidget {
       Color color) {
     final value = provider.selectedCourseId;
     final enabled = provider.selectedSemesterId != null;
+    if (enabled && courses.isEmpty) {
+      return _DropdownCard(
+        child: InputDecorator(
+          decoration: _deco(color, Icons.book, false),
+          child: _EmptyDropdownNotice(
+            accentColor: color,
+            icon: Icons.menu_book_outlined,
+            message:
+                'No subjects for this semester. If this looks wrong, ask an administrator to check your course assignments.',
+          ),
+        ),
+      );
+    }
     return Opacity(
       opacity: enabled ? 1.0 : 0.4,
       child: IgnorePointer(
@@ -414,48 +453,59 @@ class _ScheduleTab extends StatelessWidget {
             ),
           ),
           _DropdownCard(
-            child: DropdownButtonFormField<String>(
-              value: provider.selectedSemesterId,
-              hint: const Text('Choose semester…'),
-              isExpanded: true,
-              icon: const SizedBox.shrink(),
-              selectedItemBuilder: (_) => semesters
-                  .map((s) => Text(
-                        'Semester ${s.semesterNumber} — ${s.termLabel}',
-                        overflow: TextOverflow.ellipsis,
-                      ))
-                  .toList(),
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.groups, color: primaryColor),
-                suffixIcon: const Icon(Icons.arrow_drop_down,
-                    color: Colors.grey),
-                filled: true,
-                fillColor: primaryColor.withOpacity(0.07),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: primaryColor.withOpacity(0.2), width: 1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: primaryColor, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              items: semesters
-                  .map((s) => DropdownMenuItem<String>(
-                        value: s.id,
-                        child: _DropdownItem(
-                          label:
-                              'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
-                          selected:
-                              provider.selectedSemesterId == s.id,
-                          color: primaryColor,
-                        ),
-                      ))
-                  .toList(),
-              onChanged: provider.setSelectedSemester,
-            ),
+            child: semesters.isEmpty
+                ? InputDecorator(
+                    decoration: _emptySessionFieldDecoration(primaryColor),
+                    child: _EmptyDropdownNotice(
+                      accentColor: primaryColor,
+                      icon: Icons.info_outline_rounded,
+                      message: provider.errorMessage != null
+                          ? 'Could not load your courses. Try again in a moment or contact support if this continues.'
+                          : 'You have no course assignments yet. Ask an administrator to assign subjects before you can load today\'s schedule slots.',
+                    ),
+                  )
+                : DropdownButtonFormField<String>(
+                    value: provider.selectedSemesterId,
+                    hint: const Text('Choose semester…'),
+                    isExpanded: true,
+                    icon: const SizedBox.shrink(),
+                    selectedItemBuilder: (_) => semesters
+                        .map((s) => Text(
+                              'Semester ${s.semesterNumber} — ${s.termLabel}',
+                              overflow: TextOverflow.ellipsis,
+                            ))
+                        .toList(),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.groups, color: primaryColor),
+                      suffixIcon: const Icon(Icons.arrow_drop_down,
+                          color: Colors.grey),
+                      filled: true,
+                      fillColor: primaryColor.withOpacity(0.07),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: primaryColor.withOpacity(0.2), width: 1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: primaryColor, width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: semesters
+                        .map((s) => DropdownMenuItem<String>(
+                              value: s.id,
+                              child: _DropdownItem(
+                                label:
+                                    'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
+                                selected:
+                                    provider.selectedSemesterId == s.id,
+                                color: primaryColor,
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: provider.setSelectedSemester,
+                  ),
           ),
           const SizedBox(height: 16),
 
@@ -501,7 +551,7 @@ class _ScheduleTab extends StatelessWidget {
                         ),
                       ))
                   .toList(),
-              onChanged: provider.setSelectedSection,
+              onChanged: semesters.isEmpty ? null : provider.setSelectedSection,
             ),
           ),
           const SizedBox(height: 20),
@@ -775,6 +825,42 @@ class _EmptySlots extends StatelessWidget {
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
+
+class _EmptyDropdownNotice extends StatelessWidget {
+  final Color accentColor;
+  final IconData icon;
+  final String message;
+
+  const _EmptyDropdownNotice({
+    required this.accentColor,
+    required this.icon,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: accentColor.withOpacity(0.9), size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.grey.shade800,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SectionHeader extends StatelessWidget {
   final IconData icon;

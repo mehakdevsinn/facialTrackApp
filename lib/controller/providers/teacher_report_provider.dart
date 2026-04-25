@@ -73,6 +73,30 @@ class TeacherReportProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _syncSelectionsAfterCourseLoad() {
+    if (_courses.isEmpty) {
+      _selectedSemesterId = null;
+      _selectedCourseId = null;
+      return;
+    }
+    final semesterIds =
+        _courses.map((c) => c.semesterId).where((id) => id.isNotEmpty).toSet();
+    if (_selectedSemesterId == null ||
+        !semesterIds.contains(_selectedSemesterId)) {
+      _selectedSemesterId = _courses.first.semesterId;
+      _selectedCourseId = null;
+      return;
+    }
+    final courseIdsInSemester = _courses
+        .where((c) => c.semesterId == _selectedSemesterId)
+        .map((c) => c.id)
+        .toSet();
+    if (_selectedCourseId != null &&
+        !courseIdsInSemester.contains(_selectedCourseId)) {
+      _selectedCourseId = null;
+    }
+  }
+
   void _setError(String? message) {
     _errorMessage = message;
     notifyListeners();
@@ -87,9 +111,7 @@ class TeacherReportProvider extends ChangeNotifier {
       if (teacherId == null) throw Exception('Not logged in');
       _courses = await _api.getTeacherCourses(teacherId);
       await _loadAttendanceThreshold();
-      if (_selectedSemesterId == null && _courses.isNotEmpty) {
-        _selectedSemesterId = _courses.first.semesterId;
-      }
+      _syncSelectionsAfterCourseLoad();
       _isLoadingCourses = false;
       notifyListeners();
     } on AuthException catch (e) {

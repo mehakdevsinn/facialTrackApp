@@ -149,6 +149,7 @@ class SessionProvider extends ChangeNotifier {
       final teacherId = await StorageService.getUserId();
       if (teacherId == null) throw Exception('Not logged in');
       _courses = await _api.getTeacherCourses(teacherId);
+      _syncSelectionsAfterCourseLoad();
       notifyListeners();
     } on AuthException catch (e) {
       _setError(e.message);
@@ -156,6 +157,32 @@ class SessionProvider extends ChangeNotifier {
       _setError('Failed to load courses: ${e.toString()}');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  void _syncSelectionsAfterCourseLoad() {
+    if (_courses.isEmpty) {
+      _selectedSemesterId = null;
+      _selectedCourseId = null;
+      _selectedSection = null;
+      _scheduleSlots = [];
+      return;
+    }
+    final semesterIds =
+        _courses.map((c) => c.semesterId).where((id) => id.isNotEmpty).toSet();
+    if (_selectedSemesterId == null ||
+        !semesterIds.contains(_selectedSemesterId)) {
+      _selectedSemesterId = _courses.first.semesterId;
+      _selectedCourseId = null;
+      _scheduleSlots = [];
+    }
+    final courseIdsInSemester = _courses
+        .where((c) => c.semesterId == _selectedSemesterId)
+        .map((c) => c.id)
+        .toSet();
+    if (_selectedCourseId != null &&
+        !courseIdsInSemester.contains(_selectedCourseId)) {
+      _selectedCourseId = null;
     }
   }
 

@@ -192,6 +192,10 @@ class _IndividualSemesterManagementScreenState
                   admin.semesters.where(_belongsToSpringTab).toList();
               final fallSemesters =
                   admin.semesters.where(_belongsToFallTab).toList();
+              springSemesters.sort(
+                  (a, b) => a.semesterNumber.compareTo(b.semesterNumber));
+              fallSemesters.sort(
+                  (a, b) => a.semesterNumber.compareTo(b.semesterNumber));
 
               // ── Tabbed Lists ───────────────────────────────────────────────
               return TabBarView(

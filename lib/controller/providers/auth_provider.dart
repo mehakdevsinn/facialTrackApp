@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
@@ -18,12 +19,19 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   UserModel? _currentUser;
+  List<SemesterModel> _signupSemesters = [];
+  bool _isSignupSemestersLoading = false;
+  String? _signupSemestersError;
 
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   UserModel? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
+  List<SemesterModel> get signupSemesters =>
+      List.unmodifiable(_signupSemesters);
+  bool get isSignupSemestersLoading => _isSignupSemestersLoading;
+  String? get signupSemestersError => _signupSemestersError;
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   void _setLoading(bool value) {
@@ -77,6 +85,30 @@ class AuthProvider extends ChangeNotifier {
       _setError('An unexpected error occurred.');
       _setLoading(false);
       return false;
+    }
+  }
+
+  /// Loads semesters for the student signup dropdown.
+  Future<void> fetchSignupSemesters() async {
+    _isSignupSemestersLoading = true;
+    _signupSemestersError = null;
+    notifyListeners();
+    try {
+      final semesters = await _api.getSemestersForSignup();
+      final active =
+          semesters.where((s) => s.operationalStatus == 'active').toList();
+      active.sort((a, b) => a.semesterNumber.compareTo(b.semesterNumber));
+      _signupSemesters = active;
+      _isSignupSemestersLoading = false;
+      notifyListeners();
+    } on AuthException catch (e) {
+      _signupSemestersError = e.message;
+      _isSignupSemestersLoading = false;
+      notifyListeners();
+    } catch (_) {
+      _signupSemestersError = 'Failed to load semesters.';
+      _isSignupSemestersLoading = false;
+      notifyListeners();
     }
   }
 

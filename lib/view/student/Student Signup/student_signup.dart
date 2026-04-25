@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
+import 'package:facialtrackapp/core/models/semester_model.dart';
 import 'package:facialtrackapp/utils/widgets/textfield_login.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Otp%20Screen/otp-verification.dart';
@@ -33,6 +34,10 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
     confirmPasswordFocus.addListener(() => setState(() {}));
     rollNoFocus.addListener(() => setState(() {}));
     sectionFocus.addListener(() => setState(() {}));
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<AuthProvider>().fetchSignupSemesters();
+    });
   }
 
   @override
@@ -55,7 +60,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   String confirmPassword = '';
   String rollNo = '';
   String section = '';
-  String? selectedSemester;
+  SemesterModel? selectedSemester;
 
   bool get isButtonEnabled =>
       fullName.isNotEmpty &&
@@ -64,17 +69,6 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
       confirmPassword.isNotEmpty &&
       rollNo.isNotEmpty &&
       selectedSemester != null;
-
-  final List<String> semesters = [
-    '1st Semester',
-    '2nd Semester',
-    '3rd Semester',
-    '4th Semester',
-    '5th Semester',
-    '6th Semester',
-    '7th Semester',
-    '8th Semester',
-  ];
 
   void _showError(String message) {
     if (!mounted) return;
@@ -106,7 +100,7 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
       fullName: fullName,
       role: 'student',
       rollNumber: rollNo,
-      semester: selectedSemester!,
+      semester: selectedSemester!.semesterNumber.toString(),
       section: section,
     );
 
@@ -129,6 +123,11 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
+        final signupSemesters = auth.signupSemesters;
+        if (selectedSemester != null &&
+            !signupSemesters.any((s) => s.id == selectedSemester!.id)) {
+          selectedSemester = null;
+        }
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: const SystemUiOverlayStyle(
             statusBarColor: Colors.white,
@@ -282,29 +281,58 @@ class _StudentSignupScreenState extends State<StudentSignupScreen> {
                                             color: Colors.grey, fontSize: 16)),
                                   ],
                                 ),
-                                value: selectedSemester,
+                                value: selectedSemester?.id,
                                 icon: Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   color: selectedSemester != null
                                       ? ColorPallet.primaryBlue
                                       : Colors.grey,
                                 ),
-                                items: semesters.map((String sem) {
+                                items: signupSemesters.map((SemesterModel sem) {
                                   return DropdownMenuItem<String>(
-                                    value: sem,
+                                    value: sem.id,
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 32),
-                                      child: Text(sem),
+                                      child: Text(
+                                        'Semester ${sem.semesterNumber}',
+                                      ),
                                     ),
                                   );
                                 }).toList(),
-                                onChanged: (val) =>
-                                    setState(() => selectedSemester = val),
+                                onChanged: (semesterId) {
+                                  final selected = signupSemesters.firstWhere(
+                                    (s) => s.id == semesterId,
+                                  );
+                                  setState(() => selectedSemester = selected);
+                                },
                               ),
                             ),
                           ),
                         ),
                       ),
+                      if (auth.isSignupSemestersLoading)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Loading semesters...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      if (!auth.isSignupSemestersLoading &&
+                          auth.signupSemestersError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            auth.signupSemestersError!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade600,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 15),
 
                       // Section (Optional)

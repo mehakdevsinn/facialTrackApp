@@ -19,6 +19,13 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
 
+  List<SemesterModel> _activeSemesters(List<SemesterModel> semesters) {
+    final active =
+        semesters.where((s) => s.operationalStatus == 'active').toList();
+    active.sort((a, b) => a.semesterNumber.compareTo(b.semesterNumber));
+    return active;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -26,9 +33,10 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
       if (!mounted) return;
       final provider = context.read<AdminProvider>();
       provider.fetchSemesters().then((_) {
-        if (provider.semesters.isNotEmpty && mounted) {
+        final activeSemesters = _activeSemesters(provider.semesters);
+        if (activeSemesters.isNotEmpty && mounted) {
           setState(() {
-            selectedSemester = provider.semesters.first;
+            selectedSemester = activeSemesters.first;
           });
           provider.fetchCourses(selectedSemester!.id);
         }
@@ -44,8 +52,9 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
 
   void _onSemesterChanged(String? newDisplayName, AdminProvider provider) {
     if (newDisplayName == null) return;
+    final activeSemesters = _activeSemesters(provider.semesters);
     final newSem =
-        provider.semesters.firstWhere((s) => s.displayName == newDisplayName);
+        activeSemesters.firstWhere((s) => s.displayName == newDisplayName);
     setState(() {
       selectedSemester = newSem;
     });
@@ -89,12 +98,20 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (provider.semesters.isEmpty) {
-              return const Center(child: Text("No semesters available."));
+            final activeSemesters = _activeSemesters(provider.semesters);
+            if (activeSemesters.isEmpty) {
+              return const Center(
+                child: Text("No active semesters available."),
+              );
             }
 
             // Fallback if not set
-            selectedSemester ??= provider.semesters.first;
+            final selectedIsActive = selectedSemester != null &&
+                activeSemesters.any((s) => s.id == selectedSemester!.id);
+            if (!selectedIsActive) {
+              selectedSemester = activeSemesters.first;
+              provider.fetchCourses(selectedSemester!.id);
+            }
 
             final allCourses =
                 provider.getCoursesForSemester(selectedSemester!.id);
@@ -154,7 +171,7 @@ class _SchemeOfStudyScreenState extends State<SchemeOfStudyScreen> {
                                   label: "Semester",
                                   value: selectedSemester!.displayName,
                                   icon: Icons.calendar_today_rounded,
-                                  items: provider.semesters
+                                  items: activeSemesters
                                       .map((s) => s.displayName)
                                       .toList(),
                                   onChanged: (val) =>

@@ -24,6 +24,13 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
 
   static const List<String> _sections = ['A', 'B', 'C', 'D', 'E'];
 
+  List<SemesterModel> _activeOrderedSemesters(List<SemesterModel> semesters) {
+    final active =
+        semesters.where((s) => s.operationalStatus == 'active').toList();
+    active.sort((a, b) => a.semesterNumber.compareTo(b.semesterNumber));
+    return active;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -170,6 +177,14 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
   }
 
   Widget _buildCourseStep(AdminProvider provider) {
+    final availableSemesters = _activeOrderedSemesters(provider.semesters);
+    final isCurrentSelectionValid = selectedSemester != null &&
+        availableSemesters.any((s) => s.id == selectedSemester!.id);
+    if (!isCurrentSelectionValid) {
+      selectedSemester = null;
+      selectedCourse = null;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -193,7 +208,7 @@ class _CourseAssignmentScreenState extends State<CourseAssignmentScreen> {
             value: selectedSemester,
             hint: "Choose Semester",
             icon: Icons.calendar_today_rounded,
-            items: provider.semesters,
+            items: availableSemesters,
             displayText: (s) => s.displayName,
             onChanged: (s) {
               setState(() {

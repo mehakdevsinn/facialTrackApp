@@ -494,6 +494,28 @@ class ApiManager {
     }
   }
 
+  /// Public/unauth semester listing used by student signup dropdown.
+  Future<List<SemesterModel>> getSemestersForSignup() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.adminSemesters),
+            headers: _jsonHeaders,
+          )
+          .timeout(const Duration(seconds: 30));
+
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => SemesterModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // ─── 16. CREATE SEMESTER (Admin) ─────────────────────────────────────────
   Future<SemesterModel> createSemester({
     required int semesterNumber,
@@ -1109,7 +1131,8 @@ extension AssignmentApiMethods on ApiManager {
   Future<List<TimetableFromApi>> getTimetables() async {
     try {
       final response = await http
-          .get(Uri.parse(Endpoints.adminSchedule), headers: await _authHeaders())
+          .get(Uri.parse(Endpoints.adminSchedule),
+              headers: await _authHeaders())
           .timeout(const Duration(seconds: 30));
       _assertSuccess(response);
       final List data = jsonDecode(response.body) as List;
@@ -1229,8 +1252,8 @@ extension AssignmentApiMethods on ApiManager {
     required String periodId,
   }) async {
     try {
-      final request =
-          http.Request('DELETE', Uri.parse(Endpoints.adminTimetableEntries(timetableId)));
+      final request = http.Request(
+          'DELETE', Uri.parse(Endpoints.adminTimetableEntries(timetableId)));
       final headers = await _authHeaders();
       request.headers.addAll(headers);
       request.body = jsonEncode({'day': day, 'period_id': periodId});
@@ -1492,8 +1515,7 @@ extension TeacherSessionApiMethods on ApiManager {
       _assertSuccess(response);
       final List data = jsonDecode(response.body) as List;
       return data
-          .map((e) =>
-              AttendanceRecordModel.fromJson(e as Map<String, dynamic>))
+          .map((e) => AttendanceRecordModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on AuthException {
       rethrow;
@@ -1778,8 +1800,7 @@ extension ReportsApiMethods on ApiManager {
       _assertSuccess(response);
       final List data = jsonDecode(response.body) as List;
       return data
-          .map((e) =>
-              LowAttendanceStudent.fromJson(e as Map<String, dynamic>))
+          .map((e) => LowAttendanceStudent.fromJson(e as Map<String, dynamic>))
           .toList();
     } on AuthException {
       rethrow;

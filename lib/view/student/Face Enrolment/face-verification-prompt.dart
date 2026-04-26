@@ -1,9 +1,12 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/view/student/Approval%20Status/enrollment_closed_screen.dart';
 import 'package:facialtrackapp/view/student/Face%20Enrolment/student-face-enrolment.dart';
+import 'package:facialtrackapp/view/student/Student%20Login/login.dart';
 import 'package:facialtrackapp/view/student/Student%20NavBar/student-root_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 /// Entry point shown after login when `user.faceVerified == false`.
 ///
@@ -84,9 +87,18 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
   }
 
   void _startEnrollment() {
-    Navigator.pushAndRemoveUntil(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const StudentFaceEnrollement()),
+    );
+  }
+
+  Future<void> _logout() async {
+    await context.read<AuthProvider>().logout();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const StudentLoginScreen()),
       (route) => false,
     );
   }
@@ -223,7 +235,20 @@ class _FaceVerificationPromptState extends State<FaceVerificationPrompt> {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: _logout,
+              icon: Icon(Icons.logout_rounded, size: 20, color: Colors.grey[700]),
+              label: Text(
+                'Log out',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

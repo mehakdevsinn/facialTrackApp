@@ -574,7 +574,7 @@ class _StudentCard extends StatelessWidget {
                           icon: Icons.school_outlined,
                           label: student.semester.isEmpty
                               ? 'N/A'
-                              : '${student.semester} Sem',
+                              : student.semester,
                           color: const Color(0xFF7C3AED),
                         ),
                       ],

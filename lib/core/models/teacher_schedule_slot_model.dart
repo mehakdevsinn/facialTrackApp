@@ -3,6 +3,10 @@
 class TeacherScheduleSlotModel {
   final String timetableId;
   final String semesterId;
+  /// Ordinal from API (e.g. 6).
+  final int semesterNumber;
+  /// Human-readable label from API (e.g. "Semester 6").
+  final String semesterLabel;
   final String section;
   final String academicSession;
 
@@ -28,6 +32,8 @@ class TeacherScheduleSlotModel {
   const TeacherScheduleSlotModel({
     required this.timetableId,
     required this.semesterId,
+    this.semesterNumber = 0,
+    this.semesterLabel = '',
     required this.section,
     required this.academicSession,
     required this.day,
@@ -42,9 +48,16 @@ class TeacherScheduleSlotModel {
   });
 
   factory TeacherScheduleSlotModel.fromJson(Map<String, dynamic> json) {
+    final semNum = (json['semester_number'] as num?)?.toInt() ?? 0;
+    var semLabel = json['semester_label']?.toString() ?? '';
+    if (semLabel.isEmpty && semNum > 0) {
+      semLabel = 'Semester $semNum';
+    }
     return TeacherScheduleSlotModel(
       timetableId: json['timetable_id']?.toString() ?? '',
       semesterId: json['semester_id']?.toString() ?? '',
+      semesterNumber: semNum,
+      semesterLabel: semLabel,
       section: json['section']?.toString() ?? '',
       academicSession: json['academic_session']?.toString() ?? '',
       day: json['day']?.toString() ?? '',
@@ -60,6 +73,14 @@ class TeacherScheduleSlotModel {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /// Label for UI (prefers API `semester_label`, else "Semester N", else id).
+  String get displaySemester =>
+      semesterLabel.isNotEmpty
+          ? semesterLabel
+          : semesterNumber > 0
+              ? 'Semester $semesterNumber'
+              : semesterId;
 
   /// e.g. "09:00 – 10:00"
   String get displayTime => '$startTime – $endTime';

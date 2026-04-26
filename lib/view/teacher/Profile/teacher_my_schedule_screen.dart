@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:flutter/material.dart';
@@ -27,10 +28,16 @@ class _TeacherMyScheduleScreenState extends State<TeacherMyScheduleScreen> {
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
           elevation: 0,
+          backgroundColor: ColorPallet.primaryBlue,
+          foregroundColor: Colors.white,
           title: const Text(
             'My Schedule',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
+          centerTitle: true,
         ),
         body: Consumer<TeacherProvider>(
           builder: (context, teacher, _) {
@@ -142,7 +149,7 @@ class _ScheduleTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Section ${slot.section} • Semester ${slot.semesterId}',
+            'Section ${slot.section} • ${slot.displaySemester}',
             style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
           ),
           const SizedBox(height: 2),

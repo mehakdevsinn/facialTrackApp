@@ -41,7 +41,7 @@ class ComplaintScreen extends StatelessWidget {
           children: [
             _buildOptionCard(
               context,
-              title: "Report Technical Issue",
+              title: "Report Issue",
               description:
                   "App bugs, login problems, or face verification issues.",
               icon: Icons.build_circle_outlined,

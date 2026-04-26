@@ -79,7 +79,7 @@ class _TechnicalComplaintScreenState extends State<TechnicalComplaintScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          "Report Technical Issue",
+          "Report Issue",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: ColorPallet.primaryBlue,
@@ -216,7 +216,7 @@ class _TechnicalComplaintScreenState extends State<TechnicalComplaintScreen> {
                 controller: _descriptionController,
                 line: 5,
                 // label: "Student ID",
-                hint: "Please describe the technical issue...",
+                hint: "Please describe the issue...",
                 // icon: Icons.person_outline,
                 activeColor: ColorPallet.primaryBlue,
                 inactiveColor: Colors.grey,

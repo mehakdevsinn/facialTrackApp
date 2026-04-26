@@ -62,7 +62,7 @@ class AccountSettingsCard extends StatelessWidget {
               child: const Icon(Icons.bug_report_outlined, color: Colors.blue),
             ),
             title: const Text(
-              "Report Technical Issue",
+              "Report Issue",
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),

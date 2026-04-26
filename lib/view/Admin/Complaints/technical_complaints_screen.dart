@@ -109,7 +109,7 @@ class _AdminTechnicalComplaintsScreenState
         backgroundColor: const Color(0xffF6F8FB),
         appBar: AppBar(
           title: const Text(
-            "Technical Complaints",
+            "Complaints",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           centerTitle: true,
@@ -383,7 +383,7 @@ class _AdminTechnicalComplaintsScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            "No technical issues found",
+            "No complaints found",
             style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
           ),
         ],

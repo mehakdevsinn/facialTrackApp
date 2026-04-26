@@ -322,7 +322,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     context,
                     icon: Icons.bug_report_rounded,
                     color: Colors.redAccent,
-                    title: 'Technical Complaints',
+                    title: 'Complaints',
                     subtitle: 'Review app & system issues',
                     onTap: () {
                       Navigator.push(

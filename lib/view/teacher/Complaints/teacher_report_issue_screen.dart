@@ -130,7 +130,7 @@ class _TeacherReportIssueScreenState extends State<TeacherReportIssueScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Technical Support",
+                  "Help & support",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(

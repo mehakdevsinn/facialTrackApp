@@ -25,7 +25,7 @@ class _TechnicalComplaintDetailScreenState
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("🛠️ Tech issue marked as $status"),
+        content: Text("🛠️ Issue marked as $status"),
         backgroundColor: status == "Resolved" ? Colors.green : Colors.red,
       ),
     );
@@ -101,7 +101,7 @@ class _TechnicalComplaintDetailScreenState
               const SizedBox(height: 25),
 
               const Text(
-                "TECHNICAL INFO",
+                "REPORT DETAILS",
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -171,7 +171,7 @@ class _TechnicalComplaintDetailScreenState
                         controller: _noteController,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: "Add technical notes or response...",
+                          hintText: "Add notes or response...",
                           hintStyle: TextStyle(
                             color: Colors.grey.shade400,
                             fontSize: 13,

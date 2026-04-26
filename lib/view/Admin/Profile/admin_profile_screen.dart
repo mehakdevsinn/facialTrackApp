@@ -103,12 +103,6 @@ class AdminProfileScreen extends StatelessWidget {
                                 color: Colors.blue,
                               ),
                               _buildInfoCard(
-                                icon: Icons.phone_outlined,
-                                label: "Phone",
-                                value: user?.phoneNumber ?? '—',
-                                color: Colors.green,
-                              ),
-                              _buildInfoCard(
                                 icon: Icons.badge_outlined,
                                 label: "Role",
                                 value: user?.role.toUpperCase() ?? 'ADMIN',

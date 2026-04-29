@@ -105,80 +105,90 @@ class _TeacherRootScreenState extends State<TeacherRootScreen>
         _resumableSession != null && !_bannerDismissed;
 
     return Scaffold(
-      extendBody: true,
+      // Do not extend body under the nav bar — avoids orange resume banner
+      // bleeding through rounded corners and removes the odd gap above the bar.
+      extendBody: false,
+      backgroundColor: const Color(0xffF6F8FB),
       body: Column(
         children: [
           Expanded(child: _screens[_selectedIndex]),
-
-          // ── Active session resume banner ────────────────────────
-          if (showBanner)
-            _ResumeBanner(
-              session: _resumableSession!,
-              isAutoCreated: (_resumableSession!.notes ?? '').toLowerCase() ==
-                  'auto-created from timetable',
-              onResume: () => _resumeSession(_resumableSession!),
-              onDismiss: _dismissBanner,
-            ),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 12,
-              spreadRadius: 1,
-            ),
-          ],
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_icons.length, (index) {
-            final isSelected = _selectedIndex == index;
-            return GestureDetector(
-              onTap: () => _onItemTapped(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showBanner)
+              _ResumeBanner(
+                session: _resumableSession!,
+                isAutoCreated: (_resumableSession!.notes ?? '').toLowerCase() ==
+                    'auto-created from timetable',
+                onResume: () => _resumeSession(_resumableSession!),
+                onDismiss: _dismissBanner,
+              ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              child: Container(
+                height: 70,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? ColorPallet.primaryBlue.withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _icons[index],
-                      color: isSelected
-                          ? ColorPallet.primaryBlue
-                          : Colors.grey,
-                      size: isSelected ? 28 : 24,
-                    ),
-                    const SizedBox(width: 6),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        isSelected ? _labels[index] : '',
-                        style: TextStyle(
-                          color: ColorPallet.primaryBlue,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 12,
+                      spreadRadius: 1,
                     ),
                   ],
                 ),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: List.generate(_icons.length, (index) {
+                      final isSelected = _selectedIndex == index;
+                      return GestureDetector(
+                        onTap: () => _onItemTapped(index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? ColorPallet.primaryBlue.withOpacity(0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _icons[index],
+                                color: isSelected
+                                    ? ColorPallet.primaryBlue
+                                    : Colors.grey,
+                                size: isSelected ? 28 : 24,
+                              ),
+                              const SizedBox(width: 6),
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 300),
+                                child: Text(
+                                  isSelected ? _labels[index] : '',
+                                  style: TextStyle(
+                                    color: ColorPallet.primaryBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
               ),
-            );
-          }),
+          ],
         ),
       ),
     );
@@ -213,9 +223,9 @@ class _ResumeBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -238,7 +248,7 @@ class _ResumeBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'You have an active class session. Tap to resume.',
+                  'You have an active class session.',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -257,6 +267,17 @@ class _ResumeBanner extends StatelessWidget {
                       ),
                     ),
                   ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Tap to view',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -271,7 +292,7 @@ class _ResumeBanner extends StatelessWidget {
               ),
             ),
             child: const Text(
-              'Resume',
+              'View',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,

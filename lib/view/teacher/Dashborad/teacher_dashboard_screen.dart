@@ -130,20 +130,19 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ],
           ),
           body: SafeArea(
-            child: SingleChildScrollView(
-              physics:
-                  const ClampingScrollPhysics(), // padding: const EdgeInsets.all(16),
-              child: MediaQuery.removePadding(
-                context: context,
-                removeBottom: true,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    // children:[
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    // padding: EdgeInsets.zero,
-                    children: [
+            child: MediaQuery.removePadding(
+              context: context,
+              removeBottom: true,
+              child: CustomScrollView(
+                physics: const ClampingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                       Consumer<AuthProvider>(
                         builder: (context, auth, _) => Text(
                           'Welcome, ${auth.currentUser?.fullName ?? 'Teacher'}',
@@ -337,8 +336,18 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       // ---------------- LOGOUT CARD ----------------
                       // AnimatedLogoutCard(),
                     ],
+                      ),
+                    ),
                   ),
-                ),
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    fillOverscroll: true,
+                    child: ColoredBox(
+                      color: Color(0xffF6F8FB),
+                      child: SizedBox.expand(),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -24,6 +24,31 @@ InputDecoration _emptySessionFieldDecoration(Color color) => InputDecoration(
       ),
     );
 
+/// Shown directly above Start Session actions (Manual tab + Schedule slots).
+Widget _sessionStartNote() {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(
+        Icons.info_outline,
+        size: 16,
+        color: Colors.blueGrey.shade600,
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+          'One live session per subject — use End Attendance if a class is already running.',
+          style: TextStyle(
+            fontSize: 11.5,
+            color: Colors.grey.shade700,
+            height: 1.25,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
 class StartSessionScreen extends StatefulWidget {
   final bool showBackButton;
   const StartSessionScreen({super.key, this.showBackButton = false});
@@ -225,7 +250,10 @@ class _ManualTab extends StatelessWidget {
 
           _buildLabel('Select Subject', primaryColor),
           _buildCourseDropdown(courses, provider, primaryColor),
-          const SizedBox(height: 48),
+          const SizedBox(height: 28),
+
+          _sessionStartNote(),
+          const SizedBox(height: 14),
 
           Opacity(
             opacity: isReady ? 1.0 : 0.5,
@@ -555,6 +583,9 @@ class _ScheduleTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+
+          _sessionStartNote(),
+          const SizedBox(height: 12),
 
           // ── Load slots button ────────────────────────────────────
           ElevatedButton.icon(

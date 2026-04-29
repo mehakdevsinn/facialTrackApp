@@ -21,6 +21,17 @@ class TeacherDashboardScreen extends StatefulWidget {
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final session = context.read<SessionProvider>();
+      session.refreshActiveSessions();
+      session.loadCourses();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false, // Yeh back button ko fully disable kar deta hai
@@ -149,8 +160,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ---------------- COMPLAINTS BANNER ----------------
-                      _buildComplaintsBanner(context),
+                      Consumer<SessionProvider>(
+                        builder: (context, sessionProvider, _) =>
+                            _ActiveSessionCallout(provider: sessionProvider),
+                      ),
 
                       const SizedBox(height: 8),
 
@@ -176,13 +189,19 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                   builder: (context) =>
                                       StartSessionScreen(showBackButton: true),
                                 ),
-                              );
+                              ).then((_) {
+                                if (!context.mounted) return;
+                                context
+                                    .read<SessionProvider>()
+                                    .refreshActiveSessions();
+                              });
                             },
                           ),
                           Consumer<SessionProvider>(
                             builder: (context, provider, _) {
-                              final session = provider.currentSession;
-                              final hasActiveSession = session != null && session.isActive;
+                              final session = provider.dashboardActiveSession;
+                              final hasActiveSession =
+                                  session != null && session.isActive;
                               return _AnimatedDashboardCard(
                                 color: Colors.orange,
                                 icon: Icons.stop,
@@ -197,7 +216,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                             builder: (_) => LiveSessionScreen(
                                                 sessionId: session.id),
                                           ),
-                                        )
+                                        ).then((_) {
+                                          if (!context.mounted) return;
+                                          context
+                                              .read<SessionProvider>()
+                                              .refreshActiveSessions();
+                                        })
                                     : null,
                               );
                             },
@@ -207,8 +231,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             icon: Icons.calendar_today,
                             title: "Today's Logs",
                             ontap: () {
-                              final session =
-                                  context.read<SessionProvider>().currentSession;
+                              final session = context
+                                  .read<SessionProvider>()
+                                  .dashboardActiveSession;
                               if (session != null) {
                                 Navigator.push(
                                   context,
@@ -304,6 +329,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           // ),
                         ],
                       ),
+
+                      const SizedBox(height: 16),
+                      _buildComplaintsBanner(context),
 
                       // const SizedBox(height: 16),
                       // ---------------- LOGOUT CARD ----------------
@@ -411,6 +439,89 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One-line status when a session is live; nothing when idle.
+class _ActiveSessionCallout extends StatelessWidget {
+  final SessionProvider provider;
+
+  const _ActiveSessionCallout({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final session = provider.dashboardActiveSession;
+    if (session == null || !session.isActive) {
+      return const SizedBox.shrink();
+    }
+
+    final courseName = provider.courseTitleForSession(session);
+    final hasTitle = courseName.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF34A853).withOpacity(0.4),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Color(0xFF34A853),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.25,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                  children: [
+                    TextSpan(
+                      text: 'Active session',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    if (hasTitle)
+                      TextSpan(
+                        text: ' · $courseName',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                  ],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );

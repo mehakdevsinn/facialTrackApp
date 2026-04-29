@@ -98,6 +98,26 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
+  /// Active session to highlight on the teacher dashboard: in-memory first,
+  /// then any active row from the last [refreshActiveSessions] poll.
+  SessionModel? get dashboardActiveSession {
+    if (_currentSession != null && _currentSession!.isActive) {
+      return _currentSession;
+    }
+    for (final s in _activeSessions) {
+      if (s.isActive) return s;
+    }
+    return null;
+  }
+
+  /// Course title for [session] when [courses] is loaded; empty otherwise.
+  String courseTitleForSession(SessionModel session) {
+    for (final c in _courses) {
+      if (c.id == session.courseId) return c.name;
+    }
+    return '';
+  }
+
   /// Set of student IDs that already have an attendance record.
   Set<String> get presentStudentIds =>
       _attendanceRecords.map((r) => r.studentId).toSet();

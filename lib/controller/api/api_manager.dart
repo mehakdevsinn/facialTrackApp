@@ -2055,6 +2055,24 @@ extension ComplaintsApiMethods on ApiManager {
     }
   }
 
+  /// Teacher → admin complaints filed by the logged-in teacher.
+  Future<List<ComplaintItem>> getTeacherComplaintsSubmitted({String? status}) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.teacherComplaintsSubmitted(status: status)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return _parseComplaintListBody(response.body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<ComplaintItem> postTeacherComplaintApprove(
     String complaintId, {
     String? notes,

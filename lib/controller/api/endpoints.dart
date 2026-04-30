@@ -223,6 +223,13 @@ class Endpoints {
     return Uri.parse(base).replace(queryParameters: {'status': status}).toString();
   }
 
+  /// GET → complaints this teacher submitted to admin (?status optional).
+  static String teacherComplaintsSubmitted({String? status}) {
+    const base = '$_teacher/complaints/submitted';
+    if (status == null || status.isEmpty) return base;
+    return Uri.parse(base).replace(queryParameters: {'status': status}).toString();
+  }
+
   static String teacherComplaintApprove(String complaintId) =>
       '$_teacher/complaints/$complaintId/approve';
 

@@ -56,6 +56,15 @@ class _TeacherComplaintDetailScreenState
   }
 
   Future<void> _reject() async {
+    final notes = _notesController.text.trim();
+    if (notes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rejection notes are required so the student knows why.'),
+        ),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       await ApiManager.instance.postTeacherComplaintReject(
@@ -191,6 +200,9 @@ class _TeacherComplaintDetailScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDetailRow('Course', c.courseName ?? '—'),
+                    if (c.complainantRoleLabel != null &&
+                        c.complainantRoleLabel!.trim().isNotEmpty)
+                      _buildDetailRow('Student', c.complainantRoleLabel!),
                     _buildDetailRow('Session date', _fmt(c.sessionDateRaw)),
                     _buildDetailRow('Submitted', _fmt(c.createdAtRaw)),
                     const Divider(height: 30),
@@ -244,7 +256,8 @@ class _TeacherComplaintDetailScreenState
                         controller: _notesController,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: 'Optional notes for the student…',
+                          hintText:
+                              'Optional when approving. Required when rejecting.',
                           hintStyle: TextStyle(
                             color: Colors.grey.shade400,
                             fontSize: 13,

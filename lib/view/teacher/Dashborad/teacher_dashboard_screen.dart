@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
@@ -20,6 +21,9 @@ class TeacherDashboardScreen extends StatefulWidget {
 }
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+  int? _pendingComplaintCount;
+  bool _pendingComplaintsLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -28,7 +32,46 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       final session = context.read<SessionProvider>();
       session.refreshActiveSessions();
       session.loadCourses();
+      _loadPendingComplaintCount();
     });
+  }
+
+  Future<void> _loadPendingComplaintCount({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() => _pendingComplaintsLoading = true);
+    }
+    try {
+      final list =
+          await ApiManager.instance.getTeacherComplaintsInbox(status: 'pending');
+      if (!mounted) return;
+      setState(() {
+        _pendingComplaintCount = list.length;
+        _pendingComplaintsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _pendingComplaintCount = null;
+        _pendingComplaintsLoading = false;
+      });
+    }
+  }
+
+  String _complaintsBannerSubtitle() {
+    if (_pendingComplaintsLoading) {
+      return 'Checking inbox…';
+    }
+    final n = _pendingComplaintCount;
+    if (n == null) {
+      return 'Tap to open complaints inbox';
+    }
+    if (n == 0) {
+      return 'No pending attendance disputes';
+    }
+    if (n == 1) {
+      return '1 pending complaint to review';
+    }
+    return '$n pending complaints to review';
   }
 
   @override
@@ -375,11 +418,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push<void>(
               context,
               MaterialPageRoute(builder: (_) => const TeacherComplaintsInbox()),
             );
+            if (context.mounted) {
+              _loadPendingComplaintCount(showLoading: false);
+            }
           },
           borderRadius: BorderRadius.circular(22),
           child: Padding(
@@ -401,41 +447,46 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         size: 28,
                       ),
                     ),
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        height: 12,
-                        width: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: ColorPallet.primaryBlue,
-                            width: 2,
+                    if (!_pendingComplaintsLoading &&
+                        (_pendingComplaintCount ?? 0) > 0)
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: Container(
+                          height: 12,
+                          width: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: ColorPallet.primaryBlue,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Complaints Inbox",
+                    children: [
+                      const Text(
+                        'Complaints Inbox',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        "2 New student challenges pending",
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        _complaintsBannerSubtitle(),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),

@@ -5,6 +5,7 @@ import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%2
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/overview_card_widget.dart';
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/profile_screen_header_widget.dart';
 import 'package:facialtrackapp/utils/widgets/teacher%20side%20profile%20screen%20widgets/subject_card_widget.dart';
+import 'package:facialtrackapp/view/teacher/Complaints/teacher_my_complaints_screen.dart';
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_report_issue_screen.dart';
 import 'package:facialtrackapp/view/teacher/Profile/teacher_my_schedule_screen.dart';
 import 'package:facialtrackapp/view/teacher/Password%20Changed/change_password_inside_teacher_profile.dart';
@@ -83,6 +84,15 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
                               MaterialPageRoute(
                                 builder: (_) =>
                                     TeacherSideChangePasswordScreen(),
+                              ),
+                            );
+                          },
+                          onMyComplaintsTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const TeacherMyComplaintsScreen(),
                               ),
                             );
                           },

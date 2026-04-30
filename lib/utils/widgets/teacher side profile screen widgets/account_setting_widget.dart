@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class AccountSettingsCard extends StatelessWidget {
   final VoidCallback onChangePasswordTap;
   final VoidCallback onReportIssueTap;
+  final VoidCallback? onMyComplaintsTap;
 
   const AccountSettingsCard({
     super.key,
     required this.onChangePasswordTap,
     required this.onReportIssueTap,
+    this.onMyComplaintsTap,
   });
 
   @override
@@ -51,6 +53,30 @@ class AccountSettingsCard extends StatelessWidget {
             onTap: onChangePasswordTap,
           ),
           Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+          if (onMyComplaintsTap != null) ...[
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.assignment_outlined, color: Colors.teal),
+              ),
+              title: const Text(
+                "My complaints",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                "Reports you sent to administration",
+                style: TextStyle(fontSize: 12),
+              ),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: onMyComplaintsTap,
+            ),
+            Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+          ],
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: Container(

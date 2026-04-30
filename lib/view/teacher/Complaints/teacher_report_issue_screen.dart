@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/core/models/complaint_models.dart';
+import 'package:facialtrackapp/view/teacher/Complaints/teacher_my_complaints_screen.dart';
 import 'package:flutter/material.dart';
 
 /// Teacher → admin. `POST /teachers/complaints/admin`
@@ -207,6 +208,21 @@ class _TeacherReportIssueScreenState extends State<TeacherReportIssueScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.push<void>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TeacherMyComplaintsScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.assignment_outlined),
+                    label: const Text('View my submitted complaints'),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 55,

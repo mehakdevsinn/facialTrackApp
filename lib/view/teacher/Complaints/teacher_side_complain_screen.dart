@@ -5,6 +5,53 @@ import 'package:facialtrackapp/view/teacher/Complaints/teacher_side_complain_det
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Pills on blue header — avoids M3 [FilterChip] forcing a white surface + unreadable label.
+class _ComplaintStatusTabPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ComplaintStatusTabPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: selected
+                ? Colors.white
+                : Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected
+                  ? Colors.transparent
+                  : Colors.white.withOpacity(0.95),
+              width: 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? ColorPallet.primaryBlue : Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class TeacherComplaintsInbox extends StatefulWidget {
   const TeacherComplaintsInbox({super.key});
 
@@ -123,24 +170,13 @@ class _TeacherComplaintsInboxState extends State<TeacherComplaintsInbox> {
             final sel = _filterLabel == status;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(status),
+              child: _ComplaintStatusTabPill(
+                label: status,
                 selected: sel,
-                onSelected: (_) {
+                onTap: () {
                   setState(() => _filterLabel = status);
                   _load();
                 },
-                backgroundColor: Colors.white24,
-                selectedColor: Colors.white,
-                labelStyle: TextStyle(
-                  color: sel ? ColorPallet.primaryBlue : Colors.grey[300],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-                checkmarkColor: ColorPallet.primaryBlue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
               ),
             );
           }).toList(),
@@ -247,6 +283,18 @@ class _TeacherComplaintsInboxState extends State<TeacherComplaintsInbox> {
                           ),
                         ],
                       ),
+                      if (c.complainantRoleLabel != null &&
+                          c.complainantRoleLabel!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          c.complainantRoleLabel!,
+                          style: TextStyle(
+                            color: Colors.blueGrey.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                       if (c.rollNumber != null && c.rollNumber!.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
@@ -283,15 +331,14 @@ class _TeacherComplaintsInboxState extends State<TeacherComplaintsInbox> {
                           ),
                         ],
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(height: 1),
-                      ),
+                      const SizedBox(height: 6),
                       Text(
-                        c.reason,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, height: 1.4),
+                        'Tap to view details',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: ColorPallet.primaryBlue.withOpacity(0.85),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),

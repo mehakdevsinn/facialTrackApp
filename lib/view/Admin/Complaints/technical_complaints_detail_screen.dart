@@ -101,6 +101,17 @@ class _TechnicalComplaintDetailScreenState
   }
 
   Future<void> _reject() async {
+    final text = _noteController.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Review notes are required when dismissing a complaint.',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       await ApiManager.instance.postAdminComplaintReject(
@@ -329,7 +340,8 @@ class _TechnicalComplaintDetailScreenState
                     maxLines: 4,
                     enabled: !_busy,
                     decoration: InputDecoration(
-                      hintText: 'Optional review notes…',
+                      hintText:
+                          'Optional when resolving. Required when dismissing.',
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
                         fontSize: 13,

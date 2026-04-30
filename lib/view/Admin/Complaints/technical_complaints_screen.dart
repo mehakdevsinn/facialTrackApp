@@ -5,6 +5,53 @@ import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_detail
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Pills on blue header — avoids M3 [FilterChip] white surface + unreadable label.
+class _ComplaintStatusTabPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ComplaintStatusTabPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: selected
+                ? Colors.white
+                : Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected
+                  ? Colors.transparent
+                  : Colors.white.withOpacity(0.95),
+              width: 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? ColorPallet.primaryBlue : Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Admin complaints inbox. `GET /admin/complaints`
 class AdminTechnicalComplaintsScreen extends StatefulWidget {
   const AdminTechnicalComplaintsScreen({super.key});
@@ -144,24 +191,13 @@ class _AdminTechnicalComplaintsScreenState
                 final sel = _statusLabel == s;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(s),
+                  child: _ComplaintStatusTabPill(
+                    label: s,
                     selected: sel,
-                    onSelected: (_) {
+                    onTap: () {
                       setState(() => _statusLabel = s);
                       _load();
                     },
-                    backgroundColor: Colors.white24,
-                    selectedColor: Colors.white,
-                    labelStyle: TextStyle(
-                      color: sel ? ColorPallet.primaryBlue : Colors.grey[300],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    checkmarkColor: ColorPallet.primaryBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
                   ),
                 );
               }).toList(),
@@ -346,15 +382,14 @@ class _AdminTechnicalComplaintsScreenState
                           ),
                         ],
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(height: 1),
-                      ),
+                      const SizedBox(height: 8),
                       Text(
-                        c.reason,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, height: 1.4),
+                        'Tap to view details',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: ColorPallet.primaryBlue.withOpacity(0.85),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),

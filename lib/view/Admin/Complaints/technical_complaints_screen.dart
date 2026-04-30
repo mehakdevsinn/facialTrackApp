@@ -1,7 +1,11 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/complaint_models.dart';
 import 'package:facialtrackapp/view/Admin/Complaints/technical_complaints_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+/// Admin complaints inbox. `GET /admin/complaints`
 class AdminTechnicalComplaintsScreen extends StatefulWidget {
   const AdminTechnicalComplaintsScreen({super.key});
 
@@ -12,94 +16,87 @@ class AdminTechnicalComplaintsScreen extends StatefulWidget {
 
 class _AdminTechnicalComplaintsScreenState
     extends State<AdminTechnicalComplaintsScreen> {
-  String selectedFilterStatus = "All";
-  String? selectedFilterCategory;
+  String _statusLabel = 'All';
+  String _categoryKey = '';
 
-  final List<String> categories = [
-    "All Categories",
-    "Face Recognition Error",
-    "App Crash",
-    "Login Issue",
-    "Sync Problem",
-    "Other",
-  ];
+  bool _loading = true;
+  String? _error;
+  List<ComplaintItem> _items = [];
 
-  final List<Map<String, dynamic>> technicalComplaints = [
-    {
-      "id": 1,
-      "userName": "Zain Ali",
-      "userRole": "Student",
-      "idNumber": "FA21-BCS-102",
-      "semester": "6th Semester",
-      "category": "Face Recognition Error",
-      "date": "Feb 08, 2026",
-      "shortDesc": "Face not detected in outdoors.",
-      "fullDesc":
-          "I tried to mark my attendance while standing near the department entrance, but the camera was too bright and it didn't recognize my face. Tried 5 times.",
-      "status": "Pending",
-      "reportedAt": "08:45 AM",
-      "deviceInfo": "Samsung S21 • Android 13",
-      "appVersion": "v1.0.4",
-    },
-    {
-      "id": 2,
-      "userName": "Dr. Saima Kamran",
-      "userRole": "Teacher",
-      "idNumber": "TCH-2025-014",
-      "category": "Schedule Problem",
-      "date": "Feb 09, 2026",
-      "shortDesc": "Monday's lab not showing in schedule.",
-      "fullDesc":
-          "I have a Mobile App Dev lab scheduled for Monday at 11:30 AM, but it is not appearing in my 'Assigned Subjects' or 'Start Session' list.",
-      "status": "Pending",
-      "reportedAt": "10:15 AM",
-      "deviceInfo": "iPhone 14 • iOS 17",
-      "appVersion": "v1.0.5",
-    },
-    {
-      "id": 3,
-      "userName": "Amna Sheikh",
-      "userRole": "Student",
-      "idNumber": "FA21-BCS-056",
-      "semester": "4th Semester",
-      "category": "App Crash",
-      "date": "Feb 07, 2026",
-      "shortDesc": "App closes when opening logs.",
-      "fullDesc":
-          "Every time I click on 'My Attendance History', the app immediately shuts down. This started happening after the last update.",
-      "status": "Pending",
-      "reportedAt": "01:20 PM",
-      "deviceInfo": "iPhone 13 • iOS 16",
-      "appVersion": "v1.0.4",
-    },
-    {
-      "id": 4,
-      "userName": "Hassan Raza",
-      "userRole": "Student",
-      "idNumber": "FA21-BCS-012",
-      "semester": "8th Semester",
-      "category": "Sync Problem",
-      "date": "Feb 06, 2026",
-      "shortDesc": "Attendance not updating.",
-      "fullDesc":
-          "The teacher marked me present, and it shows on her screen, but my dashboard still says 'Absent'. I re-logged but no change.",
-      "status": "Resolved",
-      "reportedAt": "11:10 AM",
-      "deviceInfo": "Xiaomi Redmi Note 11",
-      "appVersion": "v1.0.3",
-    },
-  ];
+  static Map<String, String> get _categoryOptions {
+    final m = <String, String>{'': 'All Categories'};
+    m.addAll(ComplaintItem.studentAdminCategoryLabels);
+    m.addAll(ComplaintItem.teacherAdminCategoryLabels);
+    return m;
+  }
 
-  List<Map<String, dynamic>> get filteredComplaints {
-    return technicalComplaints.where((c) {
-      bool matchesStatus =
-          selectedFilterStatus == "All" || c['status'] == selectedFilterStatus;
-      bool matchesCategory =
-          selectedFilterCategory == null ||
-          selectedFilterCategory == "All Categories" ||
-          c['category'] == selectedFilterCategory;
-      return matchesStatus && matchesCategory;
-    }).toList();
+  String? get _apiStatus {
+    switch (_statusLabel) {
+      case 'Pending':
+        return 'pending';
+      case 'Resolved':
+        return 'resolved';
+      case 'Rejected':
+        return 'rejected';
+      default:
+        return null;
+    }
+  }
+
+  String? get _apiCategory =>
+      _categoryKey.isEmpty ? null : _categoryKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final list = await ApiManager.instance.getAdminComplaints(
+        status: _apiStatus,
+        category: _apiCategory,
+      );
+      if (!mounted) return;
+      setState(() {
+        _items = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _items = [];
+        _loading = false;
+      });
+    }
+  }
+
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'pending':
+        return Colors.amber;
+      case 'approved':
+      case 'resolved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _createdLine(ComplaintItem c) {
+    final raw = c.createdAtRaw;
+    if (raw == null || raw.isEmpty) return '—';
+    final dt = DateTime.tryParse(raw);
+    if (dt == null) return raw;
+    return DateFormat('MMM dd, yyyy · hh:mm a').format(dt.toLocal());
   }
 
   @override
@@ -109,7 +106,7 @@ class _AdminTechnicalComplaintsScreenState
         backgroundColor: const Color(0xffF6F8FB),
         appBar: AppBar(
           title: const Text(
-            "Complaints",
+            'Complaints',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           centerTitle: true,
@@ -120,20 +117,7 @@ class _AdminTechnicalComplaintsScreenState
         body: Column(
           children: [
             _buildFilterSection(),
-            Expanded(
-              child: filteredComplaints.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      itemCount: filteredComplaints.length,
-                      itemBuilder: (context, index) {
-                        return _buildComplaintCard(filteredComplaints[index]);
-                      },
-                    ),
-            ),
+            Expanded(child: _buildList()),
           ],
         ),
       ),
@@ -141,6 +125,7 @@ class _AdminTechnicalComplaintsScreenState
   }
 
   Widget _buildFilterSection() {
+    final opts = _categoryOptions;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: const BoxDecoration(
@@ -155,23 +140,21 @@ class _AdminTechnicalComplaintsScreenState
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: ["All", "Pending", "Resolved", "Rejected"].map((
-                status,
-              ) {
-                bool isSelected = selectedFilterStatus == status;
+              children: ['All', 'Pending', 'Resolved', 'Rejected'].map((s) {
+                final sel = _statusLabel == s;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+                  padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(status),
-                    selected: isSelected,
-                    onSelected: (val) =>
-                        setState(() => selectedFilterStatus = status),
+                    label: Text(s),
+                    selected: sel,
+                    onSelected: (_) {
+                      setState(() => _statusLabel = s);
+                      _load();
+                    },
                     backgroundColor: Colors.white24,
                     selectedColor: Colors.white,
                     labelStyle: TextStyle(
-                      color: isSelected
-                          ? ColorPallet.primaryBlue
-                          : Colors.grey[500],
+                      color: sel ? ColorPallet.primaryBlue : Colors.grey[300],
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -194,199 +177,192 @@ class _AdminTechnicalComplaintsScreenState
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                value: selectedFilterCategory ?? "All Categories",
+                value: _categoryKey.isEmpty ? '' : _categoryKey,
                 isExpanded: true,
                 dropdownColor: ColorPallet.primaryBlue,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.white,
-                ),
-                items: categories
+                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                items: opts.entries
                     .map(
-                      (c) => DropdownMenuItem(
-                        value: c,
+                      (e) => DropdownMenuItem(
+                        value: e.key,
                         child: Text(
-                          c,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
+                          e.value,
+                          style: const TextStyle(color: Colors.white, fontSize: 13),
                         ),
                       ),
                     )
                     .toList(),
-                onChanged: (val) =>
-                    setState(() => selectedFilterCategory = val),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildComplaintCard(Map<String, dynamic> complaint) {
-    Color statusColor = complaint['status'] == "Pending"
-        ? Colors.amber
-        : (complaint['status'] == "Resolved" ? Colors.green : Colors.red);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => TechnicalComplaintDetailScreen(
-                complaint: complaint,
-                onUpdate: (newStatus) {
-                  setState(() {
-                    complaint['status'] = newStatus;
-                  });
+                onChanged: (val) {
+                  setState(() => _categoryKey = val ?? '');
+                  _load();
                 },
               ),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            complaint['userName'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            "${complaint['userRole']}${complaint['userRole'] == "Student" ? " • ${complaint['semester']}" : ""}",
-                            style: TextStyle(
-                              color: complaint['userRole'] == "Teacher"
-                                  ? Colors.deepPurple
-                                  : Colors.blue,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        complaint['status'].toUpperCase(),
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  complaint['category'],
-                  style: TextStyle(
-                    color: ColorPallet.primaryBlue,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      complaint['date'],
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Icon(
-                      Icons.access_time_rounded,
-                      size: 14,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      complaint['reportedAt'],
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1),
-                ),
-                Text(
-                  complaint['shortDesc'],
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, height: 1.4),
-                ),
-              ],
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.build_circle_outlined,
-            size: 70,
-            color: Colors.grey.shade300,
+  Widget _buildList() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              OutlinedButton(onPressed: _load, child: const Text('Retry')),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            "No complaints found",
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
-          ),
-        ],
+        ),
+      );
+    }
+    if (_items.isEmpty) {
+      return Center(
+        child: Text(
+          'No complaints found',
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: _items.length,
+        itemBuilder: (context, index) {
+          final c = _items[index];
+          final col = _statusColor(c.status);
+          final catLabel = c.categoryDisplayLabel ?? 'Attendance';
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () async {
+                  await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          TechnicalComplaintDetailScreen(complaintId: c.id),
+                    ),
+                  );
+                  if (mounted) _load();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  c.complainantName ?? '—',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Text(
+                                  c.complainantRoleLabel ?? '',
+                                  style: TextStyle(
+                                    color: c.complainantRole == 'teacher'
+                                        ? Colors.deepPurple
+                                        : Colors.blue,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: col.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              c.badgeLabel,
+                              style: TextStyle(
+                                color: col,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        catLabel,
+                        style: const TextStyle(
+                          color: ColorPallet.primaryBlue,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 14,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _createdLine(c),
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(height: 1),
+                      ),
+                      Text(
+                        c.reason,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

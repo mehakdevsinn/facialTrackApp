@@ -106,6 +106,24 @@ class Endpoints {
   /// POST → permanently delete a list of students
   static const String adminStudentsBulkDelete = '$_admin/students/bulk-delete';
 
+  /// GET → admin complaints inbox (?status, ?category).
+  static String adminComplaints({String? status, String? category}) {
+    final params = <String, String>{};
+    if (status != null && status.isNotEmpty) params['status'] = status;
+    if (category != null && category.isNotEmpty) params['category'] = category;
+    if (params.isEmpty) return '$_admin/complaints';
+    return Uri.parse('$_admin/complaints').replace(queryParameters: params).toString();
+  }
+
+  static String adminComplaint(String complaintId) =>
+      '$_admin/complaints/$complaintId';
+
+  static String adminComplaintResolve(String complaintId) =>
+      '$_admin/complaints/$complaintId/resolve';
+
+  static String adminComplaintReject(String complaintId) =>
+      '$_admin/complaints/$complaintId/reject';
+
   // ── Student — Face Enrollment ─────────────────────────────────────────────
   static const String _face = '$baseUrl/api/v1';
 
@@ -128,6 +146,19 @@ class Endpoints {
 
   /// GET → semester timetable for logged-in student (JWT). Same body as admin timetable.
   static const String studentSchedule = '$_face/students/schedule/';
+
+  /// POST → student attendance complaint to teacher (session_id + reason).
+  static const String studentComplaints = '$_face/students/complaints';
+
+  /// POST → student general complaint to admin (category + reason).
+  static const String studentComplaintsAdmin = '$_face/students/complaints/admin';
+
+  /// GET → all complaints for logged-in student (?status optional).
+  static String studentComplaintsAll({String? status}) {
+    final base = '$_face/students/complaints/all';
+    if (status == null || status.isEmpty) return base;
+    return Uri.parse(base).replace(queryParameters: {'status': status}).toString();
+  }
 
   // ── Admin — Enrollment Deadline Settings ─────────────────────────────────
   static const String _adminSettings = '$_admin/settings';
@@ -184,6 +215,22 @@ class Endpoints {
   /// GET → profile summary stats + assigned subjects list.
   static String teacherProfileSummary(String teacherId) =>
       '$_teacher/$teacherId/profile-summary';
+
+  /// GET → student→teacher attendance complaints inbox (?status optional).
+  static String teacherComplaintsInbox({String? status}) {
+    const base = '$_teacher/complaints/inbox';
+    if (status == null || status.isEmpty) return base;
+    return Uri.parse(base).replace(queryParameters: {'status': status}).toString();
+  }
+
+  static String teacherComplaintApprove(String complaintId) =>
+      '$_teacher/complaints/$complaintId/approve';
+
+  static String teacherComplaintReject(String complaintId) =>
+      '$_teacher/complaints/$complaintId/reject';
+
+  /// POST → teacher general complaint to admin.
+  static const String teacherComplaintsAdmin = '$_teacher/complaints/admin';
 
   // ── Reports ────────────────────────────────────────────────────────────────
   static const String _reports = '$baseUrl/api/v1/reports';

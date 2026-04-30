@@ -1,17 +1,18 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/controller/global_complaints.dart';
-// import '../../../../controller/complaint_service.dart';
-// import '../../../../model/complaint_model.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Student → teacher attendance dispute. `POST /students/complaints`
 class AttendanceComplaintScreen extends StatefulWidget {
+  final String sessionId;
   final String courseName;
   final String teacherName;
   final DateTime date;
 
   const AttendanceComplaintScreen({
     super.key,
+    required this.sessionId,
     required this.courseName,
     required this.teacherName,
     required this.date,
@@ -27,56 +28,68 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
   String? _selectedIssue;
   bool _isLoading = false;
 
-  final List<String> _issueTypes = [
+  static const List<String> _issueTypes = [
     'Attendance Not Marked',
     'Marked Absent by Mistake',
     'Wrong Entry/Exit Time',
   ];
 
-  void _submitComplaint() async {
+  Future<void> _submitComplaint() async {
+    if (widget.sessionId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing session. Open Report Issue from a session row.')),
+      );
+      return;
+    }
     if (_selectedIssue == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select an issue type")),
+        const SnackBar(content: Text('Please select an issue type')),
       );
       return;
     }
     if (_descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please describe the issue")),
+        const SnackBar(content: Text('Please describe the issue')),
       );
       return;
     }
 
+    final reason =
+        '[${_selectedIssue!}] ${_descriptionController.text.trim()}';
+
     setState(() => _isLoading = true);
-
-    // Create complaint map
-    final newComplaint = {
-      "id": DateTime.now().millisecondsSinceEpoch.toString(),
-      "type": "Attendance",
-      "status": "Pending",
-      "submissionDate": DateTime.now(),
-      "description": _descriptionController.text.trim(),
-      "course": widget.courseName,
-      "issueType": _selectedIssue,
-      "classDate": widget.date,
-    };
-
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Save to global storage
-    globalComplaints.insert(0, newComplaint); // Add to top of list
-
-    if (mounted) {
-      setState(() => _isLoading = false);
+    try {
+      await ApiManager.instance.postStudentAttendanceComplaint(
+        sessionId: widget.sessionId,
+        reason: reason,
+      );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Complaint submitted to Teacher"),
+          content: Text('Complaint submitted to your teacher'),
           backgroundColor: Colors.green,
         ),
       );
       Navigator.pop(context);
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
@@ -85,7 +98,7 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          "Report Attendance Issue",
+          'Report Attendance Issue',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: ColorPallet.primaryBlue,
@@ -95,11 +108,10 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Info Card (Auto-filled)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -124,11 +136,13 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                           size: 20,
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          widget.courseName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            widget.courseName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -136,22 +150,21 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                     const Divider(height: 24),
                     _buildInfoRow(
                       Icons.person_outline,
-                      "Teacher",
+                      'Teacher',
                       widget.teacherName,
                     ),
                     const SizedBox(height: 12),
                     _buildInfoRow(
                       Icons.calendar_today_outlined,
-                      "Date",
+                      'Date',
                       DateFormat('MMM dd, yyyy').format(widget.date),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-
               const Text(
-                "What went wrong?",
+                'What went wrong?',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -159,8 +172,6 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Issue Type Dropdown
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   filled: true,
@@ -185,17 +196,16 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                     vertical: 14,
                   ),
                 ),
-                hint: const Text("Select Issue Type"),
+                hint: const Text('Select Issue Type'),
                 value: _selectedIssue,
-                items: _issueTypes.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type));
-                }).toList(),
+                items: _issueTypes
+                    .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                    .toList(),
                 onChanged: (val) => setState(() => _selectedIssue = val),
               ),
               const SizedBox(height: 24),
-
               const Text(
-                "Description",
+                'Description',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -203,8 +213,6 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Description Field
               TextField(
                 controller: _descriptionController,
                 maxLines: 5,
@@ -212,7 +220,7 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                   filled: true,
                   fillColor: Colors.white,
                   hintText:
-                      "Please describe why you think the attendance is incorrect...",
+                      'Please describe why you think the attendance is incorrect...',
                   hintStyle: TextStyle(color: Colors.grey.shade500),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -232,8 +240,6 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
-              // Submit Button
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
@@ -256,7 +262,7 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                           ),
                         )
                       : const Text(
-                          "Submit Complaint",
+                          'Submit Complaint',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -273,19 +279,22 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: Colors.grey.shade600),
         const SizedBox(width: 8),
         Text(
-          "$label: ",
+          '$label: ',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
           ),
         ),
       ],

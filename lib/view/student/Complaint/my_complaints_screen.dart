@@ -1,8 +1,12 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
-import 'package:facialtrackapp/controller/global_complaints.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/complaint_models.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+enum _StudentComplaintTab { all, pending, resolved, rejected }
+
+/// `GET /students/complaints/all` with status filters.
 class MyComplaintsScreen extends StatefulWidget {
   const MyComplaintsScreen({super.key});
 
@@ -11,7 +15,73 @@ class MyComplaintsScreen extends StatefulWidget {
 }
 
 class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
-  // Access globalComplaints directly
+  _StudentComplaintTab _tab = _StudentComplaintTab.all;
+  bool _loading = true;
+  String? _error;
+  List<ComplaintItem> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      List<ComplaintItem> list;
+      switch (_tab) {
+        case _StudentComplaintTab.all:
+          list = await ApiManager.instance.getStudentComplaintsAll();
+          break;
+        case _StudentComplaintTab.pending:
+          list = await ApiManager.instance.getStudentComplaintsAll(status: 'pending');
+          break;
+        case _StudentComplaintTab.rejected:
+          list = await ApiManager.instance.getStudentComplaintsAll(status: 'rejected');
+          break;
+        case _StudentComplaintTab.resolved:
+          list = await ApiManager.instance.getStudentComplaintsResolvedMerged();
+          break;
+      }
+      if (!mounted) return;
+      setState(() {
+        _items = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _items = [];
+        _loading = false;
+      });
+    }
+  }
+
+  Color _badgeColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.amber;
+      case 'approved':
+      case 'resolved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String? _formatApiDate(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    final dt = DateTime.tryParse(raw);
+    if (dt == null) return raw;
+    return DateFormat('MMM dd, yyyy').format(dt.toLocal());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +89,7 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          "My Complaints",
+          'My Complaints',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: ColorPallet.primaryBlue,
@@ -27,15 +97,74 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: globalComplaints.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: globalComplaints.length,
-              itemBuilder: (context, index) {
-                return _buildComplaintCard(globalComplaints[index]);
-              },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _tabChip('All', _StudentComplaintTab.all),
+                  _tabChip('Pending', _StudentComplaintTab.pending),
+                  _tabChip('Resolved', _StudentComplaintTab.resolved),
+                  _tabChip('Rejected', _StudentComplaintTab.rejected),
+                ],
+              ),
             ),
+          ),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabChip(String label, _StudentComplaintTab tab) {
+    final sel = _tab == tab;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(label),
+        selected: sel,
+        onSelected: (_) {
+          setState(() => _tab = tab);
+          _load();
+        },
+        selectedColor: ColorPallet.primaryBlue.withOpacity(0.2),
+        checkmarkColor: ColorPallet.primaryBlue,
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              OutlinedButton(onPressed: _load, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_items.isEmpty) {
+      return _buildEmptyState();
+    }
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _items.length,
+        itemBuilder: (context, index) => _buildComplaintCard(_items[index]),
+      ),
     );
   }
 
@@ -47,7 +176,7 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
           Icon(Icons.assignment_outlined, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            "No complaints found",
+            'No complaints found',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -56,7 +185,7 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Any issues you report will appear here.",
+            'Complaints you submit will appear here.',
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
@@ -64,21 +193,21 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
     );
   }
 
-  Widget _buildComplaintCard(Map<String, dynamic> complaint) {
-    final bool isAttendance = complaint['type'] == 'Attendance';
-    final DateTime date = complaint['submissionDate'] as DateTime;
+  Widget _buildComplaintCard(ComplaintItem c) {
+    final cat = c.categoryDisplayLabel;
+    final sessionD = _formatApiDate(c.sessionDateRaw);
+    final created = _formatApiDate(c.createdAtRaw) ?? '—';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 3,
-            // offset: const Offset(2, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 4,
           ),
         ],
       ),
@@ -88,89 +217,93 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Chip(
-                label: Text(
-                  complaint['type'],
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              if (cat != null)
+                Expanded(
+                  child: Text(
+                    cat,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else if (c.courseName != null && c.courseName!.isNotEmpty)
+                Expanded(
+                  child: Text(
+                    c.courseName!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                const Expanded(
+                  child: Text(
+                    'Attendance complaint',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                backgroundColor: isAttendance ? Colors.orange : Colors.purple,
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _badgeColor(c.status).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _badgeColor(c.status)),
+                ),
+                child: Text(
+                  c.badgeLabel,
+                  style: TextStyle(
+                    color: _badgeColor(c.status),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              _buildStatusChip(complaint['status']),
             ],
           ),
-          const SizedBox(height: 12),
-          if (isAttendance) ...[
-            Text(
-              "${complaint['course']} - ${complaint['issueType']}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+          if (c.courseName != null &&
+              c.courseName!.isNotEmpty &&
+              cat != null) ...[
             const SizedBox(height: 4),
             Text(
-              "Date: ${DateFormat('MMM dd, yyyy').format(complaint['classDate'])}",
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              c.courseName!,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
             ),
-          ] else ...[
+          ],
+          if (sessionD != null) ...[
+            const SizedBox(height: 4),
             Text(
-              complaint['category'] ?? "General Issue",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'Session date: $sessionD',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
           ],
           const SizedBox(height: 8),
           Text(
-            complaint['description'],
-            maxLines: 2,
+            c.reason,
+            maxLines: 4,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
           ),
-          const Divider(height: 24),
+          if (c.reviewNotes != null && c.reviewNotes!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Response: ${c.reviewNotes}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            ),
+          ],
+          const Divider(height: 20),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              "Submitted: ${DateFormat('MMM dd, hh:mm a').format(date)}",
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              'Submitted: $created',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(String status) {
-    Color color;
-    switch (status) {
-      case "Pending":
-        color = Colors.amber;
-        break;
-      case "Resolved":
-        color = Colors.green;
-        break;
-      case "Rejected":
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.grey; // Default color for unknown status
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }

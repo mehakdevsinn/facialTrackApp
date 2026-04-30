@@ -21,6 +21,7 @@ import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/core/models/complaint_models.dart';
 import 'package:facialtrackapp/core/models/student_report_models.dart';
 import 'package:facialtrackapp/core/models/student_timetable_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
@@ -1929,6 +1930,308 @@ extension StudentReportsApiMethods on ApiManager {
       }
       _assertSuccess(response);
       return StudentTimetableResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+}
+
+extension ComplaintsApiMethods on ApiManager {
+  List<ComplaintItem> _parseComplaintListBody(String body) {
+    final decoded = jsonDecode(body);
+    if (decoded is! List) return [];
+    return decoded
+        .map((e) => ComplaintItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ComplaintItem> postStudentAttendanceComplaint({
+    required String sessionId,
+    required String reason,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.studentComplaints),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'session_id': sessionId,
+              'reason': reason,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> postStudentAdminComplaint({
+    required String category,
+    required String reason,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.studentComplaintsAdmin),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'category': category,
+              'reason': reason,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<ComplaintItem>> getStudentComplaintsAll({String? status}) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentComplaintsAll(status: status)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return _parseComplaintListBody(response.body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Teacher-approved + admin-resolved (two requests, deduped).
+  Future<List<ComplaintItem>> getStudentComplaintsResolvedMerged() async {
+    final approved = await getStudentComplaintsAll(status: 'approved');
+    final resolved = await getStudentComplaintsAll(status: 'resolved');
+    final byId = <String, ComplaintItem>{};
+    for (final c in [...approved, ...resolved]) {
+      byId[c.id] = c;
+    }
+    final out = byId.values.toList();
+    out.sort((a, b) {
+      final ta = a.createdAtRaw ?? '';
+      final tb = b.createdAtRaw ?? '';
+      return tb.compareTo(ta);
+    });
+    return out;
+  }
+
+  Future<List<ComplaintItem>> getTeacherComplaintsInbox({String? status}) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.teacherComplaintsInbox(status: status)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return _parseComplaintListBody(response.body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> postTeacherComplaintApprove(
+    String complaintId, {
+    String? notes,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (notes != null && notes.trim().isNotEmpty) {
+        body['notes'] = notes.trim();
+      }
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherComplaintApprove(complaintId)),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> postTeacherComplaintReject(
+    String complaintId, {
+    String? notes,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (notes != null && notes.trim().isNotEmpty) {
+        body['notes'] = notes.trim();
+      }
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherComplaintReject(complaintId)),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> postTeacherAdminComplaint({
+    required String category,
+    required String reason,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherComplaintsAdmin),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'category': category,
+              'reason': reason,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<ComplaintItem>> getAdminComplaints({
+    String? status,
+    String? category,
+  }) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.adminComplaints(
+              status: status,
+              category: category,
+            )),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return _parseComplaintListBody(response.body);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> getAdminComplaint(String complaintId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.adminComplaint(complaintId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> postAdminComplaintResolve(
+    String complaintId, {
+    String? reviewNotes,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (reviewNotes != null && reviewNotes.trim().isNotEmpty) {
+        body['review_notes'] = reviewNotes.trim();
+      }
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminComplaintResolve(complaintId)),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ComplaintItem> postAdminComplaintReject(
+    String complaintId, {
+    String? reviewNotes,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (reviewNotes != null && reviewNotes.trim().isNotEmpty) {
+        body['review_notes'] = reviewNotes.trim();
+      }
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.adminComplaintReject(complaintId)),
+            headers: {
+              ...await _authHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return ComplaintItem.fromJson(
           jsonDecode(response.body) as Map<String, dynamic>);
     } on AuthException {
       rethrow;

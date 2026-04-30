@@ -41,10 +41,10 @@ class ComplaintScreen extends StatelessWidget {
           children: [
             _buildOptionCard(
               context,
-              title: "Report Issue",
+              title: 'Report to Admin',
               description:
-                  "App bugs, login problems, or face verification issues.",
-              icon: Icons.build_circle_outlined,
+                  'Semester, subjects, timetable, or other admin issues.',
+              icon: Icons.admin_panel_settings_outlined,
               color: ColorPallet.primaryBlue,
               onTap: () {
                 Navigator.push(

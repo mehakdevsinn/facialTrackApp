@@ -456,6 +456,7 @@ class AttendanceCard extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => AttendanceComplaintScreen(
+                          sessionId: record.sessionId,
                           courseName: subject,
                           teacherName: teacher.isEmpty ? '—' : teacher,
                           date: _complaintDate(),

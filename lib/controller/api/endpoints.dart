@@ -126,6 +126,9 @@ class Endpoints {
   static const String enrollmentWindow =
       '$_face/students/face/enrollment-window';
 
+  /// GET → semester timetable for logged-in student (JWT). Same body as admin timetable.
+  static const String studentSchedule = '$_face/students/schedule/';
+
   // ── Admin — Enrollment Deadline Settings ─────────────────────────────────
   static const String _adminSettings = '$_admin/settings';
 
@@ -198,4 +201,35 @@ class Endpoints {
 
   /// GET /reports/low-attendance?course_id=&threshold=
   static const String reportLowAttendance = '$_reports/low-attendance';
+
+  // ── Student reports (student JWT only) ─────────────────────────────────────
+  static const String _studentReports = '$_reports/students';
+
+  static const String studentReportsHistoryMonthBounds =
+      '$_studentReports/history/month-bounds';
+
+  static String studentReportsHistory({
+    required int year,
+    required int month,
+    String? courseId,
+  }) {
+    final params = <String, String>{
+      'year': year.toString(),
+      'month': month.toString(),
+    };
+    if (courseId != null && courseId.isNotEmpty) {
+      params['course_id'] = courseId;
+    }
+    return Uri.parse('$_studentReports/history')
+        .replace(queryParameters: params)
+        .toString();
+  }
+
+  static String studentReportsSession(String sessionId) =>
+      '$_studentReports/sessions/$sessionId';
+
+  static const String studentReportsSubjects = '$_studentReports/subjects';
+
+  static String studentReportsSubjectDetail(String courseId) =>
+      '$_studentReports/subjects/$courseId';
 }

@@ -21,6 +21,8 @@ import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/models/student_timetable_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1802,6 +1804,132 @@ extension ReportsApiMethods on ApiManager {
       return data
           .map((e) => LowAttendanceStudent.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+}
+
+extension StudentReportsApiMethods on ApiManager {
+  Future<StudentMonthPickerBounds> getStudentHistoryMonthBounds() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentReportsHistoryMonthBounds),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentMonthPickerBounds.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<StudentAttendanceHistoryResponse> getStudentAttendanceHistory({
+    required int year,
+    required int month,
+    String? courseId,
+  }) async {
+    try {
+      final uri = Uri.parse(Endpoints.studentReportsHistory(
+        year: year,
+        month: month,
+        courseId: courseId,
+      ));
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentAttendanceHistoryResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<StudentAttendanceSessionRecord> getStudentSessionDetail(
+      String sessionId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentReportsSession(sessionId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentAttendanceSessionRecord.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<StudentSubjectsResponse> getStudentSubjectsReport() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentReportsSubjects),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentSubjectsResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<StudentSubjectDetailResponse> getStudentSubjectDetail(
+      String courseId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentReportsSubjectDetail(courseId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentSubjectDetailResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Semester timetable for the logged-in student.
+  /// [400] → section/semester issue; [404] → not published.
+  Future<StudentTimetableResponse> getStudentSchedule() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentSchedule),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 400) {
+        throw AuthException('Contact admin to set your section.');
+      }
+      if (response.statusCode == 404) {
+        throw AuthException('Timetable not published yet.');
+      }
+      _assertSuccess(response);
+      return StudentTimetableResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
     } on AuthException {
       rethrow;
     } catch (e) {

@@ -1,26 +1,18 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/student_report_models.dart';
 import 'package:facialtrackapp/view/student/Subjects/subject-detail.dart';
 import 'package:flutter/material.dart';
 
-class Subject {
-  final String subject;
-  final String teacher;
-  final String code;
-  final int attendance;
-  final int presentDays;
-  final int absentDays;
-  final Color color;
-
-  Subject({
-    required this.subject,
-    required this.teacher,
-    required this.code,
-    required this.attendance,
-    required this.presentDays,
-    required this.absentDays,
-    required this.color,
-  });
-}
+const List<Color> _subjectColors = [
+  Colors.blue,
+  Colors.green,
+  Colors.orange,
+  Colors.purple,
+  Colors.teal,
+  Colors.indigo,
+  Colors.deepOrange,
+];
 
 class MySubjectsScreen extends StatefulWidget {
   const MySubjectsScreen({super.key});
@@ -31,48 +23,43 @@ class MySubjectsScreen extends StatefulWidget {
 
 class _MySubjectsScreenState extends State<MySubjectsScreen> {
   bool isSearching = false;
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
-  List<Subject> allSubjects = [
-    Subject(
-      subject: "Computer Science",
-      teacher: "Prof. Ahmed Khan",
-      code: "CS101",
-      attendance: 92,
-      presentDays: 23,
-      absentDays: 2,
-      color: Colors.blue,
-    ),
-    Subject(
-      subject: "Physics",
-      teacher: "Mr. Hassan",
-      code: "PHY101",
-      attendance: 65,
-      presentDays: 13,
-      absentDays: 7,
-      color: Colors.green,
-    ),
-    Subject(
-      subject: "Chemistry",
-      teacher: "Dr. Usman",
-      code: "CHEM101",
-      attendance: 78,
-      presentDays: 14,
-      absentDays: 4,
-      color: Colors.orange,
-    ),
-  ];
+  bool _loading = true;
+  String? _error;
+  List<StudentCourseSummary> _courses = [];
 
-  late List<Subject> filteredSubjects;
+  List<StudentCourseSummary> _filtered = [];
 
   @override
   void initState() {
     super.initState();
-    filteredSubjects = List.from(allSubjects);
+    searchController.addListener(_filterSubjects);
+    _load();
+  }
 
-    searchController.addListener(() {
-      filterSubjects();
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
     });
+    try {
+      final res = await ApiManager.instance.getStudentSubjectsReport();
+      if (!mounted) return;
+      setState(() {
+        _courses = res.courses;
+        _filtered = List.from(_courses);
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _courses = [];
+        _filtered = [];
+        _error = e.toString();
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -81,47 +68,60 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
     super.dispose();
   }
 
+  void _filterSubjects() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filtered = List.from(_courses);
+      } else {
+        _filtered = _courses.where((c) {
+          return c.courseName.toLowerCase().contains(query) ||
+              c.teacherName.toLowerCase().contains(query) ||
+              c.courseCode.toLowerCase().contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  ({int n, int weightedPct, int attended, int total}) _stats() {
+    if (_courses.isEmpty) {
+      return (n: 0, weightedPct: 0, attended: 0, total: 0);
+    }
+    var totalSess = 0;
+    var attended = 0;
+    for (final c in _courses) {
+      totalSess += c.totalSessions;
+      attended += c.sessionsAttended;
+    }
+    final pct = totalSess > 0 ? ((attended * 100) / totalSess).round() : 0;
+    return (
+      n: _courses.length,
+      weightedPct: pct,
+      attended: attended,
+      total: totalSess,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = _stats();
+
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: const Color.fromARGB(255, 244, 243, 243),
         backgroundColor: Colors.grey[100],
-
         body: Stack(
           children: [
             Container(
               height: isSearching ? 80 : 108,
               color: ColorPallet.primaryBlue,
-
-              // child: Padding(
-              //   padding: const EdgeInsets.only(top: 22, left: 18, right: 18),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Text(
-              //         "My Subjects",
-              //         style: TextStyle(color: ColorPallet.white, fontSize: 20),
-              //       ),
-
-              //       Icon(Icons.search, size: 30, color: ColorPallet.white),
-              //     ],
-              //   ),
-              // ),
             ),
-
             Positioned(
               top: isSearching ? 18 : 22,
               left: 18,
               right: 18,
               child: isSearching ? buildSearchField() : buildHeader(),
             ),
-
-            // Stats Card (hide during search)
             if (!isSearching) ...[
-              // Positioned(top: 70, left: 16, right: 16, child: buildHeader()),
               Positioned(
                 top: 70,
                 left: 16,
@@ -130,8 +130,7 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
                   padding: const EdgeInsets.only(left: 22, right: 22),
                   child: Container(
                     width: double.infinity,
-
-                    padding: EdgeInsets.only(
+                    padding: const EdgeInsets.only(
                       left: 14,
                       right: 14,
                       top: 14,
@@ -139,9 +138,7 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: ColorPallet.white,
-
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
-
+                      borderRadius: const BorderRadius.all(Radius.circular(16)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
@@ -150,161 +147,163 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Colors.blue.withOpacity(0.15),
-                              child: Icon(Icons.menu_book, color: Colors.blue),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "5 Subjects",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 48,
+                            child: Center(
+                              child: SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 40,
-                          child: VerticalDivider(
-                            thickness: 1,
-                            color: Colors.grey,
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _statColumn(
+                                Icons.menu_book,
+                                Colors.blue,
+                                '${s.n}',
+                                'Subjects',
+                              ),
+                              const SizedBox(
+                                height: 40,
+                                child: VerticalDivider(
+                                  thickness: 1,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              _statColumn(
+                                Icons.percent,
+                                Colors.green,
+                                '${s.weightedPct}%',
+                                'Overall',
+                              ),
+                              const SizedBox(
+                                height: 40,
+                                child: VerticalDivider(
+                                  thickness: 1,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              _statColumn(
+                                Icons.event_available,
+                                Colors.orange,
+                                '${s.attended}',
+                                'Present',
+                              ),
+                            ],
                           ),
-                        ),
-
-                        Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Colors.blue.withOpacity(0.15),
-                              child: Icon(Icons.menu_book, color: Colors.blue),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "5 Subjects",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 40,
-                          child: VerticalDivider(
-                            thickness: 1,
-                            color: Colors.grey,
-                          ),
-                        ),
-
-                        Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Colors.blue.withOpacity(0.15),
-                              child: Icon(Icons.menu_book, color: Colors.blue),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "5 Subjects",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
             ],
-
             Padding(
               padding: EdgeInsets.only(top: isSearching ? 120 : 180),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredSubjects.length,
-                itemBuilder: (context, index) {
-                  final sub = filteredSubjects[index];
-                  return SubjectCard(
-                    subject: sub.subject,
-                    teacher: sub.teacher,
-                    code: sub.code,
-                    attendance: sub.attendance,
-                    presentDays: sub.presentDays,
-                    absentDays: sub.absentDays,
-                    color: sub.color,
-                  );
-                },
-              ),
+              child: _buildListBody(),
             ),
-
-            // Padding(
-            //   padding: EdgeInsets.only(top: isSearching ? 120 : 180),
-            //   child: ListView(
-            //     padding: const EdgeInsets.symmetric(horizontal: 16),
-            //     children: const [
-            //       SubjectCard(
-            //         subject: "Computer Science",
-            //         teacher: "Prof. Ahmed Khan",
-            //         code: "CS101",
-            //         attendance: 92,
-            //         presentDays: 23,
-            //         absentDays: 2,
-            //         color: Colors.blue,
-            //       ),
-            //       SubjectCard(
-            //         subject: "Physics",
-            //         teacher: "Mr. Hassan",
-            //         code: "PHY101",
-            //         attendance: 65,
-            //         presentDays: 13,
-            //         absentDays: 7,
-            //         color: Colors.green,
-            //       ),
-            //       SubjectCard(
-            //         subject: "Chemistry",
-            //         teacher: "Dr. Usman",
-            //         code: "CHEM101",
-            //         attendance: 78,
-            //         presentDays: 14,
-            //         absentDays: 4,
-            //         color: Colors.orange,
-            //       ),
-            //     ],
-            //   ),
-            // ),
           ],
         ),
       ),
     );
   }
 
-  void filterSubjects() {
-    final query = searchController.text.toLowerCase();
+  Widget _buildListBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              OutlinedButton(onPressed: _load, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_courses.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'No subjects assigned.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+    if (_filtered.isEmpty) {
+      return const Center(
+        child: Text(
+          'No subjects match your search.',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
 
-    setState(() {
-      if (query.isEmpty) {
-        filteredSubjects = List.from(allSubjects);
-      } else {
-        filteredSubjects = allSubjects.where((subject) {
-          return subject.subject.toLowerCase().contains(query) ||
-              subject.teacher.toLowerCase().contains(query) ||
-              subject.code.toLowerCase().contains(query);
-        }).toList();
-      }
-    });
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _filtered.length,
+      itemBuilder: (context, index) {
+        final c = _filtered[index];
+        final globalIndex = _courses.indexOf(c);
+        final color =
+            _subjectColors[(globalIndex >= 0 ? globalIndex : index) %
+                _subjectColors.length];
+        final pct = c.attendancePercentage.round();
+        return SubjectCard(
+          courseId: c.courseId,
+          subject: c.courseName,
+          teacher: c.teacherName,
+          code: c.courseCode,
+          attendance: pct,
+          presentDays: c.sessionsAttended,
+          absentDays: c.sessionsAbsent,
+          color: color,
+        );
+      },
+    );
+  }
+
+  Widget _statColumn(
+    IconData icon,
+    Color iconColor,
+    String value,
+    String label,
+  ) {
+    return Expanded(
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: iconColor.withOpacity(0.15),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget buildSearchField() {
@@ -315,7 +314,7 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
             controller: searchController,
             autofocus: true,
             decoration: const InputDecoration(
-              hintText: "Search subjects...",
+              hintText: 'Search subjects...',
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
@@ -344,7 +343,7 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          "My Subjects",
+          'My Subjects',
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -363,6 +362,7 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
 }
 
 class SubjectCard extends StatelessWidget {
+  final String courseId;
   final String subject;
   final String teacher;
   final String code;
@@ -373,6 +373,7 @@ class SubjectCard extends StatelessWidget {
 
   const SubjectCard({
     super.key,
+    required this.courseId,
     required this.subject,
     required this.teacher,
     required this.code,
@@ -384,18 +385,23 @@ class SubjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initials = subject.length >= 2
+        ? subject.substring(0, 2).toUpperCase()
+        : subject.toUpperCase();
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => SubjectDetailScreen(
-              color: color,
+              courseId: courseId,
               subject: subject,
               teacher: teacher,
               attendance: attendance,
               presentDays: presentDays,
               absentDays: absentDays,
+              color: color,
             ),
           ),
         );
@@ -423,7 +429,7 @@ class SubjectCard extends StatelessWidget {
                   radius: 24,
                   backgroundColor: color,
                   child: Text(
-                    subject.substring(0, 2).toUpperCase(),
+                    initials,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -431,8 +437,6 @@ class SubjectCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Attendance Circle
                 Stack(
                   alignment: Alignment.center,
                   children: [
@@ -440,24 +444,24 @@ class SubjectCard extends StatelessWidget {
                       height: 54,
                       width: 54,
                       child: CircularProgressIndicator(
-                        value: attendance / 100,
+                        value: (attendance / 100).clamp(0.0, 1.0),
                         strokeWidth: 6,
                         backgroundColor: color.withOpacity(0.2),
-                        valueColor: AlwaysStoppedAnimation(color),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
                       ),
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "$attendance%",
+                          '$attendance%',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const Text(
-                          "Attendance",
+                          'Attendance',
                           style: TextStyle(fontSize: 8, color: Colors.grey),
                         ),
                       ],
@@ -466,9 +470,7 @@ class SubjectCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(width: 14),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,7 +497,7 @@ class SubjectCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          code,
+                          code.isEmpty ? '—' : code,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -504,33 +506,28 @@ class SubjectCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 4),
-
                   Text(
                     teacher,
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
-
                   const SizedBox(height: 28),
-
                   Row(
                     children: [
                       _infoDot(
                         Colors.green,
-                        "$presentDays days",
-                        "Present",
+                        '$presentDays',
+                        'Present',
                         context,
                       ),
                       const SizedBox(width: 16),
-
                       _infoDot(
                         Colors.red,
-                        "$absentDays days",
-                        "Absent",
+                        '$absentDays',
+                        'Absent',
                         context,
                       ),
-                      Spacer(),
+                      const Spacer(),
                       const Icon(Icons.chevron_right, color: Colors.grey),
                     ],
                   ),
@@ -543,15 +540,14 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _infoDot(Color color, String value, String label, context) {
-    Size size = MediaQuery.of(context).size;
+  Widget _infoDot(Color color, String value, String label, BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return size.width <= 350
         ? Column(
             children: [
               Icon(Icons.circle, size: 8, color: color),
-              const SizedBox(width: 4),
+              const SizedBox(height: 2),
               Text(value, style: const TextStyle(fontSize: 11)),
-              const SizedBox(width: 4),
               Text(
                 label,
                 style: const TextStyle(fontSize: 11, color: Colors.grey),

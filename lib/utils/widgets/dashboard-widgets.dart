@@ -215,6 +215,7 @@ Widget subjectTile(
   required int attendance,
   required int presentDays,
   required int absentDays,
+  String? courseId,
 }) {
   return GestureDetector(
     onTap: () {
@@ -222,6 +223,7 @@ Widget subjectTile(
         context,
         MaterialPageRoute(
           builder: (context) => SubjectDetailScreen(
+            courseId: courseId,
             subject: title,
             teacher: teacher,
             attendance: attendance,

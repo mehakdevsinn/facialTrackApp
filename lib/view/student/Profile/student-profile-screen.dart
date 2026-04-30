@@ -268,53 +268,12 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/controller/providers/student_provider.dart';
-import 'package:facialtrackapp/utils/widgets/dashboard-widgets.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Complaint/complaint-screen.dart';
 import 'package:facialtrackapp/view/student/Password%20Changed/password-change-inside-stident-profile.dart';
+import 'package:facialtrackapp/view/student/Profile/student_timetable_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
-
-Future<void> _generateAndDownloadPDF() async {
-  final pdf = pw.Document();
-
-  pdf.addPage(
-    pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      // Yahan 'context' ko 'pwContext' likh dein taaki conflict na ho
-      build: (pw.Context pwContext) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              "Attendance Report",
-              style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.Divider(),
-            pw.SizedBox(height: 20),
-            pw.Text("Overall Attendance: 87%"),
-            pw.Text("Total Classes: 145"),
-            pw.Text("Present: 126"),
-            pw.Text("Absent: 19"),
-            pw.SizedBox(height: 20),
-            pw.Text(
-              "Report Generated on: ${DateTime.now().toString().split('.')[0]}",
-            ),
-          ],
-        );
-      },
-    ),
-  );
-
-  await Printing.layoutPdf(
-    onLayout: (PdfPageFormat format) async => pdf.save(),
-    name: 'Attendance_Report.pdf',
-  );
-}
 
 class StudentProfileScreen extends StatefulWidget {
   final bool showBackButton;
@@ -367,313 +326,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       const SizedBox(height: 16),
                       _complaintCard(),
 
-                      /// 📊 Attendance Overview
-                      // _attendanceCard(),
                       const SizedBox(height: 16),
 
                       _settingCard(),
 
                       const SizedBox(height: 16),
 
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black12, blurRadius: 10),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.bar_chart,
-                                  color: ColorPallet.primaryBlue,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Attendance Overview",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 20),
-
-                            // Circular Indicator
-                            // CircularPercentIndicator(
-                            //   radius: 80.0,
-                            //   lineWidth: 15.0,
-                            //   percent: 0.87,
-                            //   center: Column(
-                            //     mainAxisAlignment: MainAxisAlignment.center,
-                            //     children: [
-                            //       Text(
-                            //         "87%",
-                            //         style: TextStyle(
-                            //           fontSize: 28,
-                            //           fontWeight: FontWeight.bold,
-                            //         ),
-                            //       ),
-                            //       Text(
-                            //         "Overall\nAttendance",
-                            //         textAlign: TextAlign.center,
-                            //         style: TextStyle(
-                            //           color: Colors.grey,
-                            //           fontSize: 12,
-                            //         ),
-                            //       ),
-                            //     ],
-                            //   ),
-                            //   circularStrokeCap: CircularStrokeCap.round,
-                            //   linearGradient: LinearGradient(
-                            //     colors: [Colors.blue, Colors.tealAccent],
-                            //   ),
-                            //   backgroundColor: Colors.grey.shade200,
-                            // ),
-                            // overallAttendanceCard(),
-                            CircularPercentIndicator(
-                              radius: 60,
-                              lineWidth: 12,
-                              percent: attendancePercent,
-                              center: Text(
-                                "${(attendancePercent * 100).toInt()}%",
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              linearGradient: attendanceGradient(
-                                attendancePercent,
-                              ),
-                              backgroundColor: Colors.grey.shade200,
-                              circularStrokeCap: CircularStrokeCap.round,
-                            ),
-
-                            SizedBox(height: 25),
-
-                            // Stats Grid
-                            Row(
-                              children: [
-                                _buildStatTile(
-                                  "Total Classes",
-                                  "145",
-                                  Icons.book,
-                                  Colors.blue.shade50,
-                                  Colors.blue,
-                                  Colors.blue.shade100,
-                                ),
-                                SizedBox(width: 12),
-                                _buildStatTile(
-                                  "Present",
-                                  "126",
-                                  Icons.check_circle,
-                                  Colors.green.shade50,
-                                  Colors.green,
-                                  Colors.green.shade100,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            Row(
-                              children: [
-                                _buildStatTile(
-                                  "Absent",
-                                  "19",
-                                  Icons.cancel,
-                                  Colors.red.shade50,
-                                  Colors.red,
-                                  Colors.red.shade100,
-                                ),
-                                SizedBox(width: 12),
-                                _buildStatTile(
-                                  "Leave",
-                                  "5",
-                                  Icons.person_off,
-                                  Colors.orange.shade50,
-                                  Colors.orange,
-                                  Colors.orange.shade100,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: 16),
-
-                      // Bottom Small Card
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black12, blurRadius: 10),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_month,
-                                  color: ColorPallet.primaryBlue,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "This Month",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 15),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      "92%",
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.arrow_upward,
-                                      color: Colors.green,
-                                      size: 20,
-                                    ),
-                                  ],
-                                ),
-                                _verticalDivider(),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    MediaQuery.of(context).size.width <= 400
-                                        ? Container(
-                                            width: 50,
-                                            child: Text(
-                                              "Classes attended:",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          )
-                                        : Text(
-                                            "Classes attended:",
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                    Text(
-                                      "18/20",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize:
-                                            MediaQuery.of(context).size.width <=
-                                                    400
-                                                ? 11
-                                                : 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                _verticalDivider(),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    MediaQuery.of(context).size.width <= 400
-                                        ? Container(
-                                            width: 50,
-                                            child: Text(
-                                              "Best subject:",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          )
-                                        : Text(
-                                            "Best subject:",
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                    SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.emoji_events,
-                                          color: Colors.orange,
-                                          size: 16,
-                                        ),
-                                        Text(
-                                          " Mathematics",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: MediaQuery.of(
-                                                      context,
-                                                    ).size.width <=
-                                                    400
-                                                ? 9
-                                                : 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // _thisMonthCard(),
-                      const SizedBox(height: 24),
-
-                      // Button code update
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _generateAndDownloadPDF(),
-                          icon: Icon(
-                            Icons.download,
-                            size: 20,
-                            color: ColorPallet.primaryBlue,
-                          ),
-                          label: Text(
-                            "Download Report",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: ColorPallet.primaryBlue,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorPallet.primaryBlue,
-                            side: BorderSide(
-                              color: ColorPallet.primaryBlue,
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                        ),
-                      ),
+                      _buildMyTimetableBox(context),
 
                       const SizedBox(height: 20),
 
@@ -688,60 +347,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildStatTile(
-    String title,
-    String value,
-    IconData icon,
-    Color bgColor,
-    Color iconColor,
-    Color backgroundColors,
-  ) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: backgroundColors,
-              radius: 18,
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MediaQuery.of(context).size.width <= 400
-                    ? Container(
-                        width: 50,
-                        child: Text(
-                          title,
-                          style: TextStyle(color: Colors.black54, fontSize: 12),
-                        ),
-                      )
-                    : Text(
-                        title,
-                        style: TextStyle(color: Colors.black54, fontSize: 12),
-                      ),
-                Text(
-                  value,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _verticalDivider() {
-    return Container(height: 30, width: 1, color: Colors.grey.shade300);
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -885,61 +490,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     );
   }
 
-  Widget _buildOverviewCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
-      child: Column(
-        children: [
-          _infoRow(Icons.medical_information_outlined, "Personal Information"),
-          SizedBox(height: 20),
-          Divider(),
-          _infoRow(Icons.email, "ahmad.hassan@university.edu"),
-          const SizedBox(height: 8),
-          _infoRow(Icons.phone, "+92 300 1234567"),
-          const SizedBox(height: 8),
-          _infoRow(Icons.calendar_today, "Enrolled: September 2023"),
-        ],
-      ),
-    );
-  }
-
-  Widget _subjectTile(
-    IconData icon,
-    String title,
-    String subtitle,
-    Color iconColor,
-  ) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: iconColor),
-      ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-    );
-  }
-
-  BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
-        ),
-      ],
-    );
-  }
-
   Widget _infoCard() {
     return Consumer<StudentProvider>(
       builder: (context, student, _) {
@@ -1061,6 +611,60 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     );
   }
 
+  Widget _buildMyTimetableBox(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const StudentTimetableScreen(),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.schedule_rounded, color: Colors.indigo, size: 28),
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Timetable',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Tap to view this semester class schedule',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded,
+                color: Colors.grey, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _infoRow(IconData icon, String text) {
     return Row(
       children: [
@@ -1080,102 +684,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         Spacer(),
         Icon(Icons.arrow_forward_ios, color: ColorPallet.grey, size: 15),
       ],
-    );
-  }
-
-  Widget _attendanceCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 3,
-            offset: const Offset(2, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircularPercentIndicator(
-            radius: 50,
-            lineWidth: 8,
-            percent: 0.87,
-            center: Text(
-              "87%",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            progressColor: Colors.green,
-            backgroundColor: Colors.green.withOpacity(0.2),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _statRow("Total Classes", "145", Icons.event),
-              const SizedBox(height: 6),
-              _statRow("Present", "126", Icons.check_circle),
-              const SizedBox(height: 6),
-              _statRow("Absent", "19", Icons.cancel),
-              const SizedBox(height: 6),
-              _statRow("Leave", "5", Icons.airplane_ticket),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statRow(String title, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Colors.grey.shade600),
-        const SizedBox(width: 8),
-        Text("$title: $value", style: TextStyle(fontSize: 13)),
-      ],
-    );
-  }
-
-  Widget _thisMonthCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 3,
-            offset: const Offset(2, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "This Month",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                "92%",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 12),
-              Text("Classes attended: 18/20", style: TextStyle(fontSize: 14)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text("Best subject: ⭐ Mathematics", style: TextStyle(fontSize: 14)),
-        ],
-      ),
     );
   }
 

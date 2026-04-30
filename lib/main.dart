@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/controller/providers/admin_provider.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
+import 'package:facialtrackapp/controller/providers/student_reports_provider.dart';
 import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
+        ChangeNotifierProvider(create: (_) => StudentReportsProvider()),
         ChangeNotifierProvider(create: (_) => TeacherProvider()),
         ChangeNotifierProvider(create: (_) => TeacherReportProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),

@@ -1,31 +1,60 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:flutter/material.dart';
 
-class AttendanceDetailScreen extends StatelessWidget {
-  final String date;
-  final String day;
-  final String? entry;
-  final String? exit;
-  final String subject;
-  final bool present;
+/// Session detail from `GET /reports/students/sessions/{session_id}`.
+class AttendanceDetailScreen extends StatefulWidget {
+  final String sessionId;
 
   const AttendanceDetailScreen({
     super.key,
-    required this.date,
-    required this.day,
-    this.entry,
-    this.exit,
-    required this.subject,
-    required this.present,
+    required this.sessionId,
   });
+
+  @override
+  State<AttendanceDetailScreen> createState() => _AttendanceDetailScreenState();
+}
+
+class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
+  bool _loading = true;
+  String? _error;
+  StudentAttendanceSessionRecord? _record;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final r = await ApiManager.instance.getStudentSessionDetail(widget.sessionId);
+      if (!mounted) return;
+      setState(() {
+        _record = r;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _record = null;
+        _error = 'Session unavailable.';
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // backgroundColor: const Color(0xFFF4F3F3),
         backgroundColor: Colors.grey[100],
-
         appBar: AppBar(
           backgroundColor: ColorPallet.primaryBlue,
           elevation: 0,
@@ -34,99 +63,130 @@ class AttendanceDetailScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
-            "Attendance Detail",
+            'Attendance Detail',
             style: TextStyle(color: Colors.white),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Text(
-                date,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-
-              const SizedBox(height: 8),
-
-              Container(
-                padding: const EdgeInsets.all(20),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: present ? Colors.green : Colors.red,
-                    width: 2,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      present ? Icons.check_circle : Icons.cancel,
-                      size: 40,
-                      color: present ? Colors.green : Colors.red,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Text(
-                      present ? "Present" : "Absent",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: present ? Colors.green : Colors.red,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-                    Text(
-                      present ? "Status Verified" : "Status Not Verified",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              if (present) _timeLogsCard(),
-
-              const SizedBox(height: 16),
-
-              _sessionInfoCard(),
-            ],
-          ),
-        ),
+        body: _buildBody(),
       ),
     );
   }
 
-  Widget _timeLogsCard() {
-    return Container(
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: _load,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    final r = _record!;
+    final sessionDate = r.sessionDateUtc;
+    final dateStr = sessionDate != null ? formatPktDateCard(sessionDate) : '—';
+    final dayStr = sessionDate != null ? formatPktDayName(sessionDate) : '';
+    final present = r.isPresent;
+    final markedAtStr =
+        r.entryTimeUtc != null ? formatPktTime12h(r.entryTimeUtc!) : '—';
+    final sessionStartStr = r.sessionStartTimeUtc != null
+        ? formatPktTime12h(r.sessionStartTimeUtc!)
+        : '—';
+    final exitStr =
+        r.exitTimeUtc != null ? formatPktTime12h(r.exitTimeUtc!) : '—';
+    final subject = r.courseName ?? '—';
+    final verify = verificationMethodLabel(r.verificationMethod);
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "TIME LOGS",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+          Text(
+            dateStr,
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+          if (dayStr.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              dayStr,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+          const SizedBox(height: 8),
+          if (verify != null) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              child: Chip(
+                label: Text(verify, style: const TextStyle(fontSize: 11)),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Container(
+            padding: const EdgeInsets.all(20),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: present ? Colors.green : Colors.red,
+                width: 2,
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  present ? Icons.check_circle : Icons.cancel,
+                  size: 40,
+                  color: present ? Colors.green : Colors.red,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  present ? 'Present' : 'Absent',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: present ? Colors.green : Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  present ? 'Status Verified' : 'Status Not Verified',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          _infoRow(Icons.login, "Entry Time", entry ?? "--"),
-          const SizedBox(height: 8),
-          _infoRow(Icons.logout, "Exit Time", exit ?? "--"),
+          const SizedBox(height: 16),
+          if (present) ...[
+            _timeLogsCard(markedAtStr),
+            const SizedBox(height: 16),
+          ],
+          _sessionInfoCard(
+            subject: subject,
+            sessionStartDisplay: sessionStartStr,
+            exitDisplay: exitStr,
+          ),
         ],
       ),
     );
   }
 
-  Widget _sessionInfoCard() {
+  /// System marking time only (`entry_time`).
+  Widget _timeLogsCard(String entryTimeDisplay) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration(),
@@ -134,7 +194,7 @@ class AttendanceDetailScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "SESSION INFO",
+            'TIME LOGS',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -142,12 +202,38 @@ class AttendanceDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _infoRow(Icons.book, "Subject", subject),
+          _infoRow(Icons.fingerprint, 'Entry time', entryTimeDisplay),
+        ],
+      ),
+    );
+  }
+
+  Widget _sessionInfoCard({
+    required String subject,
+    required String sessionStartDisplay,
+    required String exitDisplay,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'SESSION INFO',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _infoRow(Icons.book, 'Subject', subject),
           const SizedBox(height: 8),
           _infoRow(
             Icons.schedule,
-            "Session",
-            "${entry ?? '--'} - ${exit ?? '--'}",
+            'Session',
+            '$sessionStartDisplay - $exitDisplay',
           ),
         ],
       ),
@@ -159,7 +245,12 @@ class AttendanceDetailScreen extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: Colors.grey),
         const SizedBox(width: 8),
-        Text("$label: ${value ?? ''}", style: const TextStyle(fontSize: 14)),
+        Expanded(
+          child: Text(
+            '$label: ${value ?? ''}',
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
       ],
     );
   }

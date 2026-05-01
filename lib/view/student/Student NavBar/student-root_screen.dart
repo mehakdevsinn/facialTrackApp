@@ -194,7 +194,7 @@
 
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/view/student/Attendence%20History/attendence-history-screen.dart';
-import 'package:facialtrackapp/view/student/Dashboard/dashboard-screeen.dart';
+import 'package:facialtrackapp/view/student/Dashboard/dashboard_screen.dart';
 import 'package:facialtrackapp/view/student/Subjects/subjects-screen.dart';
 import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
 import 'package:flutter/material.dart';

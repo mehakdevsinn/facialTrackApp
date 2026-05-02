@@ -28,8 +28,7 @@ class SubjectDetailScreen extends StatefulWidget {
     required this.color,
   });
 
-  bool get _useApi =>
-      courseId != null && courseId!.trim().isNotEmpty;
+  bool get _useApi => courseId != null && courseId!.trim().isNotEmpty;
 
   @override
   State<SubjectDetailScreen> createState() => _SubjectDetailScreenState();
@@ -81,16 +80,21 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         appBar: AppBar(
           backgroundColor: ColorPallet.primaryBlue,
           elevation: 0,
-          title: Text(
-            '$title Detail',
-            style: const TextStyle(fontSize: 18, color: ColorPallet.white),
+          title: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Text(
+              '$title Detail'.replaceAll('\n', ' ').replaceAll('\r', ''),
+              style: const TextStyle(fontSize: 18, color: ColorPallet.white),
+              maxLines: 1,
+            ),
           ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: ColorPallet.white),
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: widget._useApi ? _buildApiBody(context) : _buildLegacyBody(context),
+        body:
+            widget._useApi ? _buildApiBody(context) : _buildLegacyBody(context),
       ),
     );
   }
@@ -147,11 +151,17 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Teacher: ${d.teacherName}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          'Teacher: ${d.teacherName}'
+                              .replaceAll('\n', ' ')
+                              .replaceAll('\r', ''),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -209,11 +219,17 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Teacher: ${widget.teacher}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          'Teacher: ${widget.teacher}'
+                              .replaceAll('\n', ' ')
+                              .replaceAll('\r', ''),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -319,8 +335,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     required bool isLast,
   }) {
     final u = r.sessionDateUtc;
-    final dateLabel =
-        u != null ? formatPktDateCard(u) : '—';
+    final dateLabel = u != null ? formatPktDateCard(u) : '—';
     final status = r.isPresent ? 'Present' : 'Absent';
     final statusColor = r.isPresent ? Colors.green : Colors.red;
     // Scheduled slot (timetable window) — not the system "marked at" time (see session detail).

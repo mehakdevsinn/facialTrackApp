@@ -43,52 +43,140 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
   final List<String> _filters = ["All", "At Risk", "Good"];
   final List<String> _months = ["Oct 2025", "Nov 2025", "Dec 2025", "Jan 2026"];
 
-  final List<SubjectAttendanceData> _subjects = [
-    SubjectAttendanceData(
-      code: "CS",
-      color: const Color(0xFF2304AA),
-      title: "Computer Science",
-      subtitle: "Prof. Ahmed Khan - CS101",
-      percentage: 92,
-      totalClasses: 25,
-      present: 23,
-      absent: 2,
-      leave: 0,
-    ),
-    SubjectAttendanceData(
-      code: "MA",
-      color: const Color(0xFF8B5CF6),
-      title: "Mathematics",
-      subtitle: "Prof. Ayesha - MATH101",
-      percentage: 89,
-      totalClasses: 20,
-      present: 18,
-      absent: 2,
-      leave: 0,
-    ),
-    SubjectAttendanceData(
-      code: "UR",
-      color: const Color(0xFF0D9488),
-      title: "Urdu",
-      subtitle: "Prof. Nadia - URD101",
-      percentage: 85,
-      totalClasses: 20,
-      present: 17,
-      absent: 3,
-      leave: 0,
-    ),
-    SubjectAttendanceData(
-      code: "CH",
-      color: const Color(0xFFEA580C),
-      title: "Chemistry",
-      subtitle: "Dr. Usman - CHEM101",
-      percentage: 78,
-      totalClasses: 18,
-      present: 14,
-      absent: 4,
-      leave: 0,
-    ),
-  ];
+  final Map<String, List<SubjectAttendanceData>> _mockDataByMonth = {
+    "Oct 2025": [
+      SubjectAttendanceData(
+        code: "CS",
+        color: const Color(0xFF2304AA),
+        title: "Computer Science",
+        subtitle: "Prof. Ahmed Khan - CS101",
+        percentage: 88,
+        totalClasses: 25,
+        present: 22,
+        absent: 3,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "MA",
+        color: const Color(0xFF8B5CF6),
+        title: "Mathematics",
+        subtitle: "Prof. Ayesha - MATH101",
+        percentage: 80,
+        totalClasses: 20,
+        present: 16,
+        absent: 4,
+        leave: 0,
+      ),
+    ],
+    "Nov 2025": [
+      SubjectAttendanceData(
+        code: "CS",
+        color: const Color(0xFF2304AA),
+        title: "Computer Science",
+        subtitle: "Prof. Ahmed Khan - CS101",
+        percentage: 75,
+        totalClasses: 20,
+        present: 15,
+        absent: 5,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "PH",
+        color: const Color(0xFF0D9488),
+        title: "Physics",
+        subtitle: "Dr. Ali - PHY101",
+        percentage: 90,
+        totalClasses: 20,
+        present: 18,
+        absent: 2,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "CH",
+        color: const Color(0xFFEA580C),
+        title: "Chemistry",
+        subtitle: "Dr. Usman - CHEM101",
+        percentage: 70,
+        totalClasses: 20,
+        present: 14,
+        absent: 6,
+        leave: 0,
+      ),
+    ],
+    "Dec 2025": [
+      SubjectAttendanceData(
+        code: "CS",
+        color: const Color(0xFF2304AA),
+        title: "Computer Science",
+        subtitle: "Prof. Ahmed Khan - CS101",
+        percentage: 92,
+        totalClasses: 25,
+        present: 23,
+        absent: 2,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "MA",
+        color: const Color(0xFF8B5CF6),
+        title: "Mathematics",
+        subtitle: "Prof. Ayesha - MATH101",
+        percentage: 89,
+        totalClasses: 20,
+        present: 18,
+        absent: 2,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "UR",
+        color: const Color(0xFF0D9488),
+        title: "Urdu",
+        subtitle: "Prof. Nadia - URD101",
+        percentage: 85,
+        totalClasses: 20,
+        present: 17,
+        absent: 3,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "CH",
+        color: const Color(0xFFEA580C),
+        title: "Chemistry",
+        subtitle: "Dr. Usman - CHEM101",
+        percentage: 78,
+        totalClasses: 18,
+        present: 14,
+        absent: 4,
+        leave: 0,
+      ),
+    ],
+    "Jan 2026": [
+      SubjectAttendanceData(
+        code: "CS",
+        color: const Color(0xFF2304AA),
+        title: "Computer Science",
+        subtitle: "Prof. Ahmed Khan - CS101",
+        percentage: 100,
+        totalClasses: 10,
+        present: 10,
+        absent: 0,
+        leave: 0,
+      ),
+      SubjectAttendanceData(
+        code: "MA",
+        color: const Color(0xFF8B5CF6),
+        title: "Mathematics",
+        subtitle: "Prof. Ayesha - MATH101",
+        percentage: 90,
+        totalClasses: 10,
+        present: 9,
+        absent: 1,
+        leave: 0,
+      ),
+    ],
+  };
+
+  List<SubjectAttendanceData> get _subjects =>
+      _mockDataByMonth[_selectedMonth] ?? [];
 
   // Helper to filter the list based on selection
   List<SubjectAttendanceData> get _filteredSubjects {
@@ -128,6 +216,19 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    int totalPresent = 0;
+    int totalAbsent = 0;
+    int totalClasses = 0;
+
+    for (var subject in _subjects) {
+      totalPresent += subject.present;
+      totalAbsent += subject.absent;
+      totalClasses += subject.totalClasses;
+    }
+
+    int overallPercentage =
+        totalClasses > 0 ? ((totalPresent / totalClasses) * 100).toInt() : 0;
+
     return Scaffold(
       backgroundColor: const Color(0xFF2304AA),
       body: SafeArea(
@@ -196,21 +297,27 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Text("82%",
-                              style: TextStyle(
+                          Text("$overallPercentage%",
+                              style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 40,
                                   fontWeight: FontWeight.bold)),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_drop_up,
-                              color: Color(0xFF10B981), size: 30),
+                          const SizedBox(width: 8),
+                          Icon(
+                              overallPercentage >= 80
+                                  ? Icons.arrow_drop_up
+                                  : Icons.arrow_drop_down,
+                              color: overallPercentage >= 80
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFEF4444),
+                              size: 30),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Overall - ${_filteredSubjects.length} subjects",
+                        "Overall - ${_subjects.length} subjects",
                         style: TextStyle(
                             color: Colors.white.withOpacity(0.8), fontSize: 12),
                       ),
@@ -218,9 +325,11 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
                   ),
                   Column(
                     children: [
-                      _buildStatBox("90", "Present", const Color(0xFF3B1DBC)),
+                      _buildStatBox(
+                          "$totalPresent", "Present", const Color(0xFF3B1DBC)),
                       const SizedBox(height: 8),
-                      _buildStatBox("18", "Absent", const Color(0xFF3B1DBC)),
+                      _buildStatBox(
+                          "$totalAbsent", "Absent", const Color(0xFF3B1DBC)),
                     ],
                   ),
                 ],

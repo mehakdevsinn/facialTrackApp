@@ -154,7 +154,8 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
                               child: SizedBox(
                                 height: 22,
                                 width: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
                           )
@@ -255,9 +256,8 @@ class _MySubjectsScreenState extends State<MySubjectsScreen> {
       itemBuilder: (context, index) {
         final c = _filtered[index];
         final globalIndex = _courses.indexOf(c);
-        final color =
-            _subjectColors[(globalIndex >= 0 ? globalIndex : index) %
-                _subjectColors.length];
+        final color = _subjectColors[
+            (globalIndex >= 0 ? globalIndex : index) % _subjectColors.length];
         final pct = c.attendancePercentage.round();
         return SubjectCard(
           courseId: c.courseId,
@@ -478,13 +478,16 @@ class SubjectCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          subject,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            subject.replaceAll('\n', ' ').replaceAll('\r', ''),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Container(
@@ -507,9 +510,13 @@ class SubjectCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    teacher,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(
+                      teacher.replaceAll('\n', ' ').replaceAll('\r', ''),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      maxLines: 1,
+                    ),
                   ),
                   const SizedBox(height: 28),
                   Row(
@@ -540,7 +547,8 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _infoDot(Color color, String value, String label, BuildContext context) {
+  Widget _infoDot(
+      Color color, String value, String label, BuildContext context) {
     final size = MediaQuery.of(context).size;
     return size.width <= 350
         ? Column(

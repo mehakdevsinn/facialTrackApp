@@ -1,3 +1,5 @@
+import 'package:facialtrackapp/core/models/session_model.dart';
+
 /// Represents a single attendance record returned by
 ///   GET  /teachers/sessions/{session_id}/attendance
 ///   POST /teachers/sessions/{session_id}/attendance
@@ -42,13 +44,7 @@ class AttendanceRecordModel {
     );
   }
 
-  /// Parses [markedAt] to a [DateTime] (returns null if unparseable / missing).
-  DateTime? get markedAtDateTime {
-    if (markedAt == null) return null;
-    try {
-      return DateTime.parse(markedAt!);
-    } catch (_) {
-      return null;
-    }
-  }
+  /// Parses [markedAt] as a UTC instant (naive strings = UTC wall from API).
+  DateTime? get markedAtDateTime =>
+      parseTeacherSessionInstantToUtc(markedAt);
 }

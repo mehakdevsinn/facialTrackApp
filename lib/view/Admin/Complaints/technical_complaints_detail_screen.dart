@@ -1,8 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/core/models/complaint_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 /// Admin complaint detail: `GET /admin/complaints/{id}`, resolve / reject when pending.
 class TechnicalComplaintDetailScreen extends StatefulWidget {
@@ -39,12 +39,7 @@ class _TechnicalComplaintDetailScreenState
     _fetch();
   }
 
-  String _fmt(String? raw) {
-    if (raw == null || raw.isEmpty) return '—';
-    final dt = DateTime.tryParse(raw);
-    if (dt == null) return raw;
-    return DateFormat('MMM dd, yyyy · hh:mm a').format(dt.toLocal());
-  }
+  String _fmt(String? raw) => formatPktDateTimeLineFromApiString(raw);
 
   Future<void> _fetch() async {
     setState(() {

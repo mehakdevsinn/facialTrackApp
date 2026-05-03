@@ -5,6 +5,7 @@ import 'package:facialtrackapp/controller/providers/student_provider.dart';
 import 'package:facialtrackapp/core/models/student_report_models.dart';
 import 'package:facialtrackapp/core/models/student_settings_model.dart';
 import 'package:facialtrackapp/core/models/student_timetable_model.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/utils/widgets/dashboard-widgets.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
@@ -89,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String _fmtClock(DateTime? utc) {
     if (utc == null) return '—';
-    return DateFormat('hh:mm a').format(utc.toLocal());
+    return formatPktTime12h(utc);
   }
 
   String _courseCodeAbbrev(String? code, String name) {

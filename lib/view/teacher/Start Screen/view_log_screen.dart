@@ -2,9 +2,9 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
+import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
 import 'package:facialtrackapp/utils/widgets/export_pdf.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class AttendanceLogsScreen extends StatefulWidget {
@@ -44,12 +44,15 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
         final mergedStudents = _buildMergedList(roster, records, presentIds);
 
         final displayDate = session?.startDateTime != null
-            ? DateFormat('MMMM d, y').format(session!.startDateTime!.toLocal())
-            : DateFormat('MMMM d, y').format(DateTime.now());
+            ? formatTeacherSessionDatePkt(session!.startDateTime)
+            : formatTeacherSessionDatePkt(DateTime.now().toUtc());
         final rawDate = session?.startDateTime != null
-            ? DateFormat('yyyy-MM-dd')
-                .format(session!.startDateTime!.toLocal())
-            : DateFormat('yyyy-MM-dd').format(DateTime.now());
+            ? formatTeacherSessionDateIsoPkt(session!.startDateTime)
+            : formatTeacherSessionDateIsoPkt(DateTime.now().toUtc());
+        final sessionWindowPkt = session != null
+            ? formatTeacherSessionWindowPkt(
+                session.startDateTime, session.endDateTime)
+            : '';
 
         final totalCount = roster.length;
         final presentCount = presentIds.length;
@@ -130,6 +133,16 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                           ),
                         ],
                       ),
+                      if (sessionWindowPkt.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          sessionWindowPkt,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       Text(
                         '$displayDate · $courseLabel',
@@ -392,14 +405,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 
-  String _formatMarkedAt(String raw) {
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      return DateFormat('hh:mm a').format(dt);
-    } catch (_) {
-      return raw;
-    }
-  }
+  String _formatMarkedAt(String raw) => formatTeacherApiInstantTimePkt(raw);
 }
 
 // ── Simple row model for display ──────────────────────────────────────────────

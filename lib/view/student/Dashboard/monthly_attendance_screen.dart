@@ -72,11 +72,7 @@ DateTime? _sessionSortInstant(StudentAttendanceSessionRecord r) =>
 String _sessionRowDateLabel(StudentAttendanceSessionRecord r) {
   final t = _sessionSortInstant(r);
   if (t == null) return '—';
-  final w = DateTime.fromMillisecondsSinceEpoch(
-    t.toUtc().millisecondsSinceEpoch + const Duration(hours: 5).inMilliseconds,
-    isUtc: true,
-  );
-  return DateFormat('MMM d, EEE').format(w);
+  return DateFormat('MMM d, EEE').format(reportUtcToPktWallForDisplay(t));
 }
 
 String _sessionRowTimeLabel(StudentAttendanceSessionRecord r) {

@@ -15,11 +15,7 @@ class SubjectSessionsHistoryScreen extends StatelessWidget {
   static String _dateLabel(StudentAttendanceSessionRecord r) {
     final t = _sortInstant(r);
     if (t == null) return '—';
-    final w = DateTime.fromMillisecondsSinceEpoch(
-      t.toUtc().millisecondsSinceEpoch + const Duration(hours: 5).inMilliseconds,
-      isUtc: true,
-    );
-    return DateFormat('MMM d, EEE').format(w);
+    return DateFormat('MMM d, EEE').format(reportUtcToPktWallForDisplay(t));
   }
 
   static String _timeLabel(StudentAttendanceSessionRecord r) {

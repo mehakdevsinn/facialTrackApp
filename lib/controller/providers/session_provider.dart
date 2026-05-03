@@ -208,6 +208,7 @@ class SessionProvider extends ChangeNotifier {
 
   // ── 2. Create session (manual) ────────────────────────────────────────────
   /// Creates a session for [_selectedCourseId] starting now (±2 hours window).
+  /// Sends aware UTC ISO (`…Z`) so the server does not apply naive=Karachi rules.
   /// Returns true on success.
   Future<bool> createSession() async {
     if (_selectedCourseId == null) return false;
@@ -243,6 +244,7 @@ class SessionProvider extends ChangeNotifier {
 
   // ── 2b. Create session from timetable slot ────────────────────────────────
   /// Creates a session using [slot]'s course_id and scheduled start/end times.
+  /// Sends UTC ISO from the device-local calendar date + slot wall times (`…Z`).
   /// Returns true on success.
   Future<bool> createSessionFromSlot(TeacherScheduleSlotModel slot) async {
     _setLoading(true);
@@ -326,10 +328,9 @@ class SessionProvider extends ChangeNotifier {
   Future<void> refreshActiveSessions() async {
     try {
       _activeSessions = await _api.getActiveSessions();
-      if (_currentSession != null) {
+      if (_currentSession != null && _currentSession!.isActive) {
         final match = _activeSessions.where((s) => s.id == _currentSession!.id);
         if (match.isEmpty) {
-          // session no longer active (possibly auto-stopped)
           _currentSession = null;
         }
       }
@@ -452,7 +453,8 @@ class SessionProvider extends ChangeNotifier {
   }
 
   // ── 8. End / stop session ─────────────────────────────────────────────────
-  /// Calls the stop endpoint. Returns the stopped [SessionModel] (is_active=false).
+  /// Calls the stop endpoint. Response includes [SessionModel.endTime] set to
+  /// the real stop instant (UTC). Returns the stopped session (is_active=false).
   Future<SessionModel?> endSession() async {
     if (_currentSession == null) return null;
     _setLoading(true);
@@ -478,9 +480,6 @@ class SessionProvider extends ChangeNotifier {
   /// If the session stored in [_currentSession] already matches [sessionId],
   /// attendance may already be loaded. Otherwise fetches fresh data.
   Future<void> ensureAttendanceLoaded(String sessionId) async {
-    if (_currentSession?.id == sessionId && _attendanceRecords.isNotEmpty) {
-      return; // already have data
-    }
     try {
       _attendanceRecords = await _api.getSessionAttendance(sessionId);
       notifyListeners();

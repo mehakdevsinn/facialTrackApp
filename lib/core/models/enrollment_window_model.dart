@@ -1,3 +1,5 @@
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
+
 /// Model for GET /api/v1/students/face/enrollment-window
 class EnrollmentWindowModel {
   /// The only field the app needs for routing.
@@ -39,11 +41,9 @@ class EnrollmentDeadlineModel {
     );
   }
 
-  /// Parses the deadline string into a [DateTime], or returns null.
-  DateTime? get deadlineDate {
-    if (enrollmentDeadline == null || enrollmentDeadline!.isEmpty) return null;
-    return DateTime.tryParse(enrollmentDeadline!);
-  }
+  /// Parses the deadline string into a UTC-based instant, or returns null.
+  DateTime? get deadlineDate =>
+      parseReportToUtcInstant(enrollmentDeadline);
 }
 
 /// Model for GET/PUT /api/v1/admin/settings/attendance-criteria

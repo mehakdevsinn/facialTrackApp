@@ -1,5 +1,11 @@
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 
+String? _sanitizeApiName(String? raw) {
+  if (raw == null) return null;
+  final t = raw.replaceAll(RegExp(r'[\r\n]+'), ' ').trim();
+  return t.isEmpty ? null : t;
+}
+
 class StudentMonthPickerBounds {
   final String? monthPickerStart;
   final String? monthPickerEnd;
@@ -48,7 +54,7 @@ class StudentCourseSummary {
     return StudentCourseSummary(
       courseId: json['course_id']?.toString() ?? '',
       courseCode: json['course_code']?.toString() ?? '',
-      courseName: json['course_name']?.toString() ?? '',
+      courseName: _sanitizeApiName(json['course_name']?.toString()) ?? '',
       teacherName: json['teacher_name']?.toString() ?? '',
       totalSessions: (json['total_sessions'] as num?)?.toInt() ?? 0,
       sessionsAttended: (json['sessions_attended'] as num?)?.toInt() ?? 0,
@@ -121,7 +127,7 @@ class StudentAttendanceSessionRecord {
       sessionStartTimeUtc: parseReportToUtcInstant(
         json['session_start_time']?.toString(),
       ),
-      courseName: json['course_name']?.toString(),
+      courseName: _sanitizeApiName(json['course_name']?.toString()),
       courseCode: json['course_code']?.toString(),
       teacherName: json['teacher_name']?.toString(),
       isPresent: json['is_present'] == true,
@@ -195,7 +201,7 @@ class StudentSubjectDetailResponse {
     return StudentSubjectDetailResponse(
       courseId: json['course_id']?.toString() ?? '',
       courseCode: json['course_code']?.toString() ?? '',
-      courseName: json['course_name']?.toString() ?? '',
+      courseName: _sanitizeApiName(json['course_name']?.toString()) ?? '',
       teacherName: json['teacher_name']?.toString() ?? '',
       totalSessions: (json['total_sessions'] as num?)?.toInt() ?? 0,
       sessionsAttended: (json['sessions_attended'] as num?)?.toInt() ?? 0,

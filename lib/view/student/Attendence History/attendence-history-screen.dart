@@ -345,8 +345,7 @@ class AttendanceCard extends StatelessWidget {
   DateTime _complaintDate() {
     final u = record.sessionDateUtc;
     if (u == null) return DateTime.now();
-    final iso = formatPktDateIso(u);
-    return DateTime.parse(iso);
+    return pktCalendarDateLocalFromUtc(u);
   }
 
   @override

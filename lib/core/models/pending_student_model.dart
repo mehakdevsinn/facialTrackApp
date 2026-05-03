@@ -1,3 +1,6 @@
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
+import 'package:intl/intl.dart';
+
 /// Represents a student awaiting admin approval.
 /// Maps to the GET /api/v1/admin/students/pending response object.
 class PendingStudentModel {
@@ -34,29 +37,11 @@ class PendingStudentModel {
     );
   }
 
-  /// Friendly registration date, e.g. "06 Mar 2026"
+  /// Friendly registration date in PKT, e.g. "06 Mar 2026"
   String get formattedDate {
-    try {
-      final dt = DateTime.parse(createdAt);
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${dt.day.toString().padLeft(2, '0')} '
-          '${months[dt.month - 1]} ${dt.year}';
-    } catch (_) {
-      return createdAt;
-    }
+    final u = parseReportToUtcInstant(createdAt);
+    if (u == null) return createdAt;
+    return DateFormat('dd MMM yyyy').format(reportUtcToPktWallForDisplay(u));
   }
 
   /// Initials for avatar (up to 2 letters)

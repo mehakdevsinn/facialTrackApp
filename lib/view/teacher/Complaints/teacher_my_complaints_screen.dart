@@ -1,8 +1,8 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/core/models/complaint_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 enum _TeacherMyTab { all, pending, resolved, rejected }
 
@@ -78,10 +78,10 @@ class _TeacherMyComplaintsScreenState extends State<TeacherMyComplaintsScreen> {
   }
 
   String? _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    final dt = DateTime.tryParse(raw);
-    if (dt == null) return raw;
-    return DateFormat('MMM dd, yyyy').format(dt.toLocal());
+    if (raw == null || raw.trim().isEmpty) return null;
+    final u = parseReportToUtcInstant(raw);
+    if (u == null) return raw.trim();
+    return formatPktDateCard(u);
   }
 
   Widget _tabChip(String label, _TeacherMyTab tab) {
@@ -293,12 +293,7 @@ class TeacherSubmittedComplaintDetailScreen extends StatelessWidget {
     required this.complaint,
   });
 
-  String _fmt(String? raw) {
-    if (raw == null || raw.isEmpty) return '—';
-    final dt = DateTime.tryParse(raw);
-    if (dt == null) return raw;
-    return DateFormat('MMM dd, yyyy · hh:mm a').format(dt.toLocal());
-  }
+  String _fmt(String? raw) => formatPktDateTimeLineFromApiString(raw);
 
   @override
   Widget build(BuildContext context) {

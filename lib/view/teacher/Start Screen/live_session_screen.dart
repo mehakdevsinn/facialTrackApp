@@ -90,6 +90,8 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     if (!mounted) return;
     if (stopped != null) {
       setState(() => _isSessionRunning = false);
+      await provider.refreshActiveSessions();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

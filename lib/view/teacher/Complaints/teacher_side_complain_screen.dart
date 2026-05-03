@@ -1,9 +1,9 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/core/models/complaint_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_side_complain_detail_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 /// Pills on blue header — avoids M3 [FilterChip] forcing a white surface + unreadable label.
 class _ComplaintStatusTabPill extends StatelessWidget {
@@ -110,9 +110,7 @@ class _TeacherComplaintsInboxState extends State<TeacherComplaintsInbox> {
   String _dateLine(ComplaintItem c) {
     final raw = c.sessionDateRaw ?? c.createdAtRaw;
     if (raw == null || raw.isEmpty) return '—';
-    final dt = DateTime.tryParse(raw);
-    if (dt == null) return raw;
-    return DateFormat('MMM dd, yyyy').format(dt.toLocal());
+    return formatPktDateLineFromApiString(raw);
   }
 
   Color _statusColor(String s) {

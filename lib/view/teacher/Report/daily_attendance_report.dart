@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -27,10 +28,11 @@ class DailyAttendanceReportScreen extends StatelessWidget {
           );
         }
 
-        final reportDate = DateTime.tryParse(data.reportDate);
-        final titleDate = reportDate == null
+        final u = parseReportToUtcInstant(data.reportDate);
+        final titleDate = u == null
             ? data.reportDate
-            : DateFormat('EEEE, dd MMMM yyyy').format(reportDate);
+            : DateFormat('EEEE, dd MMMM yyyy')
+                .format(reportUtcToPktWallForDisplay(u));
 
         return SafeArea(
           child: Scaffold(
@@ -223,9 +225,5 @@ class DailyAttendanceReportScreen extends StatelessWidget {
     );
   }
 
-  String _formatTime(String iso) {
-    final dt = DateTime.tryParse(iso);
-    if (dt == null) return iso;
-    return DateFormat('hh:mm a').format(dt.toLocal());
-  }
+  String _formatTime(String iso) => formatPktTimeLineFromApiString(iso);
 }

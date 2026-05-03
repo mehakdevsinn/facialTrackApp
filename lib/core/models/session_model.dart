@@ -5,14 +5,17 @@ bool _teacherSessionApiStringHasTimeZone(String s) {
       RegExp(r'[+-]\d{4}$').hasMatch(t);
 }
 
-/// Parses session API datetimes to a UTC instant.
+/// Parses session API datetimes to a UTC instant for arithmetic and display.
+///
+/// **Responses** (GET / active / stop): values are stored on the server as
+/// UTC; JSON often omits `Z`. Naive ISO strings are read as **UTC** wall time
+/// so elapsed and conversions match the backend.
+///
+/// **Create (POST)** body: the server treats **naive** values as **Asia/Karachi**
+/// local wall time. Prefer sending **aware** ISO (`Z` or `+05:00`) from the client
+/// so meaning is unambiguous.
 ///
 /// Strings with `Z` or `±hh:mm` use normal [DateTime.parse] semantics.
-///
-/// **Naive** ISO strings (no zone) are treated as **UTC** wall time. The app
-/// sends UTC via `DateTime.toUtc().toIso8601String()`; some backends return the
-/// same instant **without** `Z`. Parsing those as local (Dart default) skews
-/// elapsed duration by the device offset (e.g. ~5h for Pakistan vs 08:xx UTC).
 DateTime? parseTeacherSessionInstantToUtc(String? raw) {
   if (raw == null) return null;
   final s = raw.trim().replaceFirst(' ', 'T');
@@ -86,6 +89,9 @@ class SessionModel {
 
   /// [created_at] as a UTC instant when the backend sends it.
   DateTime? get createdDateTime => parseTeacherSessionInstantToUtc(createdAt);
+
+  /// [end_time] as a UTC instant (see [parseTeacherSessionInstantToUtc]).
+  DateTime? get endDateTime => parseTeacherSessionInstantToUtc(endTime);
 
   /// Prefer [createdDateTime] for elapsed live time, else [startDateTime].
   DateTime? get elapsedBaselineUtc =>

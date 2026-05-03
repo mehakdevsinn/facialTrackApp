@@ -112,15 +112,17 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      if (courseLabel.isNotEmpty)
-                        Text(
-                          courseLabel,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1D2671),
-                          ),
+                      Text(
+                        courseLabel.isEmpty
+                            ? displayDate
+                            : '$displayDate - $courseLabel',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D2671),
                         ),
+                        softWrap: true,
+                      ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 12,
@@ -147,13 +149,6 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 10),
-                      Text(
-                        '$displayDate · $courseLabel',
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 13),
-                        softWrap: true,
-                      ),
                     ],
                   ),
                 ),

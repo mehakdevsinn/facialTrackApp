@@ -3,6 +3,7 @@ import 'package:facialtrackapp/core/models/session_model.dart';
 /// Represents a single attendance record returned by
 ///   GET  /teachers/sessions/{session_id}/attendance
 ///   POST /teachers/sessions/{session_id}/attendance
+///   POST /teachers/sessions/{session_id}/attendance/leave
 class AttendanceRecordModel {
   final String id;
   final String sessionId;
@@ -17,7 +18,13 @@ class AttendanceRecordModel {
   /// How the record was created: "manual" (teacher tap) | "face" (recognition).
   final String? method;
 
+  /// Present — server clears on_leave when true.
   final bool isPresent;
+
+  /// Excused leave: is_present false, on_leave true, leave_reason set.
+  final bool onLeave;
+
+  final String? leaveReason;
   final String? notes;
 
   const AttendanceRecordModel({
@@ -28,6 +35,8 @@ class AttendanceRecordModel {
     this.markedAt,
     this.method,
     this.isPresent = true,
+    this.onLeave = false,
+    this.leaveReason,
     this.notes,
   });
 
@@ -39,7 +48,9 @@ class AttendanceRecordModel {
       studentName: json['student_name']?.toString(),
       markedAt: json['marked_at']?.toString(),
       method: json['method']?.toString(),
-      isPresent: json['is_present'] != false, // default true
+      isPresent: json['is_present'] == true,
+      onLeave: json['on_leave'] == true || json['is_on_leave'] == true,
+      leaveReason: json['leave_reason']?.toString(),
       notes: json['notes']?.toString(),
     );
   }

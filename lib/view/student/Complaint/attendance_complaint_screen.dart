@@ -10,12 +10,16 @@ class AttendanceComplaintScreen extends StatefulWidget {
   final String teacherName;
   final DateTime date;
 
+  /// When true, this session is excused leave — complaints are blocked (UI + API).
+  final bool sessionMarkedOnLeave;
+
   const AttendanceComplaintScreen({
     super.key,
     required this.sessionId,
     required this.courseName,
     required this.teacherName,
     required this.date,
+    this.sessionMarkedOnLeave = false,
   });
 
   @override
@@ -34,7 +38,37 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
     'Wrong Entry/Exit Time',
   ];
 
+  static const String _leaveBlockUserMessage =
+      'Attendance complaints are not accepted for sessions marked on excused leave. '
+      'If that marking is wrong, contact your administration.';
+
+  static bool _apiMessageSuggestsLeaveComplaintBlock(String raw) {
+    final s = raw.toLowerCase();
+    if (s.contains('on leave') ||
+        s.contains('on_leave') ||
+        s.contains('excused leave') ||
+        s.contains('marked on leave')) {
+      return true;
+    }
+    if (s.contains('leave') &&
+        (s.contains('complaint') ||
+            s.contains('dispute') ||
+            s.contains('cannot') ||
+            s.contains('not allowed') ||
+            s.contains('ineligible') ||
+            s.contains('blocked'))) {
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _submitComplaint() async {
+    if (widget.sessionMarkedOnLeave) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(_leaveBlockUserMessage)),
+      );
+      return;
+    }
     if (widget.sessionId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Missing session. Open Report Issue from a session row.')),
@@ -73,8 +107,11 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
       Navigator.pop(context);
     } on AuthException catch (e) {
       if (!mounted) return;
+      final msg = _apiMessageSuggestsLeaveComplaintBlock(e.message)
+          ? _leaveBlockUserMessage
+          : e.message;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+        SnackBar(content: Text(msg)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -94,6 +131,8 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final blockedByLeave = widget.sessionMarkedOnLeave;
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -112,6 +151,33 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (blockedByLeave) ...[
+                Material(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.amber.shade900),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _leaveBlockUserMessage,
+                            style: TextStyle(
+                              color: Colors.brown.shade900,
+                              fontSize: 13,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -201,7 +267,8 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
                 items: _issueTypes
                     .map((type) => DropdownMenuItem(value: type, child: Text(type)))
                     .toList(),
-                onChanged: (val) => setState(() => _selectedIssue = val),
+                onChanged:
+                    blockedByLeave ? null : (val) => setState(() => _selectedIssue = val),
               ),
               const SizedBox(height: 24),
               const Text(
@@ -215,6 +282,7 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _descriptionController,
+                readOnly: blockedByLeave,
                 maxLines: 5,
                 decoration: InputDecoration(
                   filled: true,
@@ -243,7 +311,8 @@ class _AttendanceComplaintScreenState extends State<AttendanceComplaintScreen> {
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitComplaint,
+                  onPressed:
+                      (_isLoading || blockedByLeave) ? null : _submitComplaint,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorPallet.primaryBlue,
                     foregroundColor: Colors.white,

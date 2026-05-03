@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/view_log_screen.dart';
 import 'package:facialtrackapp/view/teacher/Teacher_NavBar/teacher_root_screen.dart';
 import 'package:flutter/material.dart';
@@ -109,6 +110,71 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     }
   }
 
+  Future<void> _showMarkLeaveDialog(
+    BuildContext dialogContext,
+    SessionProvider provider,
+    String studentId,
+    String studentName,
+  ) async {
+    final controller = TextEditingController();
+    String? reason;
+    try {
+      reason = await showDialog<String>(
+        context: dialogContext,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Mark on leave'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(studentName,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'Leave reason (min 3 characters)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final t = controller.text.trim();
+                if (t.length < 3) return;
+                Navigator.pop(ctx, t);
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      final c = controller;
+      WidgetsBinding.instance.addPostFrameCallback((_) => c.dispose());
+    }
+    if (reason == null || !mounted) return;
+    provider.clearError();
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await provider.markStudentOnLeave(studentId, reason);
+    if (!mounted) return;
+    if (!ok && provider.errorMessage != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(provider.errorMessage!)),
+      );
+      provider.clearError();
+    }
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -118,8 +184,12 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
         final course = provider.selectedCourse;
         final roster = provider.rosterStudents;
         final present = provider.presentStudentIds;
+        final onLeave = provider.onLeaveStudentIds;
         final totalCount = roster.length;
         final presentCount = present.length;
+        final onLeaveCount = onLeave.length;
+        final absentUnexcused =
+            (totalCount - presentCount - onLeaveCount).clamp(0, totalCount);
         final pct = totalCount > 0
             ? (presentCount / totalCount * 100).round()
             : 0;
@@ -147,12 +217,16 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                       );
                     },
                   ),
-                  const Text(
-                    'Live Session Status',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: Text(
+                      'Live Session Status',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ],
@@ -208,13 +282,15 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                         ? 'Semester ${course!.semester!.semesterNumber}'
                         : '',
                     presentCount,
+                    onLeaveCount,
+                    absentUnexcused,
                     totalCount,
                     pct,
                   ),
                   const SizedBox(height: 25),
 
                   // ── Students grid (tap to mark present) ───────────────────
-                  _buildStudentsGrid(roster, present, provider),
+                  _buildStudentsGrid(roster, provider),
                   const SizedBox(height: 25),
 
                   // ── Stat cards ─────────────────────────────────────────────
@@ -295,6 +371,8 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     String courseName,
     String semesterLabel,
     int presentCount,
+    int onLeaveCount,
+    int absentUnexcused,
     int totalCount,
     int pct,
   ) {
@@ -314,6 +392,8 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
         children: [
           Text(
             semesterLabel.isNotEmpty ? '$semesterLabel — $courseName' : courseName,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -322,28 +402,36 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
           ),
           const SizedBox(height: 10),
           Container(
+            width: double.infinity,
             padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 4,
               children: [
-                const Icon(Icons.circle, color: Colors.orange, size: 10),
-                const SizedBox(width: 6),
-                const Text(
-                  'LIVE',
-                  style: TextStyle(
-                    color: _greenColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.circle, color: Colors.orange, size: 10),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'LIVE',
+                      style: TextStyle(
+                        color: _greenColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
-                  ' — $presentCount / $totalCount students present',
-                  style: const TextStyle(
-                      color: Colors.black54, fontSize: 12),
+                  '— $presentCount present, $onLeaveCount on leave, '
+                  '$absentUnexcused absent (unexcused) / $totalCount',
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
             ),
@@ -366,7 +454,6 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
   // ── Students Grid ──────────────────────────────────────────────────────────
   Widget _buildStudentsGrid(
     List<RosterStudentModel> roster,
-    Set<String> present,
     SessionProvider provider,
   ) {
     if (roster.isEmpty) {
@@ -383,7 +470,7 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
       );
     }
 
-    final presentCount = present.length;
+    final presentCount = provider.presentStudentIds.length;
     final total = roster.length;
 
     return Container(
@@ -407,10 +494,8 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
             itemCount: roster.length,
             itemBuilder: (_, i) {
               final student = roster[i];
-              final isPresent = present.contains(student.id);
               final isPending = provider.isPending(student.id);
-              return _buildStudentAvatar(
-                  student, isPresent, isPending, provider);
+              return _buildStudentAvatar(student, isPending, provider);
             },
           ),
           const SizedBox(height: 25),
@@ -448,29 +533,36 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
 
   Widget _buildStudentAvatar(
     RosterStudentModel student,
-    bool isPresent,
     bool isPending,
     SessionProvider provider,
   ) {
-    return GestureDetector(
-      onTap: isPending
-          ? null
-          : () async {
-              if (!isPresent) {
-                await provider.markPresent(student.id);
-              }
-            },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
+    final rec = provider.recordForStudent(student.id);
+    final isPresent = rec?.isPresent == true;
+    final isOnLeave = rec?.onLeave == true;
+    final vis = sessionRowVisualState(
+      isPresent: isPresent,
+      onLeave: isOnLeave,
+    );
+    final bg = sessionAttendanceStatusColor(vis);
+    final canMarkLeave = !isPresent && !isOnLeave;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        GestureDetector(
+          onTap: isPending
+              ? null
+              : () async {
+                  if (!isPresent) {
+                    await provider.markPresent(student.id);
+                  }
+                },
+          child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: isPresent
-                      ? Colors.green.withOpacity(0.2)
-                      : Colors.grey.withOpacity(0.15),
+                  color: bg.withOpacity(0.25),
                   blurRadius: 6,
                   spreadRadius: 1,
                   offset: const Offset(0, 3),
@@ -492,8 +584,7 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                   )
                 : CircleAvatar(
                     radius: 25,
-                    backgroundColor:
-                        isPresent ? _greenColor : Colors.grey.shade400,
+                    backgroundColor: bg,
                     child: Text(
                       student.initials,
                       style: const TextStyle(
@@ -504,22 +595,61 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                     ),
                   ),
           ),
-          if (!isPending)
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: CircleAvatar(
-                radius: 9,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  isPresent ? Icons.check_circle : Icons.touch_app,
-                  color: isPresent ? _greenColor : Colors.grey,
-                  size: 16,
+        ),
+        if (!isPending)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: CircleAvatar(
+              radius: 9,
+              backgroundColor: Colors.white,
+              child: Icon(
+                isPresent
+                    ? Icons.check_circle
+                    : isOnLeave
+                        ? Icons.flight_takeoff
+                        : Icons.touch_app,
+                color: bg,
+                size: 16,
+              ),
+            ),
+          ),
+        if (!isPending && canMarkLeave)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showMarkLeaveDialog(
+                  context,
+                  provider,
+                  student.id,
+                  student.fullName,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.event_note,
+                    size: 14,
+                    color: Colors.indigo.shade700,
+                  ),
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 

@@ -202,6 +202,10 @@ class Endpoints {
           String sessionId, String studentId) =>
       '$_teacher/sessions/$sessionId/attendance/$studentId';
 
+  /// POST → mark student on excused leave (reason min 3 chars after trim).
+  static String teacherSessionAttendanceLeave(String sessionId) =>
+      '$_teacher/sessions/$sessionId/attendance/leave';
+
   /// POST → stop/finalise a session → 200 + SessionResponse (is_active = false).
   static String teacherSessionStop(String sessionId) =>
       '$_teacher/sessions/$sessionId/stop';

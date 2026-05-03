@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/student_reports_provider.dart';
 import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/view/student/Attendence%20History/attendence-detail-screen.dart';
 import 'package:facialtrackapp/view/student/Complaint/attendance_complaint_screen.dart';
@@ -353,7 +354,14 @@ class AttendanceCard extends StatelessWidget {
     final u = record.sessionDateUtc;
     final dateStr = u != null ? formatPktDateCard(u) : '—';
     final dayStr = u != null ? formatPktDayName(u) : '';
-    final present = record.isPresent;
+    final vis = sessionRowVisualState(
+      isPresent: record.isPresent,
+      onLeave: record.isOnLeave,
+    );
+    final statusColor = sessionAttendanceStatusColor(vis);
+    final statusText = vis == SessionAttendanceVisualState.absentUnexcused
+        ? 'Absent (unexcused)'
+        : sessionAttendanceStatusLabel(vis);
     final subject = record.courseName ?? '—';
     final teacher = record.teacherName ?? '';
     final verify = verificationMethodLabel(record.verificationMethod);
@@ -365,7 +373,7 @@ class AttendanceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border(
           left: BorderSide(
-            color: present ? Colors.green : Colors.red,
+            color: statusColor,
             width: 4,
           ),
         ),
@@ -422,15 +430,13 @@ class AttendanceCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: present
-                        ? Colors.green.withOpacity(0.15)
-                        : Colors.red.withOpacity(0.15),
+                    color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    present ? 'Present' : 'Absent',
+                    statusText,
                     style: TextStyle(
-                      color: present ? Colors.green : Colors.red,
+                      color: statusColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -438,6 +444,19 @@ class AttendanceCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (record.isOnLeave &&
+                record.leaveReason != null &&
+                record.leaveReason!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Reason: ${record.leaveReason!.trim()}',
+                style: TextStyle(
+                  color: Colors.indigo.shade800,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
             _infoRow(Icons.book, subject),
             if (teacher.isNotEmpty) ...[
               const SizedBox(height: 6),
@@ -449,37 +468,57 @@ class AttendanceCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AttendanceComplaintScreen(
-                          sessionId: record.sessionId,
-                          courseName: subject,
-                          teacherName: teacher.isEmpty ? '—' : teacher,
-                          date: _complaintDate(),
-                        ),
+                Tooltip(
+                  message: record.isOnLeave
+                      ? 'Not available for excused leave. Contact administration if this is wrong.'
+                      : 'Report an attendance issue to your teacher',
+                  child: Opacity(
+                    opacity: record.isOnLeave ? 0.45 : 1,
+                    child: GestureDetector(
+                      onTap: () {
+                        if (record.isOnLeave) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Report Issue is not available when you were marked on excused leave. '
+                                'Contact administration if that is incorrect.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AttendanceComplaintScreen(
+                              sessionId: record.sessionId,
+                              courseName: subject,
+                              teacherName: teacher.isEmpty ? '—' : teacher,
+                              date: _complaintDate(),
+                              sessionMarkedOnLeave: record.isOnLeave,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.report_problem_outlined,
+                            size: 14,
+                            color: Colors.orange.shade700,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Report Issue',
+                            style: TextStyle(
+                              color: Colors.orange.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.report_problem_outlined,
-                        size: 14,
-                        color: Colors.orange.shade700,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Report Issue',
-                        style: TextStyle(
-                          color: Colors.orange.shade700,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 GestureDetector(

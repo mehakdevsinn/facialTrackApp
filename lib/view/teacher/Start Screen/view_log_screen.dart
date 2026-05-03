@@ -4,6 +4,7 @@ import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
 import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/teacher_course_model.dart';
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
 import 'package:facialtrackapp/utils/widgets/export_pdf.dart';
@@ -20,14 +21,26 @@ class AttendanceLogsScreen extends StatefulWidget {
 }
 
 class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
+  String _pdfStatusLine(_StudentRow r) {
+    if (r.isPresent) return 'Present';
+    if (r.isOnLeave) {
+      final reason = (r.leaveReason ?? '').trim();
+      if (reason.isEmpty) return 'On leave';
+      final short =
+          reason.length > 80 ? '${reason.substring(0, 77)}...' : reason;
+      return 'On leave — $short';
+    }
+    return 'Absent (unexcused)';
+  }
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Ensure attendance is loaded (may already be if coming from Live Session).
-      context
-          .read<SessionProvider>()
-          .ensureAttendanceLoaded(widget.sessionId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final p = context.read<SessionProvider>();
+      await p.refreshActiveSessions();
+      if (!mounted) return;
+      await p.ensureAttendanceLoaded(widget.sessionId);
     });
   }
 
@@ -42,9 +55,10 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
         final roster = provider.rosterStudents;
         final records = provider.attendanceRecords;
         final presentIds = provider.presentStudentIds;
+        final onLeaveIds = provider.onLeaveStudentIds;
 
         // Combine roster + attendance into a merged list.
-        final mergedStudents = _buildMergedList(roster, records, presentIds);
+        final mergedStudents = _buildMergedList(roster, records);
 
         final displayDate = session?.startDateTime != null
             ? formatTeacherSessionDatePkt(session!.startDateTime)
@@ -59,7 +73,9 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
 
         final totalCount = roster.length;
         final presentCount = presentIds.length;
-        final absentCount = totalCount - presentCount;
+        final onLeaveCount = onLeaveIds.length;
+        final absentUnexcused =
+            (totalCount - presentCount - onLeaveCount).clamp(0, totalCount);
 
         final courseLabel = course != null
             ? '${course.name} — ${course.semester != null ? "Semester ${course.semester!.semesterNumber}" : ""}'
@@ -106,33 +122,18 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                           ),
                         ),
                       const SizedBox(height: 10),
-                      Row(
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 6,
                         children: [
-                          const Text('Total: ',
-                              style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text(
-                            '$totalCount',
-                            style: const TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 15),
-                          const Text('Present: ',
-                              style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text(
-                            '$presentCount',
-                            style: const TextStyle(
-                                color: Colors.orange,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 15),
-                          const Text('Absent: ',
-                              style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text(
-                            '$absentCount',
-                            style: const TextStyle(
-                                color: Colors.deepOrange,
-                                fontWeight: FontWeight.bold),
+                          _summaryStat('Total', '$totalCount', Colors.green),
+                          _summaryStat('Present', '$presentCount', Colors.orange),
+                          _summaryStat(
+                              'On leave', '$onLeaveCount', Colors.indigo),
+                          _summaryStat(
+                            'Absent (unexcused)',
+                            '$absentUnexcused',
+                            Colors.deepOrange,
                           ),
                         ],
                       ),
@@ -151,6 +152,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                         '$displayDate · $courseLabel',
                         style: const TextStyle(
                             color: Colors.grey, fontSize: 13),
+                        softWrap: true,
                       ),
                     ],
                   ),
@@ -189,21 +191,42 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  Widget _summaryStat(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label: ',
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Merge roster (full list) with attendance records into display rows.
   List<_StudentRow> _buildMergedList(
     List<RosterStudentModel> roster,
     List<AttendanceRecordModel> records,
-    Set<String> presentIds,
   ) {
     final recordMap = {for (final r in records) r.studentId: r};
     return roster.map((s) {
       final rec = recordMap[s.id];
-      final isPresent = presentIds.contains(s.id);
+      final isPresent = rec?.isPresent == true;
+      final isOnLeave = rec?.onLeave == true;
       return _StudentRow(
         studentId: s.id,
         name: s.fullName,
         rollNumber: s.rollNumber,
         isPresent: isPresent,
+        isOnLeave: isOnLeave,
+        leaveReason: rec?.leaveReason,
         markedAt: rec?.markedAt,
         method: rec?.method,
       );
@@ -212,6 +235,11 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
 
   Widget _buildStudentCard(_StudentRow row, SessionProvider provider) {
     final isPending = provider.isPending(row.studentId);
+    final vis = sessionRowVisualState(
+      isPresent: row.isPresent,
+      onLeave: row.isOnLeave,
+    );
+    final avatarColor = sessionAttendanceStatusColor(vis);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
@@ -232,8 +260,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           children: [
             CircleAvatar(
               radius: 25,
-              backgroundColor:
-                  row.isPresent ? Colors.green : Colors.orange,
+              backgroundColor: avatarColor,
               child: Text(
                 _initials(row.name),
                 style: const TextStyle(
@@ -260,6 +287,20 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                       style: const TextStyle(
                           fontSize: 12, color: Colors.grey),
                     ),
+                  if (row.isOnLeave &&
+                      row.leaveReason != null &&
+                      row.leaveReason!.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Leave: ${row.leaveReason!.trim()}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.indigo.shade800,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
                   if (row.markedAt != null)
                     Text(
                       _formatMarkedAt(row.markedAt!),
@@ -272,8 +313,17 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildStatusBadge(row.isPresent ? 'Present' : 'Absent'),
-                const SizedBox(height: 8),
+                _buildStatusBadge(vis),
+                if (!row.isPresent && !row.isOnLeave) ...[
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: isPending
+                        ? null
+                        : () => _showMarkLeaveDialog(context, provider, row),
+                    child: const Text('Mark on leave'),
+                  ),
+                ],
+                const SizedBox(height: 4),
                 isPending
                     ? const SizedBox(
                         height: 28,
@@ -305,15 +355,81 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
     );
   }
 
-  Widget _buildStatusBadge(String status) {
-    final isPresent = status == 'Present';
-    final mainColor = isPresent
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFFF7043);
-    final bgColor = isPresent
-        ? const Color(0xFFE8F5E9)
-        : const Color(0xFFFBE9E7);
-    final icon = isPresent ? Icons.check_box : Icons.cancel;
+  Future<void> _showMarkLeaveDialog(
+    BuildContext dialogContext,
+    SessionProvider provider,
+    _StudentRow row,
+  ) async {
+    final controller = TextEditingController();
+    String? submitted;
+    try {
+      submitted = await showDialog<String>(
+        context: dialogContext,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Mark on leave'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Student: ${row.name}',
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'Leave reason (min 3 characters)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final t = controller.text.trim();
+                if (t.length < 3) return;
+                Navigator.pop(ctx, t);
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      // Let the dialog route detach the TextField before disposing the controller
+      // (avoids "TextEditingController was used after being disposed").
+      final c = controller;
+      WidgetsBinding.instance.addPostFrameCallback((_) => c.dispose());
+    }
+    if (submitted == null || !mounted) return;
+    provider.clearError();
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await provider.markStudentOnLeave(row.studentId, submitted);
+    if (!mounted) return;
+    if (!ok && provider.errorMessage != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(provider.errorMessage!)),
+      );
+      provider.clearError();
+    }
+  }
+
+  Widget _buildStatusBadge(SessionAttendanceVisualState vis) {
+    final mainColor = sessionAttendanceStatusColor(vis);
+    final bgColor = mainColor.withOpacity(0.12);
+    final label = sessionAttendanceStatusLabel(vis);
+    final icon = vis == SessionAttendanceVisualState.present
+        ? Icons.check_box
+        : vis == SessionAttendanceVisualState.onLeave
+            ? Icons.flight_takeoff
+            : Icons.cancel;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -328,7 +444,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           Icon(icon, size: 12, color: mainColor),
           const SizedBox(width: 4),
           Text(
-            status,
+            label,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
@@ -352,7 +468,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
         .map(
           (r) => {
             'name': r.name,
-            'status': r.isPresent ? 'Present' : 'Absent',
+            'status': _pdfStatusLine(r),
             'inTime':
                 r.markedAt != null ? _formatMarkedAt(r.markedAt!) : '-',
             'method': verificationMethodLabel(r.method) ?? r.method ?? '-',
@@ -449,6 +565,8 @@ class _StudentRow {
   final String name;
   final String? rollNumber;
   final bool isPresent;
+  final bool isOnLeave;
+  final String? leaveReason;
   final String? markedAt;
   final String? method;
 
@@ -457,6 +575,8 @@ class _StudentRow {
     required this.name,
     this.rollNumber,
     required this.isPresent,
+    this.isOnLeave = false,
+    this.leaveReason,
     this.markedAt,
     this.method,
   });

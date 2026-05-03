@@ -1,3 +1,4 @@
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -73,6 +74,16 @@ Future<void> exportSessionAttendanceLogsPdf({
             fontSize: 9,
           ),
           cellStyle: pw.TextStyle(font: font, fontSize: 8),
+        ),
+        pw.SizedBox(height: 12),
+        pw.Text(_ascii(kAttendancePolicyBShort), style: small),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          _ascii(
+            'Status: Present | On leave (excused) | Absent (unexcused). '
+            'Absent column is not "everyone not present".',
+          ),
+          style: small,
         ),
       ],
     ),

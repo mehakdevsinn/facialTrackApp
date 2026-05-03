@@ -6,6 +6,10 @@ class CourseReportStudent {
   final int totalSessions;
   final double attendancePercentage;
   final int lateCount;
+  /// Excused leave session count (Policy B — excluded from % denominator).
+  final int sessionsOnLeave;
+  /// Unexcused missed sessions only (from API `sessions_missed` when sent).
+  final int sessionsMissedUnexcused;
   /// Present when API includes per-student verification (e.g. dominant method).
   final String? verificationMethod;
 
@@ -17,10 +21,13 @@ class CourseReportStudent {
     required this.totalSessions,
     required this.attendancePercentage,
     required this.lateCount,
+    this.sessionsOnLeave = 0,
+    required this.sessionsMissedUnexcused,
     this.verificationMethod,
   });
 
-  int get sessionsMissed => totalSessions - sessionsAttended;
+  /// Alias for PDFs / legacy call sites: unexcused absences only.
+  int get sessionsMissed => sessionsMissedUnexcused;
 
   factory CourseReportStudent.fromJson(Map<String, dynamic> json) {
     double parseDouble(dynamic value) {
@@ -34,14 +41,24 @@ class CourseReportStudent {
       return int.tryParse(value?.toString() ?? '') ?? 0;
     }
 
+    final totalSessions = parseInt(json['total_sessions']);
+    final sessionsAttended = parseInt(json['sessions_attended']);
+    final sessionsOnLeave = parseInt(json['sessions_on_leave']);
+    final missedFromApi = json['sessions_missed'];
+    final sessionsMissedUnexcused = missedFromApi != null
+        ? parseInt(missedFromApi)
+        : (totalSessions - sessionsAttended - sessionsOnLeave).clamp(0, 1 << 30);
+
     return CourseReportStudent(
       studentId: json['student_id']?.toString() ?? '',
       studentName: json['student_name']?.toString() ?? 'Unknown',
       rollNumber: json['roll_number']?.toString() ?? '—',
-      sessionsAttended: parseInt(json['sessions_attended']),
-      totalSessions: parseInt(json['total_sessions']),
+      sessionsAttended: sessionsAttended,
+      totalSessions: totalSessions,
       attendancePercentage: parseDouble(json['attendance_percentage']),
       lateCount: parseInt(json['late_count']),
+      sessionsOnLeave: sessionsOnLeave,
+      sessionsMissedUnexcused: sessionsMissedUnexcused,
       verificationMethod: json['verification_method']?.toString() ??
           json['dominant_verification_method']?.toString(),
     );
@@ -114,6 +131,7 @@ class MonthlySessionSummary {
   final String sessionDate;
   final int presentCount;
   final int absentCount;
+  final int onLeaveCount;
   final int totalEnrolled;
 
   const MonthlySessionSummary({
@@ -121,6 +139,7 @@ class MonthlySessionSummary {
     required this.sessionDate,
     required this.presentCount,
     required this.absentCount,
+    this.onLeaveCount = 0,
     required this.totalEnrolled,
   });
 
@@ -135,6 +154,7 @@ class MonthlySessionSummary {
       sessionDate: json['session_date']?.toString() ?? '',
       presentCount: parseInt(json['present_count']),
       absentCount: parseInt(json['absent_count']),
+      onLeaveCount: parseInt(json['on_leave_count']),
       totalEnrolled: parseInt(json['total_enrolled']),
     );
   }
@@ -206,6 +226,8 @@ class DailyReportStudent {
   final String studentName;
   final String rollNumber;
   final bool isPresent;
+  final bool isOnLeave;
+  final String? leaveReason;
   final String? markedAt;
   final String? verificationMethod;
 
@@ -214,6 +236,8 @@ class DailyReportStudent {
     required this.studentName,
     required this.rollNumber,
     required this.isPresent,
+    this.isOnLeave = false,
+    this.leaveReason,
     this.markedAt,
     this.verificationMethod,
   });
@@ -224,6 +248,8 @@ class DailyReportStudent {
       studentName: json['student_name']?.toString() ?? 'Unknown',
       rollNumber: json['roll_number']?.toString() ?? '—',
       isPresent: json['is_present'] == true,
+      isOnLeave: json['is_on_leave'] == true || json['on_leave'] == true,
+      leaveReason: json['leave_reason']?.toString(),
       markedAt: json['marked_at']?.toString(),
       verificationMethod: json['verification_method']?.toString(),
     );
@@ -289,6 +315,7 @@ class LowAttendanceStudent {
   final int sessionsAttended;
   final int totalSessions;
   final int sessionsMissed;
+  final int sessionsOnLeave;
 
   const LowAttendanceStudent({
     required this.studentId,
@@ -299,6 +326,7 @@ class LowAttendanceStudent {
     required this.sessionsAttended,
     required this.totalSessions,
     required this.sessionsMissed,
+    this.sessionsOnLeave = 0,
   });
 
   factory LowAttendanceStudent.fromJson(Map<String, dynamic> json) {
@@ -322,6 +350,7 @@ class LowAttendanceStudent {
       sessionsAttended: parseInt(json['sessions_attended']),
       totalSessions: parseInt(json['total_sessions']),
       sessionsMissed: parseInt(json['sessions_missed']),
+      sessionsOnLeave: parseInt(json['sessions_on_leave']),
     );
   }
 }

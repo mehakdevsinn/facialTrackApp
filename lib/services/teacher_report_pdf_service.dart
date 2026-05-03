@@ -1,4 +1,5 @@
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -22,6 +23,19 @@ class TeacherReportPdfService {
 
   static pw.TextStyle _bodyStyle({double size = 10}) =>
       pw.TextStyle(font: _font, fontSize: size);
+
+  static String _policyFootnotePw() => _ascii(kAttendancePolicyBShort);
+
+  static String _dailyStatusLine(DailyReportStudent s) {
+    if (s.isPresent) return 'Present';
+    if (s.isOnLeave) {
+      final r = (s.leaveReason ?? '').trim();
+      if (r.isEmpty) return 'On leave';
+      final short = r.length > 60 ? '${r.substring(0, 57)}...' : r;
+      return 'On leave — $short';
+    }
+    return 'Absent (unexcused)';
+  }
 
   static String _methodFromRaw(String? raw) {
     if (raw == null || raw.isEmpty) return '-';
@@ -52,13 +66,19 @@ class TeacherReportPdfService {
         margin: const pw.EdgeInsets.all(32),
         build: (ctx) => [
           pw.Text('Monthly Attendance Report', style: _titleStyle()),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
+          pw.Text(_policyFootnotePw(), style: _bodyStyle(size: 8)),
+          pw.SizedBox(height: 4),
           pw.Text('Course: ${_ascii(data.courseName)}', style: _bodyStyle()),
           if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           pw.Text('Period: $monthLabel', style: _bodyStyle()),
           pw.Text(
             'Low-attendance criterion: $attendanceThresholdPercent%',
             style: _bodyStyle(),
+          ),
+          pw.Text(
+            'Absent (unexcused) counts only students not on excused leave.',
+            style: _bodyStyle(size: 8),
           ),
           pw.Text(
             'Overall: ${data.overallAttendancePercentage.toStringAsFixed(1)}% | '
@@ -76,7 +96,8 @@ class TeacherReportPdfService {
               headers: const [
                 'Session date',
                 'Present',
-                'Absent',
+                'Absent (unexc.)',
+                'On leave',
                 'Enrolled',
               ],
               data: data.sessions
@@ -85,6 +106,7 @@ class TeacherReportPdfService {
                       _ascii(formatPktDateLineFromApiString(e.sessionDate)),
                       '${e.presentCount}',
                       '${e.absentCount}',
+                      '${e.onLeaveCount}',
                       '${e.totalEnrolled}',
                     ],
                   )
@@ -109,7 +131,8 @@ class TeacherReportPdfService {
               'Roll',
               'Attended',
               'Total',
-              'Missed',
+              'On leave',
+              'Unexcused',
               'Method',
               'Att %',
             ],
@@ -120,7 +143,8 @@ class TeacherReportPdfService {
                     _ascii(s.rollNumber),
                     '${s.sessionsAttended}',
                     '${s.totalSessions}',
-                    '${s.sessionsMissed}',
+                    '${s.sessionsOnLeave}',
+                    '${s.sessionsMissedUnexcused}',
                     _methodCell(s),
                     '${s.attendancePercentage.toStringAsFixed(1)}%',
                   ],
@@ -159,7 +183,9 @@ class TeacherReportPdfService {
         margin: const pw.EdgeInsets.all(32),
         build: (ctx) => [
           pw.Text(_ascii(reportTitle), style: _titleStyle()),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
+          pw.Text(_policyFootnotePw(), style: _bodyStyle(size: 8)),
+          pw.SizedBox(height: 4),
           pw.Text('Course: ${_ascii(courseName)}', style: _bodyStyle()),
           if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           pw.Text(
@@ -169,6 +195,10 @@ class TeacherReportPdfService {
           pw.Text(
             'Criterion: attendance strictly below $thresholdPercent%',
             style: _bodyStyle(size: 9),
+          ),
+          pw.Text(
+            'Missed column = unexcused absences only (Policy B).',
+            style: _bodyStyle(size: 8),
           ),
           pw.Text('Students below threshold: ${lowStudents.length}',
               style: _bodyStyle(size: 9)),
@@ -184,7 +214,8 @@ class TeacherReportPdfService {
                 'Att %',
                 'Present',
                 'Total',
-                'Missed',
+                'On leave',
+                'Unexcused',
               ],
               data: lowStudents
                   .map(
@@ -194,7 +225,8 @@ class TeacherReportPdfService {
                       '${s.attendancePercentage.toStringAsFixed(1)}%',
                       '${s.sessionsAttended}',
                       '${s.totalSessions}',
-                      '${s.sessionsMissed}',
+                      '${s.sessionsOnLeave}',
+                      '${s.sessionsMissedUnexcused}',
                     ],
                   )
                   .toList(),
@@ -225,9 +257,10 @@ class TeacherReportPdfService {
     final range = dateRangeLabel ?? _courseDateRangeLine(data.dateRange);
     final presentSum =
         data.students.fold<int>(0, (a, s) => a + s.sessionsAttended);
-    final totalSum =
-        data.students.fold<int>(0, (a, s) => a + s.totalSessions);
-    final absentSum = totalSum - presentSum;
+    final missedSum = data.students
+        .fold<int>(0, (a, s) => a + s.sessionsMissedUnexcused);
+    final leaveSum =
+        data.students.fold<int>(0, (a, s) => a + s.sessionsOnLeave);
     final semSub = _semesterSubtitle(semesterLabel);
 
     pdf.addPage(
@@ -241,7 +274,9 @@ class TeacherReportPdfService {
                 : 'Student focus (semester report)',
             style: _titleStyle(),
           ),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
+          pw.Text(_policyFootnotePw(), style: _bodyStyle(size: 8)),
+          pw.SizedBox(height: 4),
           pw.Text('Course: ${_ascii(data.courseName)}', style: _bodyStyle()),
           if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           if (range.isNotEmpty)
@@ -249,7 +284,8 @@ class TeacherReportPdfService {
           pw.Text(
             'Class avg: ${data.courseAveragePercentage.toStringAsFixed(1)}% | '
             'Scheduled sessions: ${data.totalSessions} | '
-            'Roster present sum: $presentSum | absent sum: $absentSum',
+            'Present (sum): $presentSum | unexcused missed (sum): $missedSum | '
+            'on leave sessions (sum): $leaveSum',
             style: _bodyStyle(size: 9),
           ),
           if (highlightStudent != null) ...[
@@ -274,7 +310,8 @@ class TeacherReportPdfService {
               'Roll',
               'Present',
               'Total',
-              'Absent',
+              'On leave',
+              'Unexcused',
               'Method',
               'Att %',
             ],
@@ -285,7 +322,8 @@ class TeacherReportPdfService {
                     _ascii(s.rollNumber),
                     '${s.sessionsAttended}',
                     '${s.totalSessions}',
-                    '${s.sessionsMissed}',
+                    '${s.sessionsOnLeave}',
+                    '${s.sessionsMissedUnexcused}',
                     _methodCell(s),
                     '${s.attendancePercentage.toStringAsFixed(1)}%',
                   ],
@@ -335,13 +373,15 @@ class TeacherReportPdfService {
         margin: const pw.EdgeInsets.all(32),
         build: (ctx) => [
           pw.Text('Daily Attendance (Day Inspection)', style: _titleStyle()),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
+          pw.Text(_policyFootnotePw(), style: _bodyStyle(size: 8)),
+          pw.SizedBox(height: 4),
           pw.Text('Date: ${_ascii(titleDateLine)}', style: _bodyStyle()),
           pw.Text('Course: ${_ascii(data.courseName)}', style: _bodyStyle()),
           if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           pw.Text(
             'Enrolled: ${data.totalEnrolled} | Present: ${data.presentCount} | '
-            'Absent: ${data.absentCount} | Rate: '
+            'Absent (unexcused): ${data.absentCount} | Rate: '
             '${data.attendancePercentage.toStringAsFixed(1)}%',
             style: _bodyStyle(size: 9),
           ),
@@ -360,7 +400,7 @@ class TeacherReportPdfService {
                   (s) => [
                     _ascii(s.studentName),
                     _ascii(s.rollNumber),
-                    s.isPresent ? 'Present' : 'Absent',
+                    _ascii(_dailyStatusLine(s)),
                     s.markedAt == null || s.markedAt!.isEmpty
                         ? '-'
                         : _ascii(
@@ -393,9 +433,7 @@ class TeacherReportPdfService {
     required String rangeLabel,
     String? courseName,
   }) async {
-    final absent = student.totalSessions - student.sessionsAttended;
-    final courseSessionsNote =
-        'Course scheduled sessions (scope): $courseTotalSessions';
+    final absentU = student.sessionsMissedUnexcused;
     final pdf = pw.Document();
     pdf.addPage(
       pw.Page(
@@ -420,7 +458,8 @@ class TeacherReportPdfService {
             ),
             pw.SizedBox(height: 12),
             pw.Text('Present: ${student.sessionsAttended}', style: _bodyStyle()),
-            pw.Text('Absent: $absent', style: _bodyStyle()),
+            pw.Text('Unexcused absent: $absentU', style: _bodyStyle()),
+            pw.Text('On leave (sessions): ${student.sessionsOnLeave}', style: _bodyStyle()),
             pw.Text('Total classes: ${student.totalSessions}', style: _bodyStyle()),
             pw.Text(
               'Attendance %: ${student.attendancePercentage.toStringAsFixed(2)}%',
@@ -428,7 +467,7 @@ class TeacherReportPdfService {
             ),
             pw.Text('Late count: ${student.lateCount}', style: _bodyStyle()),
             pw.SizedBox(height: 8),
-            pw.Text(courseSessionsNote, style: _bodyStyle(size: 9)),
+            pw.Text(_policyFootnotePw(), style: _bodyStyle(size: 9)),
             pw.SizedBox(height: 20),
             pw.Text(
               'Per-day logs are not included; figures reflect the selected '

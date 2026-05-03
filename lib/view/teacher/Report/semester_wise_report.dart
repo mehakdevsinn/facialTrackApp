@@ -252,6 +252,10 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
     final present = data.students.fold<int>(0, (sum, s) => sum + s.sessionsAttended);
     final total = data.students.fold<int>(0, (sum, s) => sum + s.totalSessions);
     final double percent = total == 0 ? 0.0 : (present / total) * 100.0;
+    final onLeaveSum =
+        data.students.fold<int>(0, (sum, s) => sum + s.sessionsOnLeave);
+    final missedUnexcusedSum = data.students
+        .fold<int>(0, (sum, s) => sum + s.sessionsMissedUnexcused);
     return CourseReportStudent(
       studentId: 'all',
       studentName: 'All Students',
@@ -260,12 +264,14 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
       totalSessions: total,
       attendancePercentage: percent,
       lateCount: 0,
+      sessionsOnLeave: onLeaveSum,
+      sessionsMissedUnexcused: missedUnexcusedSum,
       verificationMethod: null,
     );
   }
 
   Widget _statsCard(CourseReportStudent stats) {
-    final absent = stats.totalSessions - stats.sessionsAttended;
+    final absent = stats.sessionsMissedUnexcused;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -283,7 +289,8 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
           const SizedBox(height: 12),
           _line('Total Classes', '${stats.totalSessions}'),
           _line('Present', '${stats.sessionsAttended}'),
-          _line('Absent', '$absent'),
+          _line('On leave (sessions)', '${stats.sessionsOnLeave}'),
+          _line('Absent (unexcused)', '$absent'),
           _line('Attendance %', '${stats.attendancePercentage.toStringAsFixed(1)}%'),
         ],
       ),

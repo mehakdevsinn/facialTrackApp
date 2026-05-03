@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:flutter/material.dart';
@@ -120,7 +121,12 @@ class DailyAttendanceReportScreen extends StatelessWidget {
                         children: [
                           _statItem('Total', data.totalEnrolled.toString()),
                           _statItem('Present', data.presentCount.toString()),
-                          _statItem('Absent', data.absentCount.toString()),
+                          _statItem(
+                            'On leave',
+                            '${data.students.where((x) => x.isOnLeave).length}',
+                          ),
+                          _statItem(
+                              'Absent (unexc.)', data.absentCount.toString()),
                           _statItem(
                             'Attendance',
                             '${data.attendancePercentage.toStringAsFixed(1)}%',
@@ -151,9 +157,12 @@ class DailyAttendanceReportScreen extends StatelessWidget {
                     itemCount: data.students.length,
                     itemBuilder: (_, index) {
                       final s = data.students[index];
-                      final present = s.isPresent;
-                      final color = present ? Colors.green : Colors.red;
-                      final status = present ? 'Present' : 'Absent';
+                      final vis = sessionRowVisualState(
+                        isPresent: s.isPresent,
+                        onLeave: s.isOnLeave,
+                      );
+                      final color = sessionAttendanceStatusColor(vis);
+                      final status = sessionAttendanceStatusLabel(vis);
                       final inTime = s.markedAt == null || s.markedAt!.isEmpty
                           ? '-'
                           : _formatTime(s.markedAt!);
@@ -207,6 +216,18 @@ class DailyAttendanceReportScreen extends StatelessWidget {
                                 fontSize: 12,
                               ),
                             ),
+                            if (s.isOnLeave &&
+                                s.leaveReason != null &&
+                                s.leaveReason!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                'Reason: ${s.leaveReason!.trim()}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.indigo.shade800,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 10),
                             Row(
                               children: [

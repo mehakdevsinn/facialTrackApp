@@ -37,6 +37,8 @@ class StudentCourseSummary {
   final int totalSessions;
   final int sessionsAttended;
   final int sessionsAbsent;
+  /// Excused leave session count (Policy B).
+  final int sessionsOnLeave;
   final double attendancePercentage;
 
   const StudentCourseSummary({
@@ -47,6 +49,7 @@ class StudentCourseSummary {
     required this.totalSessions,
     required this.sessionsAttended,
     required this.sessionsAbsent,
+    this.sessionsOnLeave = 0,
     required this.attendancePercentage,
   });
 
@@ -59,6 +62,7 @@ class StudentCourseSummary {
       totalSessions: (json['total_sessions'] as num?)?.toInt() ?? 0,
       sessionsAttended: (json['sessions_attended'] as num?)?.toInt() ?? 0,
       sessionsAbsent: (json['sessions_absent'] as num?)?.toInt() ?? 0,
+      sessionsOnLeave: (json['sessions_on_leave'] as num?)?.toInt() ?? 0,
       attendancePercentage:
           (json['attendance_percentage'] as num?)?.toDouble() ?? 0,
     );
@@ -100,6 +104,8 @@ class StudentAttendanceSessionRecord {
   final String? courseCode;
   final String? teacherName;
   final bool isPresent;
+  final bool isOnLeave;
+  final String? leaveReason;
   /// When the student was marked present by the system.
   final DateTime? entryTimeUtc;
   final DateTime? exitTimeUtc;
@@ -114,6 +120,8 @@ class StudentAttendanceSessionRecord {
     this.courseCode,
     this.teacherName,
     required this.isPresent,
+    this.isOnLeave = false,
+    this.leaveReason,
     this.entryTimeUtc,
     this.exitTimeUtc,
     this.verificationMethod,
@@ -131,6 +139,8 @@ class StudentAttendanceSessionRecord {
       courseCode: json['course_code']?.toString(),
       teacherName: json['teacher_name']?.toString(),
       isPresent: json['is_present'] == true,
+      isOnLeave: json['is_on_leave'] == true || json['on_leave'] == true,
+      leaveReason: json['leave_reason']?.toString(),
       entryTimeUtc: parseReportToUtcInstant(json['entry_time']?.toString()),
       exitTimeUtc: parseReportToUtcInstant(json['exit_time']?.toString()),
       verificationMethod: json['verification_method']?.toString(),
@@ -144,6 +154,7 @@ class StudentAttendanceHistoryResponse {
   final int totalSessions;
   final int sessionsAttended;
   final int sessionsAbsent;
+  final int sessionsOnLeave;
   final List<StudentAttendanceSessionRecord> records;
 
   const StudentAttendanceHistoryResponse({
@@ -152,6 +163,7 @@ class StudentAttendanceHistoryResponse {
     required this.totalSessions,
     required this.sessionsAttended,
     required this.sessionsAbsent,
+    this.sessionsOnLeave = 0,
     required this.records,
   });
 
@@ -164,6 +176,7 @@ class StudentAttendanceHistoryResponse {
       totalSessions: (json['total_sessions'] as num?)?.toInt() ?? 0,
       sessionsAttended: (json['sessions_attended'] as num?)?.toInt() ?? 0,
       sessionsAbsent: (json['sessions_absent'] as num?)?.toInt() ?? 0,
+      sessionsOnLeave: (json['sessions_on_leave'] as num?)?.toInt() ?? 0,
       records: list
           .map((e) => StudentAttendanceSessionRecord.fromJson(
               e as Map<String, dynamic>))
@@ -179,6 +192,8 @@ class StudentSubjectDetailResponse {
   final String teacherName;
   final int totalSessions;
   final int sessionsAttended;
+  final int sessionsAbsent;
+  final int sessionsOnLeave;
   final double attendancePercentage;
   final List<StudentAttendanceSessionRecord> recentSessions;
 
@@ -189,22 +204,29 @@ class StudentSubjectDetailResponse {
     required this.teacherName,
     required this.totalSessions,
     required this.sessionsAttended,
+    required this.sessionsAbsent,
+    this.sessionsOnLeave = 0,
     required this.attendancePercentage,
     required this.recentSessions,
   });
 
-  int get sessionsAbsent =>
-      (totalSessions - sessionsAttended).clamp(0, 0x7fffffff);
-
   factory StudentSubjectDetailResponse.fromJson(Map<String, dynamic> json) {
     final list = json['recent_sessions'] as List<dynamic>? ?? [];
+    final total = (json['total_sessions'] as num?)?.toInt() ?? 0;
+    final attended = (json['sessions_attended'] as num?)?.toInt() ?? 0;
+    final absentApi = json['sessions_absent'];
+    final absent = absentApi != null
+        ? (absentApi as num).toInt()
+        : (total - attended).clamp(0, 0x7fffffff);
     return StudentSubjectDetailResponse(
       courseId: json['course_id']?.toString() ?? '',
       courseCode: json['course_code']?.toString() ?? '',
       courseName: _sanitizeApiName(json['course_name']?.toString()) ?? '',
       teacherName: json['teacher_name']?.toString() ?? '',
-      totalSessions: (json['total_sessions'] as num?)?.toInt() ?? 0,
-      sessionsAttended: (json['sessions_attended'] as num?)?.toInt() ?? 0,
+      totalSessions: total,
+      sessionsAttended: attended,
+      sessionsAbsent: absent,
+      sessionsOnLeave: (json['sessions_on_leave'] as num?)?.toInt() ?? 0,
       attendancePercentage:
           (json['attendance_percentage'] as num?)?.toDouble() ?? 0,
       recentSessions: list

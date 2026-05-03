@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/utils/attendance_display.dart';
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:flutter/material.dart';
 
@@ -98,7 +99,24 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
     final sessionDate = r.sessionDateUtc;
     final dateStr = sessionDate != null ? formatPktDateCard(sessionDate) : '—';
     final dayStr = sessionDate != null ? formatPktDayName(sessionDate) : '';
-    final present = r.isPresent;
+    final vis = sessionRowVisualState(
+      isPresent: r.isPresent,
+      onLeave: r.isOnLeave,
+    );
+    final statusColor = sessionAttendanceStatusColor(vis);
+    final statusTitle = vis == SessionAttendanceVisualState.absentUnexcused
+        ? 'Absent (unexcused)'
+        : sessionAttendanceStatusLabel(vis);
+    final statusSubtitle = switch (vis) {
+      SessionAttendanceVisualState.present => 'Status verified',
+      SessionAttendanceVisualState.onLeave => 'Excused leave',
+      SessionAttendanceVisualState.absentUnexcused => 'Status not verified',
+    };
+    final statusIcon = switch (vis) {
+      SessionAttendanceVisualState.present => Icons.check_circle,
+      SessionAttendanceVisualState.onLeave => Icons.event_note,
+      SessionAttendanceVisualState.absentUnexcused => Icons.cancel,
+    };
     final markedAtStr =
         r.entryTimeUtc != null ? formatPktTime12h(r.entryTimeUtc!) : '—';
     final sessionStartStr = r.sessionStartTimeUtc != null
@@ -142,36 +160,50 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: present ? Colors.green : Colors.red,
+                color: statusColor,
                 width: 2,
               ),
             ),
             child: Column(
               children: [
                 Icon(
-                  present ? Icons.check_circle : Icons.cancel,
+                  statusIcon,
                   size: 40,
-                  color: present ? Colors.green : Colors.red,
+                  color: statusColor,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  present ? 'Present' : 'Absent',
+                  statusTitle,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: present ? Colors.green : Colors.red,
+                    color: statusColor,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  present ? 'Status Verified' : 'Status Not Verified',
+                  statusSubtitle,
                   style: const TextStyle(color: Colors.grey),
                 ),
+                if (vis == SessionAttendanceVisualState.onLeave &&
+                    r.leaveReason != null &&
+                    r.leaveReason!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Reason: ${r.leaveReason!.trim()}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.indigo.shade800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 16),
-          if (present) ...[
+          if (r.isPresent) ...[
             _timeLogsCard(markedAtStr),
             const SizedBox(height: 16),
           ],

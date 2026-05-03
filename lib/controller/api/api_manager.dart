@@ -1557,6 +1557,34 @@ extension TeacherSessionApiMethods on ApiManager {
   }
 
   // ─── 6. DELETE remove attendance (mark absent) ──────────────────────────
+  /// POST /teachers/sessions/{session_id}/attendance/leave
+  /// Body: student_id, leave_reason (>= 3 chars after trim).
+  Future<AttendanceRecordModel> markAttendanceLeave(
+    String sessionId,
+    String studentId,
+    String leaveReason,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherSessionAttendanceLeave(sessionId)),
+            headers: await _authHeaders(),
+            body: jsonEncode({
+              'student_id': studentId,
+              'leave_reason': leaveReason.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return AttendanceRecordModel.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// DELETE /teachers/sessions/{session_id}/attendance/{student_id}
   /// 204 = success ; 404 = already absent (no-op).
   Future<void> removeAttendance(String sessionId, String studentId) async {

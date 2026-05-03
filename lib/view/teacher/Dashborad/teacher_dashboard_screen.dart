@@ -3,6 +3,7 @@ import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
+import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:facialtrackapp/view/teacher/Complaints/teacher_side_complain_screen.dart';
@@ -196,9 +197,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Monday, October 28, 2024',
-                        style: TextStyle(color: Colors.grey),
+                      Text(
+                        formatTeacherSessionDatePkt(
+                          DateTime.now().toUtc(),
+                          pattern: 'EEEE, MMMM d, y',
+                        ),
+                        style: const TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 20),
 

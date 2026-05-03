@@ -118,14 +118,30 @@ class SessionProvider extends ChangeNotifier {
     return '';
   }
 
-  /// Set of student IDs that already have an attendance record.
-  Set<String> get presentStudentIds =>
-      _attendanceRecords.map((r) => r.studentId).toSet();
+  /// Students with `is_present == true`.
+  Set<String> get presentStudentIds => _attendanceRecords
+      .where((r) => r.isPresent)
+      .map((r) => r.studentId)
+      .toSet();
 
-  /// Students from the roster who are NOT yet marked present.
+  /// Students marked on excused leave (`on_leave` true, not present).
+  Set<String> get onLeaveStudentIds => _attendanceRecords
+      .where((r) => r.onLeave)
+      .map((r) => r.studentId)
+      .toSet();
+
+  /// Roster students with no attendance row yet (not marked / unexcused absent).
   List<RosterStudentModel> get absentStudents => _rosterStudents
-      .where((s) => !presentStudentIds.contains(s.id))
+      .where((s) => !_attendanceRecords.any((r) => r.studentId == s.id))
       .toList();
+
+  /// Latest attendance row for [studentId], if any.
+  AttendanceRecordModel? recordForStudent(String studentId) {
+    for (final r in _attendanceRecords) {
+      if (r.studentId == studentId) return r;
+    }
+    return null;
+  }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   void _setLoading(bool v) {
@@ -428,7 +444,33 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
-  // ── 7. Remove attendance (toggle absent) ──────────────────────────────────
+  // ── 7. Mark excused leave (disabled when student already present — API 400).
+  Future<bool> markStudentOnLeave(String studentId, String leaveReason) async {
+    if (_currentSession == null) return false;
+    final trimmed = leaveReason.trim();
+    if (trimmed.length < 3) {
+      _setError('Leave reason must be at least 3 characters.');
+      return false;
+    }
+    _pendingMarkIds.add(studentId);
+    notifyListeners();
+    try {
+      await _api.markAttendanceLeave(_currentSession!.id, studentId, trimmed);
+      await loadAttendance();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Could not mark leave.');
+      return false;
+    } finally {
+      _pendingMarkIds.remove(studentId);
+      notifyListeners();
+    }
+  }
+
+  // ── 8. Remove attendance (toggle absent) ──────────────────────────────────
   Future<bool> markAbsent(String studentId) async {
     if (_currentSession == null) return false;
     _pendingMarkIds.add(studentId);
@@ -452,7 +494,7 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
-  // ── 8. End / stop session ─────────────────────────────────────────────────
+  // ── 9. End / stop session ─────────────────────────────────────────────────
   /// Calls the stop endpoint. Response includes [SessionModel.endTime] set to
   /// the real stop instant (UTC). Returns the stopped session (is_active=false).
   Future<SessionModel?> endSession() async {
@@ -476,12 +518,26 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
-  // ── 9. Load attendance by session ID (for Logs screen re-entry) ───────────
+  // ── 10. Load attendance by session ID (for Logs screen re-entry) ───────────
   /// If the session stored in [_currentSession] already matches [sessionId],
   /// attendance may already be loaded. Otherwise fetches fresh data.
   Future<void> ensureAttendanceLoaded(String sessionId) async {
     try {
       _attendanceRecords = await _api.getSessionAttendance(sessionId);
+      // Align in-memory session so logs (e.g. from dashboard) can mark leave
+      // and loadAttendance() targets the same session id.
+      SessionModel? match;
+      for (final s in _activeSessions) {
+        if (s.id == sessionId) {
+          match = s;
+          break;
+        }
+      }
+      match ??= _currentSession?.id == sessionId ? _currentSession : null;
+      if (match != null) {
+        _currentSession = match;
+        _selectedCourseId = match.courseId;
+      }
       notifyListeners();
     } catch (e) {
       _setError('Failed to load attendance logs.');

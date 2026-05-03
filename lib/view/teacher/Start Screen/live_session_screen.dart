@@ -31,22 +31,25 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
   @override
   void initState() {
     super.initState();
+    final provider = context.read<SessionProvider>();
+    _sessionStart =
+        provider.currentSession?.elapsedBaselineUtc ?? DateTime.now();
     _updateClock();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) _updateClock();
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = context.read<SessionProvider>();
+      final p = context.read<SessionProvider>();
       // Load roster + first attendance snapshot in parallel.
-      await Future.wait([provider.loadRoster(), provider.loadAttendance()]);
+      await Future.wait([p.loadRoster(), p.loadAttendance()]);
       // Start polling every 10 s.
-      provider.startPolling();
-      // Record start time for elapsed display.
-      if (provider.currentSession?.startDateTime != null) {
-        _sessionStart = provider.currentSession!.startDateTime;
-      } else {
-        _sessionStart = DateTime.now();
+      p.startPolling();
+      // Sync baseline if session object was refreshed (e.g. created_at now present).
+      final s = p.currentSession;
+      final baseline = s?.elapsedBaselineUtc;
+      if (baseline != null) {
+        setState(() => _sessionStart = baseline);
       }
     });
   }
@@ -66,7 +69,9 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     final mm = now.minute.toString().padLeft(2, '0');
     final ss = now.second.toString().padLeft(2, '0');
     if (_sessionStart != null) {
-      _elapsed = now.difference(_sessionStart!);
+      var diff = now.difference(_sessionStart!);
+      if (diff.isNegative) diff = Duration.zero;
+      _elapsed = diff;
     }
     setState(() {
       _currentTime = '$h:$mm:$ss $amPm';
@@ -74,8 +79,9 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
   }
 
   String _fmt(Duration d) {
+    var x = d.isNegative ? Duration.zero : d;
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(d.inHours)}:${two(d.inMinutes.remainder(60))}:${two(d.inSeconds.remainder(60))}';
+    return '${two(x.inHours)}:${two(x.inMinutes.remainder(60))}:${two(x.inSeconds.remainder(60))}';
   }
 
   Future<void> _handleEndSession() async {
@@ -271,32 +277,6 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                     style: TextStyle(
                       color: _isSessionRunning ? _orangeTheme : Colors.grey,
                       fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // ── View logs ──────────────────────────────────────────────
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AttendanceLogsScreen(
-                              sessionId: widget.sessionId),
-                        ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: _primaryBlue, width: 1.5),
-                      minimumSize: const Size(double.infinity, 54),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text(
-                      'View Logs',
-                      style: TextStyle(
-                        color: _primaryBlue,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
                   ),
                 ],

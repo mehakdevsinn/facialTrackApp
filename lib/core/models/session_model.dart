@@ -1,3 +1,38 @@
+bool _teacherSessionApiStringHasTimeZone(String s) {
+  final t = s.trim();
+  if (t.endsWith('Z')) return true;
+  return RegExp(r'[+-]\d{2}:\d{2}$').hasMatch(t) ||
+      RegExp(r'[+-]\d{4}$').hasMatch(t);
+}
+
+/// Parses session API datetimes to a UTC instant.
+///
+/// Strings with `Z` or `±hh:mm` use normal [DateTime.parse] semantics.
+///
+/// **Naive** ISO strings (no zone) are treated as **UTC** wall time. The app
+/// sends UTC via `DateTime.toUtc().toIso8601String()`; some backends return the
+/// same instant **without** `Z`. Parsing those as local (Dart default) skews
+/// elapsed duration by the device offset (e.g. ~5h for Pakistan vs 08:xx UTC).
+DateTime? parseTeacherSessionInstantToUtc(String? raw) {
+  if (raw == null) return null;
+  final s = raw.trim().replaceFirst(' ', 'T');
+  if (s.isEmpty) return null;
+  try {
+    if (_teacherSessionApiStringHasTimeZone(s)) {
+      return DateTime.parse(s).toUtc();
+    }
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
+      return DateTime.parse('${s}T00:00:00Z').toUtc();
+    }
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}T').hasMatch(s)) {
+      return DateTime.parse('${s}Z').toUtc();
+    }
+    return DateTime.parse(s).toUtc();
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Represents a teaching session returned by:
 ///   POST /teachers/sessions             (create)
 ///   POST /teachers/sessions/{id}/stop   (stop – returns same shape, is_active=false)
@@ -46,12 +81,13 @@ class SessionModel {
     );
   }
 
-  /// Parses [startTime] to a [DateTime] (returns null if unparseable).
-  DateTime? get startDateTime {
-    try {
-      return DateTime.parse(startTime);
-    } catch (_) {
-      return null;
-    }
-  }
+  /// [startTime] as a UTC instant (see [parseTeacherSessionInstantToUtc]).
+  DateTime? get startDateTime => parseTeacherSessionInstantToUtc(startTime);
+
+  /// [created_at] as a UTC instant when the backend sends it.
+  DateTime? get createdDateTime => parseTeacherSessionInstantToUtc(createdAt);
+
+  /// Prefer [createdDateTime] for elapsed live time, else [startDateTime].
+  DateTime? get elapsedBaselineUtc =>
+      createdDateTime ?? startDateTime;
 }

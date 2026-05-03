@@ -1,5 +1,6 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
+import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +55,27 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                   : null,
               title: const Text('Monthly Report'),
               centerTitle: true,
+              actions: [
+                if (data != null)
+                  IconButton(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    tooltip: 'Export PDF',
+                    onPressed: () async {
+                      try {
+                        await TeacherReportPdfService.layoutMonthlyReportPdf(
+                          data: data,
+                          attendanceThresholdPercent: report.attendanceThreshold,
+                          studentRows: students,
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('PDF export failed: $e')),
+                        );
+                      }
+                    },
+                  ),
+              ],
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),

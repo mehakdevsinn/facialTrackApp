@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:facialtrackapp/view/teacher/Attendence%20Report/individual_student_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,8 @@ class AttendanceReportScreen extends StatelessWidget {
           );
         }
 
+        final rangeLabel = _rangeText();
+
         return SafeArea(
           child: Scaffold(
             backgroundColor: Colors.grey[100],
@@ -38,6 +41,25 @@ class AttendanceReportScreen extends StatelessWidget {
               backgroundColor: ColorPallet.primaryBlue,
               title: const Text('Analytics Report'),
               centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  tooltip: 'Export PDF',
+                  onPressed: () async {
+                    try {
+                      await TeacherReportPdfService.layoutCourseReportPdf(
+                        data: data,
+                        dateRangeLabel: rangeLabel,
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('PDF export failed: $e')),
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
+import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -34,6 +35,20 @@ class DailyAttendanceReportScreen extends StatelessWidget {
             : DateFormat('EEEE, dd MMMM yyyy')
                 .format(reportUtcToPktWallForDisplay(u));
 
+        Future<void> exportPdf() async {
+          try {
+            await TeacherReportPdfService.layoutDailyRollCallPdf(
+              data: data,
+              titleDateLine: titleDate,
+            );
+          } catch (e) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('PDF export failed: $e')),
+            );
+          }
+        }
+
         return SafeArea(
           child: Scaffold(
             backgroundColor: const Color(0xFFF8F9FE),
@@ -49,6 +64,13 @@ class DailyAttendanceReportScreen extends StatelessWidget {
               centerTitle: true,
               backgroundColor: ColorPallet.primaryBlue,
               foregroundColor: Colors.white,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  tooltip: 'Export PDF',
+                  onPressed: exportPdf,
+                ),
+              ],
             ),
             body: Column(
               children: [

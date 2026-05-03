@@ -6,6 +6,8 @@ class CourseReportStudent {
   final int totalSessions;
   final double attendancePercentage;
   final int lateCount;
+  /// Present when API includes per-student verification (e.g. dominant method).
+  final String? verificationMethod;
 
   const CourseReportStudent({
     required this.studentId,
@@ -15,6 +17,7 @@ class CourseReportStudent {
     required this.totalSessions,
     required this.attendancePercentage,
     required this.lateCount,
+    this.verificationMethod,
   });
 
   int get sessionsMissed => totalSessions - sessionsAttended;

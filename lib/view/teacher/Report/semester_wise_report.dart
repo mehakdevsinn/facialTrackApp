@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -48,6 +49,26 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
               centerTitle: true,
               backgroundColor: ColorPallet.primaryBlue,
               foregroundColor: Colors.white,
+              actions: [
+                if (data != null)
+                  IconButton(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    tooltip: 'Export PDF',
+                    onPressed: () async {
+                      try {
+                        await TeacherReportPdfService.layoutCourseReportPdf(
+                          data: data,
+                          highlightStudent: selectedStudent,
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('PDF export failed: $e')),
+                        );
+                      }
+                    },
+                  ),
+              ],
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),

@@ -1,7 +1,10 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class DayByDayReportScreen extends StatelessWidget {
   final CourseReportStudent student;
@@ -22,6 +25,25 @@ class DayByDayReportScreen extends StatelessWidget {
     final absent = student.totalSessions - student.sessionsAttended;
     final range = '${startDate != null ? DateFormat('dd MMM').format(startDate!) : '-'}'
         ' - ${endDate != null ? DateFormat('dd MMM').format(endDate!) : '-'}';
+    final courseName =
+        context.watch<TeacherReportProvider>().courseReport?.courseName;
+
+    Future<void> exportPdf() async {
+      try {
+        await TeacherReportPdfService.layoutStudentAttendanceSummaryPdf(
+          student: student,
+          courseTotalSessions: courseTotalSessions,
+          rangeLabel: range,
+          courseName: courseName,
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF export failed: $e')),
+        );
+      }
+    }
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF3F7FF),
@@ -30,6 +52,13 @@ class DayByDayReportScreen extends StatelessWidget {
           backgroundColor: ColorPallet.primaryBlue,
           foregroundColor: Colors.white,
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              tooltip: 'Export PDF',
+              onPressed: exportPdf,
+            ),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),

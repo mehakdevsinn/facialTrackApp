@@ -1,6 +1,7 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/teacher_report_provider.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/services/teacher_report_pdf_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,27 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
       if (!mounted) return;
       context.read<TeacherReportProvider>().loadCourses();
     });
+  }
+
+  String? _semesterPdfLabel(TeacherReportProvider report) {
+    final n = report.selectedCourse?.semester?.semesterNumber;
+    if (n == null) return null;
+    return 'Semester $n';
+  }
+
+  String _coursePeriodLabel(CourseReportResponse data) {
+    final dr = data.dateRange;
+    if (dr == null) return 'Full semester (server scope)';
+    final a = dr.start == null || dr.start!.isEmpty
+        ? ''
+        : formatPktDateLineFromApiString(dr.start);
+    final b = dr.end == null || dr.end!.isEmpty
+        ? ''
+        : formatPktDateLineFromApiString(dr.end);
+    if (a.isEmpty && b.isEmpty) return 'Full semester (server scope)';
+    if (a.isEmpty) return b;
+    if (b.isEmpty) return a;
+    return '$a - $b';
   }
 
   @override
@@ -50,15 +72,37 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
               backgroundColor: ColorPallet.primaryBlue,
               foregroundColor: Colors.white,
               actions: [
-                if (data != null)
+                if (data != null) ...[
                   IconButton(
-                    icon: const Icon(Icons.picture_as_pdf),
-                    tooltip: 'Export PDF',
+                    icon: const Icon(Icons.warning_amber_outlined),
+                    tooltip: 'Export low attendance list (PDF)',
                     onPressed: () async {
+                      final low = data.students
+                          .where(
+                            (s) =>
+                                s.attendancePercentage <
+                                report.attendanceThreshold,
+                          )
+                          .toList();
+                      if (low.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'No students below the attendance threshold.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
                       try {
-                        await TeacherReportPdfService.layoutCourseReportPdf(
-                          data: data,
-                          highlightStudent: selectedStudent,
+                        await TeacherReportPdfService
+                            .layoutLowAttendanceStudentsPdf(
+                          reportTitle: 'Low attendance — semester / course',
+                          courseName: data.courseName,
+                          semesterLabel: _semesterPdfLabel(report),
+                          periodOrRangeDescription: _coursePeriodLabel(data),
+                          thresholdPercent: report.attendanceThreshold,
+                          lowStudents: low,
                         );
                       } catch (e) {
                         if (!context.mounted) return;
@@ -68,6 +112,25 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
                       }
                     },
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    tooltip: 'Export PDF',
+                    onPressed: () async {
+                      try {
+                        await TeacherReportPdfService.layoutCourseReportPdf(
+                          data: data,
+                          highlightStudent: selectedStudent,
+                          semesterLabel: _semesterPdfLabel(report),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('PDF export failed: $e')),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
             body: SingleChildScrollView(
@@ -197,6 +260,7 @@ class _SemesterWiseReportScreenState extends State<SemesterWiseReportScreen> {
       totalSessions: total,
       attendancePercentage: percent,
       lateCount: 0,
+      verificationMethod: null,
     );
   }
 

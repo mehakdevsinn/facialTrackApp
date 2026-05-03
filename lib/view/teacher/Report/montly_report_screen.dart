@@ -27,6 +27,12 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
     });
   }
 
+  String? _semesterPdfLabel(TeacherReportProvider report) {
+    final n = report.selectedCourse?.semester?.semesterNumber;
+    if (n == null) return null;
+    return 'Semester $n';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<TeacherReportProvider>(
@@ -56,16 +62,39 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
               title: const Text('Monthly Report'),
               centerTitle: true,
               actions: [
-                if (data != null)
+                if (data != null) ...[
                   IconButton(
-                    icon: const Icon(Icons.picture_as_pdf),
-                    tooltip: 'Export PDF',
+                    icon: const Icon(Icons.warning_amber_outlined),
+                    tooltip: 'Export low attendance list (PDF)',
                     onPressed: () async {
+                      final low = data.students
+                          .where(
+                            (s) =>
+                                s.attendancePercentage <
+                                report.attendanceThreshold,
+                          )
+                          .toList();
+                      if (low.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'No students below the attendance threshold.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
                       try {
-                        await TeacherReportPdfService.layoutMonthlyReportPdf(
-                          data: data,
-                          attendanceThresholdPercent: report.attendanceThreshold,
-                          studentRows: students,
+                        final monthPeriod = DateFormat('MMMM yyyy')
+                            .format(DateTime(data.year, data.month));
+                        await TeacherReportPdfService
+                            .layoutLowAttendanceStudentsPdf(
+                          reportTitle: 'Low attendance — monthly',
+                          courseName: data.courseName,
+                          semesterLabel: _semesterPdfLabel(report),
+                          periodOrRangeDescription: monthPeriod,
+                          thresholdPercent: report.attendanceThreshold,
+                          lowStudents: low,
                         );
                       } catch (e) {
                         if (!context.mounted) return;
@@ -75,6 +104,26 @@ class _MonthlyAttendanceReportState extends State<MonthlyAttendanceReport> {
                       }
                     },
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    tooltip: 'Export PDF',
+                    onPressed: () async {
+                      try {
+                        await TeacherReportPdfService.layoutMonthlyReportPdf(
+                          data: data,
+                          attendanceThresholdPercent: report.attendanceThreshold,
+                          studentRows: students,
+                          semesterLabel: _semesterPdfLabel(report),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('PDF export failed: $e')),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
             body: SingleChildScrollView(

@@ -2,6 +2,9 @@ import 'package:facialtrackapp/constants/color_pallet.dart';
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
+import 'package:facialtrackapp/core/models/session_model.dart';
+import 'package:facialtrackapp/core/models/teacher_course_model.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
 import 'package:facialtrackapp/utils/widgets/export_pdf.dart';
 import 'package:flutter/material.dart';
@@ -169,7 +172,13 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
 
                 // ── Bottom actions ───────────────────────────────────────────
                 _buildBottomActions(
-                    context, displayDate, rawDate, mergedStudents),
+                  context,
+                  displayDate,
+                  rawDate,
+                  mergedStudents,
+                  session,
+                  course,
+                ),
               ],
             ),
           ),
@@ -336,17 +345,43 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
     String displayDate,
     String rawDate,
     List<_StudentRow> rows,
+    SessionModel? session,
+    TeacherCourseModel? course,
   ) {
-    // Convert to the legacy Map format expected by exportToPDF.
-    final legacyList = rows
-        .map((r) => {
-              'name': r.name,
-              'status': r.isPresent ? 'Present' : 'Absent',
-              'time': r.markedAt != null
-                  ? _formatMarkedAt(r.markedAt!)
-                  : '--',
-            })
+    final pdfRows = rows
+        .map(
+          (r) => {
+            'name': r.name,
+            'status': r.isPresent ? 'Present' : 'Absent',
+            'inTime':
+                r.markedAt != null ? _formatMarkedAt(r.markedAt!) : '-',
+            'method': verificationMethodLabel(r.method) ?? r.method ?? '-',
+          },
+        )
         .toList();
+
+    Future<void> exportLogs() async {
+      try {
+        await exportSessionAttendanceLogsPdf(
+          dateDisplay: displayDate,
+          semesterNumber: course?.semester?.semesterNumber,
+          subjectName: course?.name ?? '—',
+          sessionStartPkt: session != null
+              ? formatTeacherSessionTime12hPkt(session.startDateTime)
+              : '',
+          sessionEndPkt: session != null
+              ? formatTeacherSessionTime12hPkt(session.endDateTime)
+              : '',
+          rows: pdfRows,
+          fileNameDate: rawDate,
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF export failed: $e')),
+        );
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -378,7 +413,7 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
           ),
           const SizedBox(height: 5),
           OutlinedButton(
-            onPressed: () => exportToPDF(displayDate, rawDate, legacyList),
+            onPressed: exportLogs,
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Colors.green),
               shape: RoundedRectangleBorder(

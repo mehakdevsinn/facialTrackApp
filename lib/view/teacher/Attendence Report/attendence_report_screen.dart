@@ -32,6 +32,9 @@ class AttendanceReportScreen extends StatelessWidget {
         }
 
         final rangeLabel = _rangeText();
+        final sem = report.selectedCourse?.semester;
+        final semesterPdfLabel =
+            sem == null ? null : 'Semester ${sem.semesterNumber}';
 
         return SafeArea(
           child: Scaffold(
@@ -50,6 +53,7 @@ class AttendanceReportScreen extends StatelessWidget {
                       await TeacherReportPdfService.layoutCourseReportPdf(
                         data: data,
                         dateRangeLabel: rangeLabel,
+                        semesterLabel: semesterPdfLabel,
                       );
                     } catch (e) {
                       if (!context.mounted) return;

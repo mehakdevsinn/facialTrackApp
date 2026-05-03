@@ -23,13 +23,28 @@ class TeacherReportPdfService {
   static pw.TextStyle _bodyStyle({double size = 10}) =>
       pw.TextStyle(font: _font, fontSize: size);
 
+  static String _methodFromRaw(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+    return _ascii(verificationMethodLabel(raw) ?? raw);
+  }
+
+  static String _methodCell(CourseReportStudent s) =>
+      _methodFromRaw(s.verificationMethod);
+
+  static String? _semesterSubtitle(String? semesterLabel) {
+    if (semesterLabel == null || semesterLabel.isEmpty) return null;
+    return 'Semester: ${_ascii(semesterLabel)}';
+  }
+
   static Future<void> layoutMonthlyReportPdf({
     required MonthlyReportResponse data,
     required int attendanceThresholdPercent,
     required List<CourseReportStudent> studentRows,
+    String? semesterLabel,
   }) async {
     final monthLabel =
         DateFormat('MMMM yyyy').format(DateTime(data.year, data.month));
+    final semSub = _semesterSubtitle(semesterLabel);
     final pdf = pw.Document();
     pdf.addPage(
       pw.MultiPage(
@@ -39,6 +54,7 @@ class TeacherReportPdfService {
           pw.Text('Monthly Attendance Report', style: _titleStyle()),
           pw.SizedBox(height: 8),
           pw.Text('Course: ${_ascii(data.courseName)}', style: _bodyStyle()),
+          if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           pw.Text('Period: $monthLabel', style: _bodyStyle()),
           pw.Text(
             'Low-attendance criterion: $attendanceThresholdPercent%',
@@ -94,7 +110,7 @@ class TeacherReportPdfService {
               'Attended',
               'Total',
               'Missed',
-              'Late',
+              'Method',
               'Att %',
             ],
             data: studentRows
@@ -105,7 +121,7 @@ class TeacherReportPdfService {
                     '${s.sessionsAttended}',
                     '${s.totalSessions}',
                     '${s.sessionsMissed}',
-                    '${s.lateCount}',
+                    _methodCell(s),
                     '${s.attendancePercentage.toStringAsFixed(1)}%',
                   ],
                 )
@@ -127,10 +143,83 @@ class TeacherReportPdfService {
     );
   }
 
+  static Future<void> layoutLowAttendanceStudentsPdf({
+    required String reportTitle,
+    required String courseName,
+    String? semesterLabel,
+    required String periodOrRangeDescription,
+    required int thresholdPercent,
+    required List<CourseReportStudent> lowStudents,
+  }) async {
+    final pdf = pw.Document();
+    final semSub = _semesterSubtitle(semesterLabel);
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (ctx) => [
+          pw.Text(_ascii(reportTitle), style: _titleStyle()),
+          pw.SizedBox(height: 8),
+          pw.Text('Course: ${_ascii(courseName)}', style: _bodyStyle()),
+          if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
+          pw.Text(
+            'Period: ${_ascii(periodOrRangeDescription)}',
+            style: _bodyStyle(),
+          ),
+          pw.Text(
+            'Criterion: attendance strictly below $thresholdPercent%',
+            style: _bodyStyle(size: 9),
+          ),
+          pw.Text('Students below threshold: ${lowStudents.length}',
+              style: _bodyStyle(size: 9)),
+          pw.Divider(),
+          pw.SizedBox(height: 8),
+          if (lowStudents.isEmpty)
+            pw.Text('No students match this criterion.', style: _bodyStyle())
+          else
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Name',
+                'Roll',
+                'Att %',
+                'Present',
+                'Total',
+                'Missed',
+              ],
+              data: lowStudents
+                  .map(
+                    (s) => [
+                      _ascii(s.studentName),
+                      _ascii(s.rollNumber),
+                      '${s.attendancePercentage.toStringAsFixed(1)}%',
+                      '${s.sessionsAttended}',
+                      '${s.totalSessions}',
+                      '${s.sessionsMissed}',
+                    ],
+                  )
+                  .toList(),
+              headerStyle: pw.TextStyle(
+                font: _font,
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 9,
+              ),
+              cellStyle: _bodyStyle(size: 8),
+            ),
+        ],
+      ),
+    );
+    final safeName = _ascii(courseName).replaceAll(RegExp(r'\s+'), '_');
+    await Printing.layoutPdf(
+      onLayout: (_) async => pdf.save(),
+      name: 'LowAttendance_$safeName.pdf',
+    );
+  }
+
   static Future<void> layoutCourseReportPdf({
     required CourseReportResponse data,
     String? dateRangeLabel,
     CourseReportStudent? highlightStudent,
+    String? semesterLabel,
   }) async {
     final pdf = pw.Document();
     final range = dateRangeLabel ?? _courseDateRangeLine(data.dateRange);
@@ -139,6 +228,7 @@ class TeacherReportPdfService {
     final totalSum =
         data.students.fold<int>(0, (a, s) => a + s.totalSessions);
     final absentSum = totalSum - presentSum;
+    final semSub = _semesterSubtitle(semesterLabel);
 
     pdf.addPage(
       pw.MultiPage(
@@ -153,6 +243,7 @@ class TeacherReportPdfService {
           ),
           pw.SizedBox(height: 8),
           pw.Text('Course: ${_ascii(data.courseName)}', style: _bodyStyle()),
+          if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           if (range.isNotEmpty)
             pw.Text('Date range: $range', style: _bodyStyle()),
           pw.Text(
@@ -184,7 +275,7 @@ class TeacherReportPdfService {
               'Present',
               'Total',
               'Absent',
-              'Late',
+              'Method',
               'Att %',
             ],
             data: data.students
@@ -195,7 +286,7 @@ class TeacherReportPdfService {
                     '${s.sessionsAttended}',
                     '${s.totalSessions}',
                     '${s.sessionsMissed}',
-                    '${s.lateCount}',
+                    _methodCell(s),
                     '${s.attendancePercentage.toStringAsFixed(1)}%',
                   ],
                 )
@@ -234,7 +325,9 @@ class TeacherReportPdfService {
   static Future<void> layoutDailyRollCallPdf({
     required DailyReportResponse data,
     required String titleDateLine,
+    String? semesterLabel,
   }) async {
+    final semSub = _semesterSubtitle(semesterLabel);
     final pdf = pw.Document();
     pdf.addPage(
       pw.MultiPage(
@@ -245,6 +338,7 @@ class TeacherReportPdfService {
           pw.SizedBox(height: 8),
           pw.Text('Date: ${_ascii(titleDateLine)}', style: _bodyStyle()),
           pw.Text('Course: ${_ascii(data.courseName)}', style: _bodyStyle()),
+          if (semSub != null) pw.Text(semSub, style: _bodyStyle(size: 9)),
           pw.Text(
             'Enrolled: ${data.totalEnrolled} | Present: ${data.presentCount} | '
             'Absent: ${data.absentCount} | Rate: '
@@ -272,7 +366,7 @@ class TeacherReportPdfService {
                         : _ascii(
                             formatPktTimeLineFromApiString(s.markedAt),
                           ),
-                    _ascii(s.verificationMethod ?? '-'),
+                    _methodFromRaw(s.verificationMethod),
                   ],
                 )
                 .toList(),

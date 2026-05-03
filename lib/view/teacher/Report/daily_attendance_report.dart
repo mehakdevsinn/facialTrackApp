@@ -35,11 +35,16 @@ class DailyAttendanceReportScreen extends StatelessWidget {
             : DateFormat('EEEE, dd MMMM yyyy')
                 .format(reportUtcToPktWallForDisplay(u));
 
+        final sem = report.selectedCourse?.semester;
+        final semesterPdfLabel =
+            sem == null ? null : 'Semester ${sem.semesterNumber}';
+
         Future<void> exportPdf() async {
           try {
             await TeacherReportPdfService.layoutDailyRollCallPdf(
               data: data,
               titleDateLine: titleDate,
+              semesterLabel: semesterPdfLabel,
             );
           } catch (e) {
             if (!context.mounted) return;
@@ -99,6 +104,16 @@ class DailyAttendanceReportScreen extends StatelessWidget {
                         style:
                             const TextStyle(color: Colors.white70, fontSize: 13),
                       ),
+                      if (sem != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Semester ${sem.semesterNumber}',
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 18),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

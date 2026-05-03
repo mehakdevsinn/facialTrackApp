@@ -42,6 +42,8 @@ class CourseReportStudent {
       totalSessions: parseInt(json['total_sessions']),
       attendancePercentage: parseDouble(json['attendance_percentage']),
       lateCount: parseInt(json['late_count']),
+      verificationMethod: json['verification_method']?.toString() ??
+          json['dominant_verification_method']?.toString(),
     );
   }
 }

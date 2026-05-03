@@ -1,3 +1,6 @@
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -30,99 +33,128 @@ class TodaySessionsScreen extends StatefulWidget {
 
 class _TodaySessionsScreenState extends State<TodaySessionsScreen> {
   late DateTime _selectedDate;
-  late List<SessionData> _sessions;
+  List<SessionData> _sessions = [];
+  bool _loading = true;
+  String? _error;
+
+  static const List<Color> _palette = [
+    Color(0xFF6366F1),
+    Color(0xFF8B5CF6),
+    Color(0xFF3B82F6),
+    Color(0xFF10B981),
+    Color(0xFF059669),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Default mock date as in the design or just today
     _selectedDate = DateTime.now();
     _loadSessionsForDate(_selectedDate);
   }
 
-  void _loadSessionsForDate(DateTime date) {
-    bool isToday = date.day == DateTime.now().day &&
-        date.month == DateTime.now().month &&
-        date.year == DateTime.now().year;
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
-    if (isToday) {
-      _sessions = [
-        SessionData(
-            iconData: "PH",
-            iconBgColor: const Color(0xFF059669),
-            title: "Physics",
-            time: "09:00 AM – 09:45 AM",
-            status: "Present",
-            attendanceText: "Attendance marked at 09:10 AM"),
-        SessionData(
-            iconData: "MA",
-            iconBgColor: const Color(0xFF2304AA),
-            title: "Mathematics",
-            time: "10:00 AM – 10:45 AM",
-            status: "Present",
-            attendanceText: "Attendance marked at 10:05 AM"),
-        SessionData(
-            iconData: "SC",
-            iconBgColor: const Color(0xFF8B5CF6),
-            title: "Science",
-            time: "11:00 AM – 11:45 AM",
-            status: "Upcoming",
-            upcomingNotice: "Starts in 15 minutes — be ready"),
-        SessionData(
-            iconData: "LB",
-            iconBgColor: const Color(0xFF9CA3AF),
-            title: "Lunch Break",
-            time: "12:00 PM – 12:45 PM",
-            status: "Break"),
-        SessionData(
-            iconData: "EN",
-            iconBgColor: const Color(0xFFEA580C),
-            title: "English",
-            time: "01:00 PM – 01:45 PM",
-            status: "Upcoming"),
-        SessionData(
-            iconData: "CS",
-            iconBgColor: const Color(0xFF6366F1),
-            title: "Computer Science",
-            time: "02:00 PM – 02:45 PM",
-            status: "Upcoming"),
-        SessionData(
-            iconData: "UR",
-            iconBgColor: const Color(0xFF0D9488),
-            title: "Urdu",
-            time: "03:00 PM – 03:45 PM",
-            status: "Upcoming"),
-      ];
-    } else {
-      bool isPast = date.isBefore(DateTime.now());
-      _sessions = [
-        SessionData(
-            iconData: "EN",
-            iconBgColor: const Color(0xFFEA580C),
-            title: "English",
-            time: "09:00 AM – 09:45 AM",
-            status: isPast ? "Present" : "Upcoming",
-            attendanceText: isPast ? "Attendance marked at 09:05 AM" : null),
-        SessionData(
-            iconData: "CH",
-            iconBgColor: const Color(0xFFEAB308),
-            title: "Chemistry",
-            time: "10:00 AM – 10:45 AM",
-            status: isPast ? "Absent" : "Upcoming"),
-        SessionData(
-            iconData: "LB",
-            iconBgColor: const Color(0xFF9CA3AF),
-            title: "Lunch Break",
-            time: "11:00 AM – 11:45 AM",
-            status: "Break"),
-        SessionData(
-            iconData: "PH",
-            iconBgColor: const Color(0xFF059669),
-            title: "Physics",
-            time: "12:00 PM – 12:45 PM",
-            status: isPast ? "Present" : "Upcoming",
-            attendanceText: isPast ? "Attendance marked at 12:01 PM" : null),
-      ];
+  bool _sameCalendarDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  String _courseCodeAbbrev(String? code, String name) {
+    final c = (code ?? '').trim();
+    if (c.length >= 2) return c.substring(0, 2).toUpperCase();
+    final n = name.trim();
+    if (n.length >= 2) return n.substring(0, 2).toUpperCase();
+    return '••';
+  }
+
+  String _statusFor(
+    StudentAttendanceSessionRecord r,
+    DateTime dayLocal,
+    DateTime now,
+  ) {
+    final dayStart = _dateOnly(dayLocal);
+    final todayStart = _dateOnly(now);
+    if (dayStart.isAfter(todayStart)) return 'Upcoming';
+    if (dayStart.isBefore(todayStart)) {
+      return r.isPresent ? 'Present' : 'Absent';
+    }
+    final start = r.sessionStartTimeUtc ?? r.sessionDateUtc;
+    if (start != null && start.isAfter(now.toUtc())) {
+      return 'Upcoming';
+    }
+    return r.isPresent ? 'Present' : 'Absent';
+  }
+
+  Future<void> _loadSessionsForDate(DateTime date) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final y = date.year;
+    final m = date.month;
+    final dateKey =
+        '$y-${m.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    try {
+      final res = await ApiManager.instance.getStudentAttendanceHistory(
+        year: y,
+        month: m,
+        date: dateKey,
+      );
+      final now = DateTime.now();
+      final sorted = List<StudentAttendanceSessionRecord>.from(res.records);
+      sorted.sort((a, b) {
+        final ta = a.sessionStartTimeUtc ??
+            a.sessionDateUtc ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final tb = b.sessionStartTimeUtc ??
+            b.sessionDateUtc ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        return ta.compareTo(tb);
+      });
+      final built = <SessionData>[];
+      for (var i = 0; i < sorted.length; i++) {
+        final r = sorted[i];
+        final title = r.courseName ?? r.courseCode ?? 'Session';
+        final st = _statusFor(r, date, now);
+        final start = r.sessionStartTimeUtc ?? r.sessionDateUtc;
+        final time = start != null
+            ? formatPktTime12h(start)
+            : '—';
+        String? att;
+        String? upcoming;
+        if (st == 'Present' && r.entryTimeUtc != null) {
+          att = 'Attendance marked at ${formatPktTime12h(r.entryTimeUtc!)}';
+        } else if (st == 'Upcoming' &&
+            _sameCalendarDay(date, now) &&
+            start != null) {
+          upcoming = 'Scheduled ${formatPktTime12h(start)}';
+        } else if (st == 'Absent') {
+          att = 'Marked absent for this session';
+        }
+        built.add(
+          SessionData(
+            iconData: _courseCodeAbbrev(r.courseCode, title),
+            iconBgColor: _palette[i % _palette.length],
+            title: title,
+            time: time,
+            status: st,
+            attendanceText: att,
+            upcomingNotice: upcoming,
+          ),
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _sessions = built;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _sessions = [];
+        _loading = false;
+      });
     }
   }
 
@@ -146,11 +178,16 @@ class _TodaySessionsScreenState extends State<TodaySessionsScreen> {
       },
     );
     if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _loadSessionsForDate(_selectedDate);
-      });
+      setState(() => _selectedDate = picked);
+      await _loadSessionsForDate(picked);
     }
+  }
+
+  bool get _isSelectedToday {
+    final n = DateTime.now();
+    return _selectedDate.year == n.year &&
+        _selectedDate.month == n.month &&
+        _selectedDate.day == n.day;
   }
 
   @override
@@ -181,8 +218,7 @@ class _TodaySessionsScreenState extends State<TodaySessionsScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      _selectedDate.day == DateTime.now().day &&
-                              _selectedDate.month == DateTime.now().month
+                      _isSelectedToday
                           ? "Today's Sessions"
                           : "Sessions",
                       style: const TextStyle(
@@ -212,7 +248,25 @@ class _TodaySessionsScreenState extends State<TodaySessionsScreen> {
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
                   ),
-                  child: SingleChildScrollView(
+                  child: _loading
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(48),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : _error != null
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            )
+                          : SingleChildScrollView(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

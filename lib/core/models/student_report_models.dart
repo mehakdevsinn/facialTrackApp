@@ -85,6 +85,8 @@ class StudentSubjectsResponse {
 
 class StudentAttendanceSessionRecord {
   final String sessionId;
+  /// Course UUID when API provides it (filters / grouping).
+  final String? courseId;
   final DateTime? sessionDateUtc;
   /// Scheduled session start (class window).
   final DateTime? sessionStartTimeUtc;
@@ -99,6 +101,7 @@ class StudentAttendanceSessionRecord {
 
   const StudentAttendanceSessionRecord({
     required this.sessionId,
+    this.courseId,
     this.sessionDateUtc,
     this.sessionStartTimeUtc,
     this.courseName,
@@ -113,6 +116,7 @@ class StudentAttendanceSessionRecord {
   factory StudentAttendanceSessionRecord.fromJson(Map<String, dynamic> json) {
     return StudentAttendanceSessionRecord(
       sessionId: json['session_id']?.toString() ?? '',
+      courseId: json['course_id']?.toString(),
       sessionDateUtc: parseReportToUtcInstant(json['session_date']?.toString()),
       sessionStartTimeUtc: parseReportToUtcInstant(
         json['session_start_time']?.toString(),

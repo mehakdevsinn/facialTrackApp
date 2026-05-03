@@ -147,6 +147,10 @@ class Endpoints {
   /// GET → semester timetable for logged-in student (JWT). Same body as admin timetable.
   static const String studentSchedule = '$_face/students/schedule/';
 
+  /// GET → global attendance threshold % (read-only for students).
+  static const String studentSettingsAttendanceCriteria =
+      '$_face/students/settings/attendance-criteria';
+
   /// POST → student attendance complaint to teacher (session_id + reason).
   static const String studentComplaints = '$_face/students/complaints';
 
@@ -262,10 +266,12 @@ class Endpoints {
   static const String studentReportsHistoryMonthBounds =
       '$_studentReports/history/month-bounds';
 
+  /// Optional [date]: `YYYY-MM-DD` calendar day; must fall within [year]/[month].
   static String studentReportsHistory({
     required int year,
     required int month,
     String? courseId,
+    String? date,
   }) {
     final params = <String, String>{
       'year': year.toString(),
@@ -273,6 +279,9 @@ class Endpoints {
     };
     if (courseId != null && courseId.isNotEmpty) {
       params['course_id'] = courseId;
+    }
+    if (date != null && date.isNotEmpty) {
+      params['date'] = date;
     }
     return Uri.parse('$_studentReports/history')
         .replace(queryParameters: params)

@@ -1,8 +1,15 @@
-import 'package:flutter/material.dart';
-// Note: Ensure this import path is correct for your project
+import 'package:facialtrackapp/controller/api/api_manager.dart';
+import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/utils/student_report_datetime.dart';
 import 'package:facialtrackapp/view/student/Dashboard/subject_sessions_history_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class SubjectAttendanceData {
+  final String? courseId;
+  final int reportYear;
+  final int reportMonth;
+  final List<StudentAttendanceSessionRecord> monthSessions;
   final String code;
   final Color color;
   final String title;
@@ -15,6 +22,10 @@ class SubjectAttendanceData {
   final bool isExpanded;
 
   SubjectAttendanceData({
+    this.courseId,
+    required this.reportYear,
+    required this.reportMonth,
+    this.monthSessions = const [],
     required this.code,
     required this.color,
     required this.title,
@@ -28,6 +39,114 @@ class SubjectAttendanceData {
   });
 }
 
+const List<Color> _subjectPalette = [
+  Color(0xFF2304AA),
+  Color(0xFF8B5CF6),
+  Color(0xFF0D9488),
+  Color(0xFFEA580C),
+  Color(0xFF6366F1),
+  Color(0xFF3B82F6),
+];
+
+String _courseCodeAbbrev(String? code, String name) {
+  final c = (code ?? '').trim();
+  if (c.length >= 2) return c.substring(0, 2).toUpperCase();
+  final n = name.trim();
+  if (n.length >= 2) return n.substring(0, 2).toUpperCase();
+  return '••';
+}
+
+String _groupKey(StudentAttendanceSessionRecord r) {
+  final id = r.courseId?.trim();
+  if (id != null && id.isNotEmpty) return 'id:$id';
+  final code = r.courseCode?.trim();
+  if (code != null && code.isNotEmpty) return 'code:$code';
+  final name = r.courseName?.trim();
+  if (name != null && name.isNotEmpty) return 'name:$name';
+  return 'unknown';
+}
+
+DateTime? _sessionSortInstant(StudentAttendanceSessionRecord r) =>
+    r.sessionStartTimeUtc ?? r.sessionDateUtc;
+
+String _sessionRowDateLabel(StudentAttendanceSessionRecord r) {
+  final t = _sessionSortInstant(r);
+  if (t == null) return '—';
+  final w = DateTime.fromMillisecondsSinceEpoch(
+    t.toUtc().millisecondsSinceEpoch + const Duration(hours: 5).inMilliseconds,
+    isUtc: true,
+  );
+  return DateFormat('MMM d, EEE').format(w);
+}
+
+String _sessionRowTimeLabel(StudentAttendanceSessionRecord r) {
+  final start = r.sessionStartTimeUtc ?? r.sessionDateUtc;
+  if (start == null) return '—';
+  return formatPktEntryExitRange(r.entryTimeUtc, r.exitTimeUtc);
+}
+
+List<SubjectAttendanceData> _aggregateMonthSubjects({
+  required List<StudentAttendanceSessionRecord> records,
+  required int year,
+  required int month,
+}) {
+  final map = <String, List<StudentAttendanceSessionRecord>>{};
+  for (final r in records) {
+    map.putIfAbsent(_groupKey(r), () => []).add(r);
+  }
+  var colorIndex = 0;
+  final out = <SubjectAttendanceData>[];
+  for (final entry in map.entries) {
+    final list = entry.value;
+    list.sort((a, b) {
+      final ta = _sessionSortInstant(a) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+      final tb = _sessionSortInstant(b) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+      return ta.compareTo(tb);
+    });
+    final first = list.first;
+    var present = 0;
+    var absent = 0;
+    for (final x in list) {
+      if (x.isPresent) {
+        present++;
+      } else {
+        absent++;
+      }
+    }
+    final total = present + absent;
+    final pct = total == 0 ? 0.0 : (present * 100.0 / total);
+    final title = first.courseName ?? first.courseCode ?? 'Course';
+    final codeStr = first.courseCode ?? '';
+    final teacher = (first.teacherName ?? '').trim();
+    final subtitle = [
+      if (teacher.isNotEmpty) teacher,
+      if (codeStr.isNotEmpty) codeStr,
+    ].join(' · ');
+    out.add(
+      SubjectAttendanceData(
+        courseId: first.courseId,
+        reportYear: year,
+        reportMonth: month,
+        monthSessions: List<StudentAttendanceSessionRecord>.from(list),
+        code: _courseCodeAbbrev(first.courseCode, title),
+        color: _subjectPalette[colorIndex % _subjectPalette.length],
+        title: title,
+        subtitle: subtitle,
+        percentage: pct,
+        totalClasses: total,
+        present: present,
+        absent: absent,
+        leave: 0,
+      ),
+    );
+    colorIndex++;
+  }
+  out.sort((a, b) => b.percentage.compareTo(a.percentage));
+  return out;
+}
+
 class MonthlyAttendanceScreen extends StatefulWidget {
   const MonthlyAttendanceScreen({super.key});
 
@@ -38,159 +157,118 @@ class MonthlyAttendanceScreen extends StatefulWidget {
 
 class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
   int _selectedFilterIndex = 0; // 0: All, 1: At Risk, 2: Good
-  String _selectedMonth = "Dec 2025";
 
   final List<String> _filters = ["All", "At Risk", "Good"];
-  final List<String> _months = ["Oct 2025", "Nov 2025", "Dec 2025", "Jan 2026"];
 
-  final Map<String, List<SubjectAttendanceData>> _mockDataByMonth = {
-    "Oct 2025": [
-      SubjectAttendanceData(
-        code: "CS",
-        color: const Color(0xFF2304AA),
-        title: "Computer Science",
-        subtitle: "Prof. Ahmed Khan - CS101",
-        percentage: 88,
-        totalClasses: 25,
-        present: 22,
-        absent: 3,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "MA",
-        color: const Color(0xFF8B5CF6),
-        title: "Mathematics",
-        subtitle: "Prof. Ayesha - MATH101",
-        percentage: 80,
-        totalClasses: 20,
-        present: 16,
-        absent: 4,
-        leave: 0,
-      ),
-    ],
-    "Nov 2025": [
-      SubjectAttendanceData(
-        code: "CS",
-        color: const Color(0xFF2304AA),
-        title: "Computer Science",
-        subtitle: "Prof. Ahmed Khan - CS101",
-        percentage: 75,
-        totalClasses: 20,
-        present: 15,
-        absent: 5,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "PH",
-        color: const Color(0xFF0D9488),
-        title: "Physics",
-        subtitle: "Dr. Ali - PHY101",
-        percentage: 90,
-        totalClasses: 20,
-        present: 18,
-        absent: 2,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "CH",
-        color: const Color(0xFFEA580C),
-        title: "Chemistry",
-        subtitle: "Dr. Usman - CHEM101",
-        percentage: 70,
-        totalClasses: 20,
-        present: 14,
-        absent: 6,
-        leave: 0,
-      ),
-    ],
-    "Dec 2025": [
-      SubjectAttendanceData(
-        code: "CS",
-        color: const Color(0xFF2304AA),
-        title: "Computer Science",
-        subtitle: "Prof. Ahmed Khan - CS101",
-        percentage: 92,
-        totalClasses: 25,
-        present: 23,
-        absent: 2,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "MA",
-        color: const Color(0xFF8B5CF6),
-        title: "Mathematics",
-        subtitle: "Prof. Ayesha - MATH101",
-        percentage: 89,
-        totalClasses: 20,
-        present: 18,
-        absent: 2,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "UR",
-        color: const Color(0xFF0D9488),
-        title: "Urdu",
-        subtitle: "Prof. Nadia - URD101",
-        percentage: 85,
-        totalClasses: 20,
-        present: 17,
-        absent: 3,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "CH",
-        color: const Color(0xFFEA580C),
-        title: "Chemistry",
-        subtitle: "Dr. Usman - CHEM101",
-        percentage: 78,
-        totalClasses: 18,
-        present: 14,
-        absent: 4,
-        leave: 0,
-      ),
-    ],
-    "Jan 2026": [
-      SubjectAttendanceData(
-        code: "CS",
-        color: const Color(0xFF2304AA),
-        title: "Computer Science",
-        subtitle: "Prof. Ahmed Khan - CS101",
-        percentage: 100,
-        totalClasses: 10,
-        present: 10,
-        absent: 0,
-        leave: 0,
-      ),
-      SubjectAttendanceData(
-        code: "MA",
-        color: const Color(0xFF8B5CF6),
-        title: "Mathematics",
-        subtitle: "Prof. Ayesha - MATH101",
-        percentage: 90,
-        totalClasses: 10,
-        present: 9,
-        absent: 1,
-        leave: 0,
-      ),
-    ],
-  };
+  List<({int year, int month, String label})> _monthOptions = [];
+  int _monthIndex = 0;
+  List<SubjectAttendanceData> _subjects = [];
+  bool _loading = true;
+  String? _error;
+  int _thresholdPercent = 75;
 
-  List<SubjectAttendanceData> get _subjects =>
-      _mockDataByMonth[_selectedMonth] ?? [];
-
-  // Helper to filter the list based on selection
   List<SubjectAttendanceData> get _filteredSubjects {
+    final t = _thresholdPercent.toDouble();
     if (_selectedFilterIndex == 1) {
-      // At Risk: Percentage < 80
-      return _subjects.where((s) => s.percentage < 80).toList();
-    } else if (_selectedFilterIndex == 2) {
-      // Good: Percentage >= 80
-      return _subjects.where((s) => s.percentage >= 80).toList();
+      return _subjects.where((s) => s.percentage < t).toList();
+    }
+    if (_selectedFilterIndex == 2) {
+      return _subjects.where((s) => s.percentage >= t).toList();
     }
     return _subjects;
   }
 
+  String get _selectedMonthLabel =>
+      _monthOptions.isEmpty ? '—' : _monthOptions[_monthIndex].label;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final criteria =
+          await ApiManager.instance.getStudentAttendanceCriteria();
+      final bounds = await ApiManager.instance.getStudentHistoryMonthBounds();
+      final months = monthRangeInclusive(
+        bounds.monthPickerStart,
+        bounds.monthPickerEnd,
+      );
+      if (!mounted) return;
+      setState(() {
+        _thresholdPercent = criteria.attendanceThresholdPercent;
+        _monthOptions = months;
+        if (months.isEmpty) {
+          _monthIndex = 0;
+        } else {
+          final now = currentYearMonthPkt();
+          var idx = -1;
+          for (var i = 0; i < months.length; i++) {
+            if (months[i].year == now.year && months[i].month == now.month) {
+              idx = i;
+              break;
+            }
+          }
+          _monthIndex = idx >= 0 ? idx : months.length - 1;
+        }
+      });
+      await _loadMonth();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _loadMonth() async {
+    if (_monthOptions.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _subjects = [];
+        _loading = false;
+      });
+      return;
+    }
+    final y = _monthOptions[_monthIndex].year;
+    final m = _monthOptions[_monthIndex].month;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await ApiManager.instance.getStudentAttendanceHistory(
+        year: y,
+        month: m,
+      );
+      if (!mounted) return;
+      setState(() {
+        _subjects = _aggregateMonthSubjects(
+          records: res.records,
+          year: y,
+          month: m,
+        );
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _subjects = [];
+        _loading = false;
+      });
+    }
+  }
+
   void _showMonthPicker() {
+    if (_monthOptions.isEmpty) return;
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -198,13 +276,16 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: ListView.builder(
             shrinkWrap: true,
-            itemCount: _months.length,
+            itemCount: _monthOptions.length,
             itemBuilder: (context, index) {
+              final opt = _monthOptions[index];
               return ListTile(
-                title: Text(_months[index], textAlign: TextAlign.center),
-                onTap: () {
-                  setState(() => _selectedMonth = _months[index]);
+                title: Text(opt.label, textAlign: TextAlign.center),
+                onTap: () async {
                   Navigator.pop(context);
+                  if (index == _monthIndex) return;
+                  setState(() => _monthIndex = index);
+                  await _loadMonth();
                 },
               );
             },
@@ -212,6 +293,21 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
         );
       },
     );
+  }
+
+  List<StudentAttendanceSessionRecord> _recentSessionsForCard(
+      SubjectAttendanceData subject) {
+    final copy = List<StudentAttendanceSessionRecord>.from(
+        subject.monthSessions);
+    copy.sort((a, b) {
+      final ta = _sessionSortInstant(a) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+      final tb = _sessionSortInstant(b) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+      return tb.compareTo(ta);
+    });
+    if (copy.length <= 3) return copy;
+    return copy.sublist(0, 3);
   }
 
   @override
@@ -269,7 +365,7 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _selectedMonth,
+                            _selectedMonthLabel,
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -306,10 +402,10 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(width: 8),
                           Icon(
-                              overallPercentage >= 80
+                              overallPercentage >= _thresholdPercent
                                   ? Icons.arrow_drop_up
                                   : Icons.arrow_drop_down,
-                              color: overallPercentage >= 80
+                              color: overallPercentage >= _thresholdPercent
                                   ? const Color(0xFF10B981)
                                   : const Color(0xFFEF4444),
                               size: 30),
@@ -348,65 +444,112 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24)),
                 ),
-                child: Column(
-                  children: [
-                    // Filters Row
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                      child: Row(
-                        children: List.generate(_filters.length, (index) {
-                          bool isSelected = _selectedFilterIndex == index;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedFilterIndex = index),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 10),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF2304AA)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: isSelected
-                                    ? null
-                                    : Border.all(color: Colors.grey.shade300),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _error!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: Color(0xFF6B7280)),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextButton(
+                                    onPressed: _bootstrap,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
                               ),
-                              child: Text(
-                                _filters[index],
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.grey.shade600,
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
+                            ),
+                          )
+                        : _monthOptions.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No attendance months available yet.',
+                                  textAlign: TextAlign.center,
                                 ),
+                              )
+                            : Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        20, 20, 20, 10),
+                                    child: Row(
+                                      children: List.generate(_filters.length,
+                                          (index) {
+                                        final isSelected =
+                                            _selectedFilterIndex == index;
+                                        return GestureDetector(
+                                          onTap: () => setState(
+                                              () => _selectedFilterIndex =
+                                                  index),
+                                          child: Container(
+                                            margin: const EdgeInsets.only(
+                                                right: 10),
+                                            padding: const EdgeInsets
+                                                .symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? const Color(0xFF2304AA)
+                                                  : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: isSelected
+                                                  ? null
+                                                  : Border.all(
+                                                      color: Colors
+                                                          .grey.shade300),
+                                            ),
+                                            child: Text(
+                                              _filters[index],
+                                              style: TextStyle(
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : Colors.grey.shade600,
+                                                fontSize: 13,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _filteredSubjects.isEmpty
+                                        ? Center(
+                                            child: Text(
+                                              _subjects.isEmpty
+                                                  ? 'No sessions recorded for this month.'
+                                                  : 'No subjects found for this filter.',
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          )
+                                        : ListView.builder(
+                                            padding: const EdgeInsets
+                                                .symmetric(
+                                                    horizontal: 20,
+                                                    vertical: 10),
+                                            itemCount:
+                                                _filteredSubjects.length,
+                                            itemBuilder: (context, index) {
+                                              return _buildSubjectCard(
+                                                  _filteredSubjects[index]);
+                                            },
+                                          ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-
-                    // List View
-                    Expanded(
-                      child: _filteredSubjects.isEmpty
-                          ? const Center(
-                              child: Text("No subjects found for this filter."))
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                              itemCount: _filteredSubjects.length,
-                              itemBuilder: (context, index) {
-                                return _buildSubjectCard(
-                                    _filteredSubjects[index]);
-                              },
-                            ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -436,7 +579,9 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
   }
 
   Widget _buildSubjectCard(SubjectAttendanceData subject) {
-    Color percentageColor = subject.percentage >= 80
+    final recent = _recentSessionsForCard(subject);
+    final threshold = _thresholdPercent.toDouble();
+    Color percentageColor = subject.percentage >= threshold
         ? const Color(0xFF10B981)
         : const Color(0xFFEA580C);
 
@@ -541,12 +686,28 @@ class _MonthlyAttendanceScreenState extends State<MonthlyAttendanceScreen> {
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF9CA3AF))),
                 const SizedBox(height: 12),
-                _buildRecentSessionRow("Dec 10, Wed", "09:00 - 10:30 AM",
-                    "Present", const Color(0xFF10B981)),
-                _buildRecentSessionRow("Dec 09, Tue", "09:00 - 10:30 AM",
-                    "Present", const Color(0xFF10B981)),
-                _buildRecentSessionRow("Dec 05, Fri", "09:00 - 10:30 AM",
-                    "Absent", const Color(0xFFEF4444)),
+                if (recent.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'No sessions this month.',
+                      style: TextStyle(
+                          fontSize: 12, color: Color(0xFF9CA3AF)),
+                    ),
+                  )
+                else
+                  ...recent.map((r) {
+                    final status = r.isPresent ? 'Present' : 'Absent';
+                    final statusColor = r.isPresent
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444);
+                    return _buildRecentSessionRow(
+                      _sessionRowDateLabel(r),
+                      _sessionRowTimeLabel(r),
+                      status,
+                      statusColor,
+                    );
+                  }),
                 const SizedBox(height: 8),
                 Center(
                   child: TextButton(

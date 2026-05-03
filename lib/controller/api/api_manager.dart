@@ -23,6 +23,7 @@ import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
 import 'package:facialtrackapp/core/models/complaint_models.dart';
 import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/models/student_settings_model.dart';
 import 'package:facialtrackapp/core/models/student_timetable_model.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
@@ -1814,6 +1815,25 @@ extension ReportsApiMethods on ApiManager {
 }
 
 extension StudentReportsApiMethods on ApiManager {
+  /// Global minimum attendance % (same as admin-configured threshold).
+  Future<StudentAttendanceCriteriaSettings> getStudentAttendanceCriteria() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(Endpoints.studentSettingsAttendanceCriteria),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      return StudentAttendanceCriteriaSettings.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<StudentMonthPickerBounds> getStudentHistoryMonthBounds() async {
     try {
       final response = await http
@@ -1836,12 +1856,14 @@ extension StudentReportsApiMethods on ApiManager {
     required int year,
     required int month,
     String? courseId,
+    String? date,
   }) async {
     try {
       final uri = Uri.parse(Endpoints.studentReportsHistory(
         year: year,
         month: month,
         courseId: courseId,
+        date: date,
       ));
       final response = await http
           .get(uri, headers: await _authHeaders())

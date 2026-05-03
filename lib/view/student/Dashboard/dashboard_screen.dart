@@ -1,6 +1,10 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/controller/providers/auth_provider.dart';
 import 'package:facialtrackapp/controller/providers/student_provider.dart';
+import 'package:facialtrackapp/core/models/student_report_models.dart';
+import 'package:facialtrackapp/core/models/student_settings_model.dart';
+import 'package:facialtrackapp/core/models/student_timetable_model.dart';
 import 'package:facialtrackapp/utils/widgets/dashboard-widgets.dart';
 import 'package:facialtrackapp/view/Role%20Selection/role_selcetion_screen.dart';
 import 'package:facialtrackapp/view/student/Profile/student-profile-screen.dart';
@@ -18,6 +22,237 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  bool _dashLoading = true;
+  StudentAttendanceCriteriaSettings? _criteria;
+  StudentSubjectsResponse? _subjects;
+  StudentAttendanceHistoryResponse? _todayHistory;
+  StudentTimetableResponse? _timetable;
+
+  static const List<Color> _kSubjectColors = [
+    Color(0xFF6366F1),
+    Color(0xFF8B5CF6),
+    Color(0xFF3B82F6),
+    Color(0xFF10B981),
+    Color(0xFFEF4444),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _loadDashboard(showFullScreenLoader: true));
+  }
+
+  Future<void> _loadDashboard({bool showFullScreenLoader = false}) async {
+    if (!mounted) return;
+    if (showFullScreenLoader) {
+      setState(() => _dashLoading = true);
+    }
+    final now = DateTime.now();
+    final dateKey =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    StudentAttendanceCriteriaSettings? crit;
+    StudentSubjectsResponse? subj;
+    StudentAttendanceHistoryResponse? day;
+    StudentTimetableResponse? tt;
+
+    try {
+      crit = await ApiManager.instance.getStudentAttendanceCriteria();
+    } catch (_) {}
+
+    try {
+      subj = await ApiManager.instance.getStudentSubjectsReport();
+    } catch (_) {}
+
+    try {
+      day = await ApiManager.instance.getStudentAttendanceHistory(
+        year: now.year,
+        month: now.month,
+        date: dateKey,
+      );
+    } catch (_) {}
+
+    try {
+      tt = await ApiManager.instance.getStudentSchedule();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      _criteria = crit;
+      _subjects = subj;
+      _todayHistory = day;
+      _timetable = tt;
+      _dashLoading = false;
+    });
+  }
+
+  String _fmtClock(DateTime? utc) {
+    if (utc == null) return '—';
+    return DateFormat('hh:mm a').format(utc.toLocal());
+  }
+
+  String _courseCodeAbbrev(String? code, String name) {
+    final c = (code ?? '').trim();
+    if (c.length >= 2) return c.substring(0, 2).toUpperCase();
+    final n = name.trim();
+    if (n.length >= 2) return n.substring(0, 2).toUpperCase();
+    return '••';
+  }
+
+  Color _subjectColor(int index) =>
+      _kSubjectColors[index % _kSubjectColors.length];
+
+  static const List<String> _weekdayAbbrev = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
+
+  bool _timetableEntryHasClass(TimetableEntry e) {
+    if (e.isUnassigned) return false;
+    final t = e.courseTitle?.trim() ?? '';
+    final c = e.courseCode?.trim() ?? '';
+    return t.isNotEmpty || c.isNotEmpty;
+  }
+
+  /// Next calendar day after [fromLocal]'s date that has a class on the weekly timetable.
+  DateTime? _nextTimetableTeachingDay(DateTime fromLocal) {
+    final tt = _timetable;
+    if (tt == null || tt.entries.isEmpty) return null;
+    final daysWithClass = <String>{};
+    for (final e in tt.entries) {
+      if (_timetableEntryHasClass(e) && e.day.isNotEmpty) {
+        daysWithClass.add(e.day);
+      }
+    }
+    if (daysWithClass.isEmpty) return null;
+    final start = DateTime(fromLocal.year, fromLocal.month, fromLocal.day);
+    for (var i = 1; i <= 56; i++) {
+      final d = start.add(Duration(days: i));
+      final key = _weekdayAbbrev[d.weekday - 1];
+      if (daysWithClass.contains(key)) return d;
+    }
+    return null;
+  }
+
+  String _weekendNextClassSubtext(DateTime nowLocal) {
+    final next = _nextTimetableTeachingDay(nowLocal);
+    if (next != null) {
+      final label = DateFormat('EEE, MMM d').format(next);
+      return 'Attendance not required. Next class $label.';
+    }
+    if (_timetable == null) {
+      return 'Attendance not required. Timetable not available yet — open My Timetable when it is published.';
+    }
+    return 'Attendance not required. No class days found on your timetable for the next few weeks.';
+  }
+
+  int _overallPercent(List<StudentCourseSummary> courses) {
+    var tot = 0;
+    var att = 0;
+    for (final c in courses) {
+      tot += c.totalSessions;
+      att += c.sessionsAttended;
+    }
+    if (tot <= 0) return 0;
+    return ((att / tot) * 100).round().clamp(0, 100);
+  }
+
+  /// Next upcoming session if any; otherwise the last session of the day.
+  StudentAttendanceSessionRecord? _focusSessionRecord() {
+    final raw = _todayHistory?.records ?? [];
+    if (raw.isEmpty) return null;
+    final records = List<StudentAttendanceSessionRecord>.from(raw);
+    records.sort((a, b) {
+      final ta = a.sessionStartTimeUtc ??
+          a.sessionDateUtc ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final tb = b.sessionStartTimeUtc ??
+          b.sessionDateUtc ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return ta.compareTo(tb);
+    });
+    final now = DateTime.now().toUtc();
+    for (final r in records) {
+      final s = r.sessionStartTimeUtc ?? r.sessionDateUtc;
+      if (s != null && s.isAfter(now)) return r;
+    }
+    return records.last;
+  }
+
+  String _nextClassStart(
+    StudentAttendanceSessionRecord focus,
+    List<StudentAttendanceSessionRecord> sorted,
+  ) {
+    final idx = sorted.indexWhere((r) => r.sessionId == focus.sessionId);
+    if (idx >= 0 && idx + 1 < sorted.length) {
+      final n = sorted[idx + 1];
+      return _fmtClock(n.sessionStartTimeUtc ?? n.sessionDateUtc);
+    }
+    return '—';
+  }
+
+  List<SessionItem> _sessionItemsFromApi() {
+    final raw = _todayHistory?.records ?? [];
+    if (raw.isEmpty) return [];
+    final sorted = List<StudentAttendanceSessionRecord>.from(raw);
+    sorted.sort((a, b) {
+      final ta = a.sessionStartTimeUtc ??
+          a.sessionDateUtc ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final tb = b.sessionStartTimeUtc ??
+          b.sessionDateUtc ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return ta.compareTo(tb);
+    });
+    final now = DateTime.now().toUtc();
+    return sorted.asMap().entries.map((e) {
+      final i = e.key;
+      final r = e.value;
+      final start = r.sessionStartTimeUtc ?? r.sessionDateUtc;
+      final SessionStatus st;
+      if (start != null && start.isAfter(now)) {
+        st = SessionStatus.upcoming;
+      } else {
+        st = r.isPresent ? SessionStatus.present : SessionStatus.absent;
+      }
+      return SessionItem(
+        subject: r.courseName ?? r.courseCode ?? 'Session',
+        code: _courseCodeAbbrev(r.courseCode, r.courseName ?? ''),
+        time: _fmtClock(start),
+        status: st,
+        color: _subjectColor(i),
+      );
+    }).toList();
+  }
+
+  List<AlertItem> _atRiskAlerts() {
+    final threshold = _criteria?.attendanceThresholdPercent ?? 75;
+    final courses = _subjects?.courses ?? [];
+    if (courses.isEmpty) return [];
+    final below =
+        courses.where((c) => c.attendancePercentage < threshold).toList();
+    if (below.isEmpty) return [];
+    below.sort(
+      (a, b) => a.attendancePercentage.compareTo(b.attendancePercentage),
+    );
+    return below
+        .map(
+          (c) => AlertItem(
+            title:
+                '${c.courseName} at ${c.attendancePercentage.toStringAsFixed(0)}% — below $threshold% minimum.',
+            subtitle: 'Attendance notice',
+            type: AlertType.danger,
+          ),
+        )
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().currentUser;
@@ -26,54 +261,98 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isWeekend =
         now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
 
+    if (_dashLoading) {
+      return SafeArea(
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8F9FA),
+          body: const Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    final sessionsToday = _sessionItemsFromApi();
+    final alerts = _atRiskAlerts();
+    final focus = _focusSessionRecord();
+    final sortedToday = () {
+      final raw = _todayHistory?.records ?? [];
+      if (raw.isEmpty) return <StudentAttendanceSessionRecord>[];
+      final list = List<StudentAttendanceSessionRecord>.from(raw);
+      list.sort((a, b) {
+        final ta = a.sessionStartTimeUtc ??
+            a.sessionDateUtc ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final tb = b.sessionStartTimeUtc ??
+            b.sessionDateUtc ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        return ta.compareTo(tb);
+      });
+      return list;
+    }();
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F9FA),
-        body: SingleChildScrollView(
-          child: Column(
+        body: RefreshIndicator(
+          onRefresh: _loadDashboard,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(user?.fullName ?? 'Student', isWeekend),
-              // _buildQuickActions(),
-              // const SizedBox(height: 8),
-
-              // SEPARATE CARDS - Weekday/Weekend conditional
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: isWeekend
-                    ? _buildWeekendCard(date: dateStr)
+                    ? _buildWeekendCard(
+                        date: dateStr,
+                        nextClassSubtext: _weekendNextClassSubtext(now),
+                      )
                     : _buildCurrentClassCard(
                         date: dateStr,
-                        subject: "Mathematics",
-                        teacher: "Prof. Ayesha",
-                        room: "Room 201, B Block",
-                        sessionStart: "10:00 AM",
-                        presentAt: "10:05 AM",
-                        nextClass: "11:00 AM",
-                        isPresent: true,
+                        subject: focus == null
+                            ? 'No sessions recorded'
+                            : (focus.courseName ??
+                                focus.courseCode ??
+                                'Session'),
+                        teacher: focus?.teacherName ?? '—',
+                        room: '—',
+                        sessionStart: _fmtClock(
+                          focus?.sessionStartTimeUtc ??
+                              focus?.sessionDateUtc,
+                        ),
+                        presentAt: (focus != null && focus.isPresent)
+                            ? _fmtClock(focus.entryTimeUtc)
+                            : '—',
+                        nextClass: focus == null
+                            ? '—'
+                            : _nextClassStart(focus, sortedToday),
+                        isPresent: focus?.isPresent ?? false,
                       ),
               ),
               const SizedBox(height: 16),
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildMonthlyStatsCard(),
+                child: _buildMonthlyStatsCard(now),
               ),
               const SizedBox(height: 16),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildTodaySessionsCard(sessions: _getTodaySessions()),
-              ),
-              const SizedBox(height: 16),
+              if (!isWeekend) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildTodaySessionsCard(sessions: sessionsToday),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildAlertsCard(alerts: _getAlerts()),
+                child: _buildAlertsCard(alerts: alerts),
               ),
               const SizedBox(height: 30),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -461,7 +740,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildWeekendCard({required String date}) {
+  Widget _buildWeekendCard({
+    required String date,
+    required String nextClassSubtext,
+  }) {
     return Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(16),
@@ -515,7 +797,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1F2937))),
                 const SizedBox(height: 8),
-                Text('Attendance not required. Next class Mon, Dec 15',
+                Text(
+                    nextClassSubtext,
+                    textAlign: TextAlign.center,
                     style:
                         TextStyle(fontSize: 13, color: Colors.grey.shade600)),
               ],
@@ -527,45 +811,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMonthlyStatsCard() {
-    final subjects = [
-      SubjectStat(
-          code: 'CS',
-          name: 'Computer Science',
-          percentage: 92,
-          present: 22,
-          absent: 2,
-          color: const Color(0xFF6366F1)),
-      SubjectStat(
-          code: 'MA',
-          name: 'Mathematics',
-          percentage: 89,
-          present: 18,
-          absent: 2,
-          color: const Color(0xFF8B5CF6)),
-      SubjectStat(
-          code: 'CH',
-          name: 'Chemistry',
-          percentage: 78,
-          present: 14,
-          absent: 4,
-          color: const Color(0xFF3B82F6)),
-      SubjectStat(
-          code: 'UR',
-          name: 'Urdu',
-          percentage: 85,
-          present: 17,
-          absent: 3,
-          color: const Color(0xFF10B981)),
-      SubjectStat(
-          code: 'PH',
-          name: 'Physics',
-          percentage: 65,
-          present: 9,
-          absent: 7,
-          color: const Color(0xFFEF4444),
-          isAtRisk: true),
-    ];
+  Widget _buildMonthlyStatsCard(DateTime now) {
+    final monthTitle =
+        'THIS MONTH - ${DateFormat('MMMM yyyy').format(now).toUpperCase()}';
+    final courses = _subjects?.courses ?? [];
+    if (courses.isEmpty) {
+      return Container(
+        decoration: _cardDecoration(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(monthTitle,
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF9CA3AF),
+                    letterSpacing: 0.5)),
+            const SizedBox(height: 12),
+            Text(
+              'Subject attendance will appear when available.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final overall = _overallPercent(courses);
+    final threshold = _criteria?.attendanceThresholdPercent ?? 75;
+    final subjects = courses.asMap().entries.map((e) {
+      final i = e.key;
+      final c = e.value;
+      final pct = c.attendancePercentage.round().clamp(0, 100);
+      return SubjectStat(
+        code: _courseCodeAbbrev(c.courseCode, c.courseName),
+        name: c.courseName,
+        percentage: pct,
+        present: c.sessionsAttended,
+        absent: c.sessionsAbsent,
+        color: _subjectColor(i),
+        isAtRisk: c.attendancePercentage < threshold,
+      );
+    }).toList();
 
     return Container(
       decoration: _cardDecoration(),
@@ -573,8 +861,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('THIS MONTH - DECEMBER',
-              style: TextStyle(
+          Text(monthTitle,
+              style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF9CA3AF),
@@ -583,14 +871,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('82%',
-                  style: TextStyle(
+              Text('$overall%',
+                  style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1F2937))),
               const SizedBox(width: 8),
-              const Icon(Icons.arrow_upward,
-                  color: Color(0xFF10B981), size: 20),
               const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -612,10 +898,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF4F46E5))),
                   ),
-                  const Text('Overall: 5 subjects',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                  const Text('December 2025',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+                  Text('Overall: ${courses.length} subjects',
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF6B7280))),
+                  Text(DateFormat('MMMM yyyy').format(now),
+                      style: const TextStyle(
+                          fontSize: 10, color: Color(0xFF9CA3AF))),
                 ],
               ),
             ],
@@ -697,7 +985,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: Color(0xFF9CA3AF),
                   letterSpacing: 0.5)),
           const SizedBox(height: 12),
-          ...alerts.map((alert) => _compactAlertItem(alert)),
+          if (alerts.isEmpty)
+            Text(
+              'No attendance warnings.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            )
+          else
+            ...alerts.map((alert) => _compactAlertItem(alert)),
         ],
       ),
     );
@@ -867,52 +1161,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
-  }
-
-  List<SessionItem> _getTodaySessions() {
-    return [
-      SessionItem(
-          subject: "Physics",
-          code: "PH",
-          time: "09:00 - 09:45 AM",
-          status: SessionStatus.present,
-          color: const Color(0xFF10B981)),
-      SessionItem(
-          subject: "Mathematics",
-          code: "MA",
-          time: "10:00 - 10:45 AM",
-          status: SessionStatus.present,
-          color: const Color(0xFF3B82F6)),
-      SessionItem(
-          subject: "Science",
-          code: "SC",
-          time: "11:00 - 11:45 AM",
-          status: SessionStatus.upcoming,
-          color: const Color(0xFF8B5CF6)),
-      SessionItem(
-          subject: "Lunch Break",
-          code: "LB",
-          time: "12:00 - 12:45 PM",
-          status: SessionStatus.breakTime,
-          color: const Color(0xFF6B7280)),
-    ];
-  }
-
-  List<AlertItem> _getAlerts() {
-    return [
-      AlertItem(
-          title: "Physics at 65% - shortage risk. Need 75% minimum.",
-          subtitle: "Today",
-          type: AlertType.danger),
-      AlertItem(
-          title: "Chemistry rescheduled to 3:00 PM tomorrow",
-          subtitle: "Yesterday",
-          type: AlertType.warning),
-      AlertItem(
-          title: "Semester report ready - download from Profile",
-          subtitle: "2 days ago",
-          type: AlertType.success),
-    ];
   }
 
   void _showLogoutDialog(BuildContext context) {

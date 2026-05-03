@@ -54,10 +54,8 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
         final course = provider.selectedCourse;
         final roster = provider.rosterStudents;
         final records = provider.attendanceRecords;
-        final presentIds = provider.presentStudentIds;
-        final onLeaveIds = provider.onLeaveStudentIds;
 
-        // Combine roster + attendance into a merged list.
+        // Combine roster + attendance; if roster empty (cold open), use records.
         final mergedStudents = _buildMergedList(roster, records);
 
         final displayDate = session?.startDateTime != null
@@ -71,11 +69,13 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
                 session.startDateTime, session.endDateTime)
             : '';
 
-        final totalCount = roster.length;
-        final presentCount = presentIds.length;
-        final onLeaveCount = onLeaveIds.length;
+        final totalCount = mergedStudents.length;
+        final presentCount =
+            mergedStudents.where((r) => r.isPresent).length;
+        final onLeaveCount =
+            mergedStudents.where((r) => r.isOnLeave).length;
         final absentUnexcused =
-            (totalCount - presentCount - onLeaveCount).clamp(0, totalCount);
+            mergedStudents.where((r) => !r.isPresent && !r.isOnLeave).length;
 
         final courseLabel = course != null
             ? '${course.name} — ${course.semester != null ? "Semester ${course.semester!.semesterNumber}" : ""}'
@@ -211,24 +211,45 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
   }
 
   /// Merge roster (full list) with attendance records into display rows.
+  /// When [roster] is empty (e.g. logs opened without prior [loadRoster]),
+  /// builds one row per attendance record so the list still renders.
   List<_StudentRow> _buildMergedList(
     List<RosterStudentModel> roster,
     List<AttendanceRecordModel> records,
   ) {
     final recordMap = {for (final r in records) r.studentId: r};
-    return roster.map((s) {
-      final rec = recordMap[s.id];
-      final isPresent = rec?.isPresent == true;
-      final isOnLeave = rec?.onLeave == true;
+    if (roster.isNotEmpty) {
+      return roster.map((s) {
+        final rec = recordMap[s.id];
+        final isPresent = rec?.isPresent == true;
+        final isOnLeave = rec?.onLeave == true;
+        return _StudentRow(
+          studentId: s.id,
+          name: s.fullName,
+          rollNumber: s.rollNumber,
+          isPresent: isPresent,
+          isOnLeave: isOnLeave,
+          leaveReason: rec?.leaveReason,
+          markedAt: rec?.markedAt,
+          method: rec?.method,
+        );
+      }).toList();
+    }
+    final unique = <String, AttendanceRecordModel>{};
+    for (final r in records) {
+      unique[r.studentId] = r;
+    }
+    return unique.values.map((r) {
+      final name = (r.studentName ?? '').trim();
       return _StudentRow(
-        studentId: s.id,
-        name: s.fullName,
-        rollNumber: s.rollNumber,
-        isPresent: isPresent,
-        isOnLeave: isOnLeave,
-        leaveReason: rec?.leaveReason,
-        markedAt: rec?.markedAt,
-        method: rec?.method,
+        studentId: r.studentId,
+        name: name.isEmpty ? 'Student' : name,
+        rollNumber: r.studentRollNumber,
+        isPresent: r.isPresent,
+        isOnLeave: r.onLeave,
+        leaveReason: r.leaveReason,
+        markedAt: r.markedAt,
+        method: r.method,
       );
     }).toList();
   }
@@ -239,118 +260,205 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
       isPresent: row.isPresent,
       onLeave: row.isOnLeave,
     );
-    final avatarColor = sessionAttendanceStatusColor(vis);
+    final statusColor = sessionAttendanceStatusColor(vis);
+    final canMarkLeave = !row.isPresent && !row.isOnLeave;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: avatarColor,
-              child: Text(
-                _initials(row.name),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    row.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (row.rollNumber != null)
-                    Text(
-                      row.rollNumber!,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.grey),
-                    ),
-                  if (row.isOnLeave &&
-                      row.leaveReason != null &&
-                      row.leaveReason!.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Leave: ${row.leaveReason!.trim()}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.indigo.shade800,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  if (row.markedAt != null)
-                    Text(
-                      _formatMarkedAt(row.markedAt!),
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.grey),
-                    ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _buildStatusBadge(vis),
-                if (!row.isPresent && !row.isOnLeave) ...[
-                  const SizedBox(height: 6),
-                  TextButton(
-                    onPressed: isPending
-                        ? null
-                        : () => _showMarkLeaveDialog(context, provider, row),
-                    child: const Text('Mark on leave'),
-                  ),
-                ],
-                const SizedBox(height: 4),
-                isPending
-                    ? const SizedBox(
-                        height: 28,
-                        width: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : Transform.scale(
-                        scale: 0.8,
-                        child: Switch(
-                          value: row.isPresent,
-                          onChanged: (val) async {
-                            if (val) {
-                              await provider.markPresent(row.studentId);
-                            } else {
-                              await provider.markAbsent(row.studentId);
-                            }
-                          },
-                          activeTrackColor: const Color(0xFF4CAF50),
-                          inactiveTrackColor: const Color(0xFFFF7043),
-                          activeColor: Colors.white,
-                          inactiveThumbColor: Colors.white,
-                        ),
-                      ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 5, color: statusColor),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: statusColor.withOpacity(0.18),
+                            foregroundColor: statusColor,
+                            child: Text(
+                              _initials(row.name),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  row.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                if (row.rollNumber != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Roll ${row.rollNumber}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          _buildStatusBadge(vis),
+                        ],
+                      ),
+                      if (row.isOnLeave &&
+                          row.leaveReason != null &&
+                          row.leaveReason!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            row.leaveReason!.trim(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.indigo.shade900,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (row.markedAt != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Marked ${_formatMarkedAt(row.markedAt!)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                      const Divider(height: 22),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Present in class',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                                Text(
+                                  row.isPresent
+                                      ? 'Turn off to remove presence'
+                                      : 'Turn on to mark present',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isPending)
+                            const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: SizedBox(
+                                height: 28,
+                                width: 28,
+                                child: CircularProgressIndicator(strokeWidth: 2.5),
+                              ),
+                            )
+                          else
+                            Transform.scale(
+                              scale: 0.88,
+                              alignment: Alignment.centerRight,
+                              child: Switch(
+                                value: row.isPresent,
+                                onChanged: (val) async {
+                                  if (val) {
+                                    await provider.markPresent(row.studentId);
+                                  } else {
+                                    await provider.markAbsent(row.studentId);
+                                  }
+                                },
+                                activeTrackColor: const Color(0xFF4CAF50),
+                                inactiveTrackColor: const Color(0xFFFF7043),
+                                activeColor: Colors.white,
+                                inactiveThumbColor: Colors.white,
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (canMarkLeave) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: isPending
+                                ? null
+                                : () => _showMarkLeaveDialog(
+                                    context, provider, row),
+                            icon: Icon(
+                              Icons.event_busy_outlined,
+                              size: 18,
+                              color: ColorPallet.primaryBlue,
+                            ),
+                            label: const Text('Mark on leave'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: ColorPallet.primaryBlue,
+                              side: BorderSide(
+                                color:
+                                    ColorPallet.primaryBlue.withOpacity(0.45),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       ),
     );
   }
@@ -432,22 +540,22 @@ class _AttendanceLogsScreenState extends State<AttendanceLogsScreen> {
             : Icons.cancel;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: mainColor, width: 1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: mainColor.withOpacity(0.35), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: mainColor),
-          const SizedBox(width: 4),
+          Icon(icon, size: 14, color: mainColor),
+          const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
               color: mainColor,
             ),
           ),

@@ -1,8 +1,6 @@
 import 'package:facialtrackapp/controller/providers/session_provider.dart';
 import 'package:facialtrackapp/core/models/semester_model.dart';
-import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/teacher_course_model.dart';
-import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
 import 'package:facialtrackapp/view/teacher/Start%20Screen/live_session_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +22,7 @@ InputDecoration _emptySessionFieldDecoration(Color color) => InputDecoration(
       ),
     );
 
-/// Shown directly above Start Session actions (Manual tab + Schedule slots).
+/// Shown directly above Start Session actions.
 Widget _sessionStartNote() {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,18 +55,12 @@ class StartSessionScreen extends StatefulWidget {
   State<StartSessionScreen> createState() => _StartSessionScreenState();
 }
 
-class _StartSessionScreenState extends State<StartSessionScreen>
-    with SingleTickerProviderStateMixin {
+class _StartSessionScreenState extends State<StartSessionScreen> {
   static const _primaryColor = Color.fromARGB(255, 35, 4, 170);
-
-  late TabController _tabController;
-
-  static const _sections = ['A', 'B', 'C', 'D', 'E'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<SessionProvider>();
       provider.loadCourses();
@@ -77,28 +69,10 @@ class _StartSessionScreenState extends State<StartSessionScreen>
     });
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   Future<void> _onStartManual(SessionProvider provider) async {
     final success = await provider.createSession();
-    if (!mounted) return;
-    if (success && provider.currentSession != null) {
-      _navigateToLive(provider.currentSession!.id);
-    } else if (provider.errorMessage != null) {
-      _showError(provider.errorMessage!);
-      provider.clearError();
-    }
-  }
-
-  Future<void> _onStartFromSlot(
-      SessionProvider provider, TeacherScheduleSlotModel slot) async {
-    final success = await provider.createSessionFromSlot(slot);
     if (!mounted) return;
     if (success && provider.currentSession != null) {
       _navigateToLive(provider.currentSession!.id);
@@ -165,42 +139,13 @@ class _StartSessionScreenState extends State<StartSessionScreen>
                     ),
                   ],
                 ),
-                bottom: TabBar(
-                  controller: _tabController,
-                  indicatorColor: Colors.white,
-                  indicatorWeight: 3,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white60,
-                  labelStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                  tabs: const [
-                    Tab(icon: Icon(Icons.tune), text: 'Manual'),
-                    Tab(
-                        icon: Icon(Icons.calendar_today),
-                        text: "Today's Schedule"),
-                  ],
-                ),
               ),
               body: provider.isLoading && provider.courses.isEmpty
                   ? const Center(child: CircularProgressIndicator())
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _ManualTab(
-                          provider: provider,
-                          primaryColor: _primaryColor,
-                          onStart: () => _onStartManual(provider),
-                        ),
-                        _ScheduleTab(
-                          provider: provider,
-                          primaryColor: _primaryColor,
-                          sections: _sections,
-                          onStart: (slot) =>
-                              _onStartFromSlot(provider, slot),
-                        ),
-                      ],
+                  : _ManualTab(
+                      provider: provider,
+                      primaryColor: _primaryColor,
+                      onStart: () => _onStartManual(provider),
                     ),
             ),
           ),
@@ -210,7 +155,7 @@ class _StartSessionScreenState extends State<StartSessionScreen>
   }
 }
 
-// ── Tab 1: Manual ─────────────────────────────────────────────────────────────
+// ── Start session form (semester + subject + note + button) ───────────────────
 
 class _ManualTab extends StatelessWidget {
   final SessionProvider provider;
@@ -238,9 +183,9 @@ class _ManualTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _SectionHeader(
-            icon: Icons.tune,
-            title: 'Manual Selection',
-            subtitle: 'Choose semester and subject to begin',
+            icon: Icons.play_circle_outline,
+            title: 'Start attendance',
+            subtitle: 'Select semester, then subject',
           ),
           const SizedBox(height: 32),
 
@@ -437,423 +382,11 @@ class _ManualTab extends StatelessWidget {
       );
 }
 
-// ── Tab 2: Today's Schedule ───────────────────────────────────────────────────
-
-class _ScheduleTab extends StatelessWidget {
-  final SessionProvider provider;
-  final Color primaryColor;
-  final List<String> sections;
-  final void Function(TeacherScheduleSlotModel slot) onStart;
-
-  const _ScheduleTab({
-    required this.provider,
-    required this.primaryColor,
-    required this.sections,
-    required this.onStart,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final semesters = provider.distinctSemesters;
-    final canLoad = provider.selectedSemesterId != null &&
-        provider.selectedSection != null;
-
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _SectionHeader(
-            icon: Icons.calendar_today,
-            title: "Today's Schedule",
-            subtitle: 'Pick semester + section to load your slots',
-          ),
-          const SizedBox(height: 24),
-
-          // ── Semester picker ──────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'Semester',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: primaryColor),
-            ),
-          ),
-          _DropdownCard(
-            child: semesters.isEmpty
-                ? InputDecorator(
-                    decoration: _emptySessionFieldDecoration(primaryColor),
-                    child: _EmptyDropdownNotice(
-                      accentColor: primaryColor,
-                      icon: Icons.info_outline_rounded,
-                      message: provider.errorMessage != null
-                          ? 'Could not load your courses. Try again in a moment or contact support if this continues.'
-                          : 'You have no course assignments yet. Ask an administrator to assign subjects before you can load today\'s schedule slots.',
-                    ),
-                  )
-                : DropdownButtonFormField<String>(
-                    value: provider.selectedSemesterId,
-                    hint: const Text('Choose semester…'),
-                    isExpanded: true,
-                    icon: const SizedBox.shrink(),
-                    selectedItemBuilder: (_) => semesters
-                        .map((s) => Text(
-                              'Semester ${s.semesterNumber} — ${s.termLabel}',
-                              overflow: TextOverflow.ellipsis,
-                            ))
-                        .toList(),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.groups, color: primaryColor),
-                      suffixIcon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.grey),
-                      filled: true,
-                      fillColor: primaryColor.withOpacity(0.07),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            color: primaryColor.withOpacity(0.2), width: 1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: primaryColor, width: 2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    items: semesters
-                        .map((s) => DropdownMenuItem<String>(
-                              value: s.id,
-                              child: _DropdownItem(
-                                label:
-                                    'Semester ${s.semesterNumber} — ${s.termLabel} ${s.academicSession}',
-                                selected:
-                                    provider.selectedSemesterId == s.id,
-                                color: primaryColor,
-                              ),
-                            ))
-                        .toList(),
-                    onChanged: provider.setSelectedSemester,
-                  ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── Section picker ───────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'Section',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: primaryColor),
-            ),
-          ),
-          _DropdownCard(
-            child: DropdownButtonFormField<String>(
-              value: provider.selectedSection,
-              hint: const Text('Choose section…'),
-              isExpanded: true,
-              icon: const SizedBox.shrink(),
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.people_alt, color: primaryColor),
-                suffixIcon: const Icon(Icons.arrow_drop_down,
-                    color: Colors.grey),
-                filled: true,
-                fillColor: primaryColor.withOpacity(0.07),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: primaryColor.withOpacity(0.2), width: 1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: primaryColor, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              items: sections
-                  .map((s) => DropdownMenuItem<String>(
-                        value: s,
-                        child: _DropdownItem(
-                          label: 'Section $s',
-                          selected: provider.selectedSection == s,
-                          color: primaryColor,
-                        ),
-                      ))
-                  .toList(),
-              onChanged: semesters.isEmpty ? null : provider.setSelectedSection,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          _sessionStartNote(),
-          const SizedBox(height: 12),
-
-          // ── Load slots button ────────────────────────────────────
-          ElevatedButton.icon(
-            onPressed: canLoad && !provider.scheduleLoading
-                ? () => provider.loadSchedule()
-                : null,
-            icon: provider.scheduleLoading
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : const Icon(Icons.search, color: Colors.white),
-            label: Text(
-              provider.scheduleLoading
-                  ? 'Loading…'
-                  : "Load Today's Slots",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              disabledBackgroundColor: primaryColor.withOpacity(0.4),
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ── Slot cards ───────────────────────────────────────────
-          if (!provider.scheduleLoading) ...[
-            if (provider.scheduleSlots.isEmpty &&
-                provider.selectedSemesterId != null &&
-                provider.selectedSection != null)
-              _EmptySlots(primaryColor: primaryColor)
-            else
-              ...provider.scheduleSlots.map(
-                (slot) => _SlotCard(
-                  slot: slot,
-                  primaryColor: primaryColor,
-                  isLoading: provider.isLoading,
-                  activeSession: provider.activeSessionForCourse(slot.courseId),
-                  onStart: () => onStart(slot),
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ── Slot Card ─────────────────────────────────────────────────────────────────
-
-class _SlotCard extends StatelessWidget {
-  final TeacherScheduleSlotModel slot;
-  final Color primaryColor;
-  final bool isLoading;
-  final VoidCallback onStart;
-  final SessionModel? activeSession;
-
-  const _SlotCard({
-    required this.slot,
-    required this.primaryColor,
-    required this.isLoading,
-    required this.onStart,
-    required this.activeSession,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasActive = activeSession != null;
-    final isAuto = (activeSession?.notes ?? '').toLowerCase() ==
-        'auto-created from timetable';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(Icons.access_time, color: primaryColor),
-        ),
-        title: Text(
-          slot.courseName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Text(
-              slot.periodLabel,
-              style:
-                  const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Icon(Icons.schedule,
-                    size: 13, color: primaryColor),
-                const SizedBox(width: 4),
-                Text(
-                  slot.displayTime,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    'Section ${slot.section}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.teal,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (hasActive && isAuto) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.deepOrange.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Auto (Timetable)',
-                  style: TextStyle(
-                    color: Colors.deepOrange,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        trailing: isLoading
-            ? const SizedBox(
-                height: 22,
-                width: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
-              )
-            : ElevatedButton(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        if (hasActive) {
-                          context
-                              .read<SessionProvider>()
-                              .resumeSession(activeSession!);
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  LiveSessionScreen(sessionId: activeSession!.id),
-                            ),
-                          );
-                          return;
-                        }
-                        onStart();
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      hasActive ? Colors.orange.shade700 : const Color(0xFF34A853),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  minimumSize: const Size(60, 36),
-                ),
-                child: Text(
-                  hasActive ? 'View' : 'Start',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13),
-                ),
-              ),
-        isThreeLine: hasActive && isAuto,
-        subtitleTextStyle: const TextStyle(color: Colors.grey, fontSize: 12),
-        titleTextStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-          color: Colors.black,
-        ),
-      ),
-    );
-  }
-}
-
-// ── Empty state ───────────────────────────────────────────────────────────────
-
-class _EmptySlots extends StatelessWidget {
-  final Color primaryColor;
-  const _EmptySlots({required this.primaryColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.event_busy, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          const Text(
-            'No classes scheduled for today',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Try the Manual tab to start a session anyway',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// "Today's Schedule" tab — removed from UI (was Tab 2: _ScheduleTab, _SlotCard,
+// _EmptySlots + createSessionFromSlot). Restore from git if timetable-based
+// start is needed again; re-add imports: session_model, teacher_schedule_slot_model.
+// ═══════════════════════════════════════════════════════════════════════════
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 

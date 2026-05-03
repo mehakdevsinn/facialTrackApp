@@ -538,6 +538,11 @@ class SessionProvider extends ChangeNotifier {
         _currentSession = match;
         _selectedCourseId = match.courseId;
       }
+      // Logs screen needs roster rows; opening cold (e.g. web refresh) only
+      // populated attendance before — fetch course roster when we know course.
+      if (_selectedCourseId != null) {
+        await loadRoster();
+      }
       notifyListeners();
     } catch (e) {
       _setError('Failed to load attendance logs.');

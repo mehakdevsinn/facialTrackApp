@@ -12,6 +12,9 @@ class AttendanceRecordModel {
   /// Backend may return the student name directly (convenient for display).
   final String? studentName;
 
+  /// Optional roll number on attendance payloads (e.g. GET list / leave).
+  final String? studentRollNumber;
+
   /// ISO 8601 datetime string when attendance was recorded.
   final String? markedAt;
 
@@ -32,6 +35,7 @@ class AttendanceRecordModel {
     required this.sessionId,
     required this.studentId,
     this.studentName,
+    this.studentRollNumber,
     this.markedAt,
     this.method,
     this.isPresent = true,
@@ -46,6 +50,8 @@ class AttendanceRecordModel {
       sessionId: json['session_id']?.toString() ?? '',
       studentId: json['student_id']?.toString() ?? '',
       studentName: json['student_name']?.toString(),
+      studentRollNumber: json['student_roll_number']?.toString() ??
+          json['roll_number']?.toString(),
       markedAt: json['marked_at']?.toString(),
       method: json['method']?.toString(),
       isPresent: json['is_present'] == true,

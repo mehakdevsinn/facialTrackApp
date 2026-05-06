@@ -21,6 +21,52 @@ String formatTeacherSessionDatePkt(DateTime? utc,
 String formatTeacherSessionDateIsoPkt(DateTime? utc) =>
     formatTeacherSessionDatePkt(utc, pattern: 'yyyy-MM-dd');
 
+/// Calendar "today" in Pakistan (UTC+5 wall) for scheduler-aligned class dates.
+DateTime pktCalendarToday() {
+  final wall = teacherSessionUtcToPktWall(DateTime.now().toUtc());
+  return DateTime(wall.year, wall.month, wall.day);
+}
+
+bool pktIsWeekday(DateTime date) =>
+    date.weekday >= DateTime.monday && date.weekday <= DateTime.friday;
+
+/// Maps timetable slot day label (e.g. `Mon`) to [DateTime.monday]…[DateTime.sunday].
+int? pktSlotDayLabelToWeekday(String dayLabel) {
+  switch (dayLabel.trim().toLowerCase()) {
+    case 'mon':
+    case 'monday':
+      return DateTime.monday;
+    case 'tue':
+    case 'tues':
+    case 'tuesday':
+      return DateTime.tuesday;
+    case 'wed':
+    case 'weds':
+    case 'wednesday':
+      return DateTime.wednesday;
+    case 'thu':
+    case 'thur':
+    case 'thurs':
+    case 'thursday':
+      return DateTime.thursday;
+    case 'fri':
+    case 'friday':
+      return DateTime.friday;
+    case 'sat':
+    case 'saturday':
+      return DateTime.saturday;
+    case 'sun':
+    case 'sunday':
+      return DateTime.sunday;
+    default:
+      return null;
+  }
+}
+
+/// Format a pure calendar date as `YYYY-MM-DD` (for API `class_date`).
+String formatPktYyyyMmDd(DateTime localCalendarDate) =>
+    DateFormat('yyyy-MM-dd').format(localCalendarDate);
+
 String formatTeacherSessionTime12hPkt(DateTime? utc) {
   if (utc == null) return '';
   return DateFormat('h:mm a').format(teacherSessionUtcToPktWall(utc));

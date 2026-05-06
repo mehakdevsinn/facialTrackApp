@@ -1,14 +1,19 @@
 import 'package:facialtrackapp/constants/color_pallet.dart';
+import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/controller/providers/teacher_provider.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
+import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
+import 'package:facialtrackapp/view/teacher/Profile/teacher_schedule_skips_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class TeacherMyScheduleScreen extends StatefulWidget {
   const TeacherMyScheduleScreen({super.key});
 
   @override
-  State<TeacherMyScheduleScreen> createState() => _TeacherMyScheduleScreenState();
+  State<TeacherMyScheduleScreen> createState() =>
+      _TeacherMyScheduleScreenState();
 }
 
 class _TeacherMyScheduleScreenState extends State<TeacherMyScheduleScreen> {
@@ -38,6 +43,20 @@ class _TeacherMyScheduleScreenState extends State<TeacherMyScheduleScreen> {
             ),
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              tooltip: 'Skipped periods',
+              icon: const Icon(Icons.event_busy_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const TeacherScheduleSkipsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: Consumer<TeacherProvider>(
           builder: (context, teacher, _) {
@@ -45,10 +64,12 @@ class _TeacherMyScheduleScreenState extends State<TeacherMyScheduleScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (teacher.scheduleError != null && teacher.scheduleError!.isNotEmpty) {
+            if (teacher.scheduleError != null &&
+                teacher.scheduleError!.isNotEmpty) {
               return _ErrorState(
                 message: teacher.scheduleError!,
-                onRetry: () => context.read<TeacherProvider>().fetchMySchedule(),
+                onRetry: () =>
+                    context.read<TeacherProvider>().fetchMySchedule(),
               );
             }
 
@@ -63,11 +84,15 @@ class _TeacherMyScheduleScreenState extends State<TeacherMyScheduleScreen> {
               });
 
             return RefreshIndicator(
-              onRefresh: () => context.read<TeacherProvider>().fetchMySchedule(),
+              onRefresh: () =>
+                  context.read<TeacherProvider>().fetchMySchedule(),
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
-                itemBuilder: (_, index) => _ScheduleTile(slot: sorted[index]),
+                itemBuilder: (_, index) => _ScheduleTile(
+                  slot: sorted[index],
+                  onSkip: () => _showSkipPeriodSheet(context, sorted[index]),
+                ),
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemCount: sorted.length,
               ),
@@ -92,12 +117,228 @@ class _TeacherMyScheduleScreenState extends State<TeacherMyScheduleScreen> {
   }
 }
 
-class _ScheduleTile extends StatelessWidget {
+void _showSkipPeriodSheet(
+    BuildContext context, TeacherScheduleSlotModel slot) {
+  if (slot.timetableId.isEmpty || slot.periodId.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+            'This slot is missing timetable or period data. Cannot skip.'),
+      ),
+    );
+    return;
+  }
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(ctx).bottom,
+      ),
+      child: _SkipPeriodSheet(slot: slot),
+    ),
+  );
+}
+
+bool _validSkipDate(DateTime d, TeacherScheduleSlotModel slot) {
+  final targetWd = pktSlotDayLabelToWeekday(slot.day);
+  final today = pktCalendarToday();
+  if (d.isBefore(today) || !pktIsWeekday(d)) return false;
+  if (targetWd != null && d.weekday != targetWd) return false;
+  return true;
+}
+
+DateTime _defaultSkipDate(TeacherScheduleSlotModel slot) {
+  final today = pktCalendarToday();
+  if (_validSkipDate(today, slot)) return today;
+  var d = today.add(const Duration(days: 1));
+  for (var i = 0; i < 400; i++) {
+    if (_validSkipDate(d, slot)) return d;
+    d = d.add(const Duration(days: 1));
+  }
+  return today;
+}
+
+class _SkipPeriodSheet extends StatefulWidget {
   final TeacherScheduleSlotModel slot;
-  const _ScheduleTile({required this.slot});
+  const _SkipPeriodSheet({required this.slot});
+
+  @override
+  State<_SkipPeriodSheet> createState() => _SkipPeriodSheetState();
+}
+
+class _SkipPeriodSheetState extends State<_SkipPeriodSheet> {
+  late DateTime _classDate;
+  final _reasonCtrl = TextEditingController();
+  bool _submitting = false;
+
+  TeacherScheduleSlotModel get slot => widget.slot;
+
+  @override
+  void initState() {
+    super.initState();
+    _classDate = _defaultSkipDate(slot);
+  }
+
+  @override
+  void dispose() {
+    _reasonCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final today = pktCalendarToday();
+    final last = today.add(const Duration(days: 180));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _classDate,
+      firstDate: today,
+      lastDate: last,
+      selectableDayPredicate: (d) => _validSkipDate(d, slot),
+    );
+    if (picked != null && mounted) {
+      setState(() => _classDate = picked);
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    try {
+      await context.read<TeacherProvider>().createPeriodSkip(
+            timetableId: slot.timetableId,
+            classDateYmd: formatPktYyyyMmDd(_classDate),
+            periodId: slot.periodId,
+            reason: _reasonCtrl.text,
+          );
+      if (!mounted) return;
+      nav.pop();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('This period is skipped for the selected day.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on ApiConflictException {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This period is already skipped for that date.',
+          ),
+        ),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not save skip. Try again.')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Skip this class',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Stops automatic attendance for this timetable cell on one calendar day only '
+            '(Asia/Karachi). Students are not bulk-marked absent for that slot.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${slot.courseCode} · ${slot.courseName}',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          Text(
+            '${slot.day} · ${slot.periodLabel} · ${slot.displayTime}',
+            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Class date'),
+            subtitle: Text(
+              DateFormat.yMMMEd().format(_classDate),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.calendar_month),
+              onPressed: _pickDate,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _reasonCtrl,
+            maxLines: 3,
+            maxLength: 2000,
+            decoration: const InputDecoration(
+              labelText: 'Reason (optional)',
+              hintText: 'e.g. On leave, conference…',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: _submitting ? null : _submit,
+            child: _submitting
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Confirm skip'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduleTile extends StatelessWidget {
+  final TeacherScheduleSlotModel slot;
+  final VoidCallback onSkip;
+
+  const _ScheduleTile({
+    required this.slot,
+    required this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final canSkip =
+        slot.timetableId.isNotEmpty && slot.periodId.trim().isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -133,11 +374,13 @@ class _ScheduleTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '${slot.startTime} - ${slot.endTime}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+              Expanded(
+                child: Text(
+                  '${slot.startTime} - ${slot.endTime}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
@@ -156,6 +399,15 @@ class _ScheduleTile extends StatelessWidget {
           Text(
             slot.academicSession,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: canSkip ? onSkip : null,
+              icon: const Icon(Icons.event_busy_outlined, size: 18),
+              label: const Text('Skip this class'),
+            ),
           ),
         ],
       ),

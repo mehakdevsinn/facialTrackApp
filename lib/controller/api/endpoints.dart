@@ -220,6 +220,18 @@ class Endpoints {
   static String teacherScheduleAll(String teacherId) =>
       '$_teacher/$teacherId/schedule/all';
 
+  /// POST → skip one timetable period for one calendar day (scheduler).
+  static String teacherScheduleSkipPeriod(String teacherId) =>
+      '$_teacher/$teacherId/schedule/skip-period';
+
+  /// GET → list period skips (?start_date=&end_date= YYYY-MM-DD).
+  static String teacherScheduleSkips(String teacherId) =>
+      '$_teacher/$teacherId/schedule/skips';
+
+  /// DELETE → remove a skip by id.
+  static String teacherScheduleSkipById(String teacherId, String skipId) =>
+      '$_teacher/$teacherId/schedule/skips/$skipId';
+
   /// GET → profile summary stats + assigned subjects list.
   static String teacherProfileSummary(String teacherId) =>
       '$_teacher/$teacherId/profile-summary';

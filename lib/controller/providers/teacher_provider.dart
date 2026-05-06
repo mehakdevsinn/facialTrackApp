@@ -1,7 +1,9 @@
 import 'package:facialtrackapp/controller/api/api_manager.dart';
 import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
+import 'package:facialtrackapp/core/models/timetable_period_skip_model.dart';
 import 'package:facialtrackapp/core/models/user_model.dart';
+import 'package:facialtrackapp/core/utils/teacher_session_display.dart';
 import 'package:facialtrackapp/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -22,6 +24,9 @@ class TeacherProvider extends ChangeNotifier {
   List<TeacherScheduleSlotModel> _mySchedule = [];
   bool _isScheduleLoading = false;
   String? _scheduleError;
+  List<TimetablePeriodSkipResponse> _periodSkips = [];
+  bool _isSkipsLoading = false;
+  String? _skipsError;
 
   // ── Getters ────────────────────────────────────────────────────────────────
   bool get isLoading => _isLoading;
@@ -31,6 +36,9 @@ class TeacherProvider extends ChangeNotifier {
   List<TeacherScheduleSlotModel> get mySchedule => _mySchedule;
   bool get isScheduleLoading => _isScheduleLoading;
   String? get scheduleError => _scheduleError;
+  List<TimetablePeriodSkipResponse> get periodSkips => _periodSkips;
+  bool get isSkipsLoading => _isSkipsLoading;
+  String? get skipsError => _skipsError;
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   void _setLoading(bool value) {
@@ -152,6 +160,90 @@ class TeacherProvider extends ChangeNotifier {
     }
   }
 
+  /// Loads timetable period skips (default range: today PKT → +180 days).
+  Future<bool> fetchPeriodSkips({DateTime? startPkt, DateTime? endPkt}) async {
+    _isSkipsLoading = true;
+    _skipsError = null;
+    notifyListeners();
+    try {
+      final teacherId = await StorageService.getUserId();
+      if (teacherId == null) {
+        _skipsError = 'Teacher identity missing. Please login again.';
+        _isSkipsLoading = false;
+        notifyListeners();
+        return false;
+      }
+      final start = startPkt ?? pktCalendarToday();
+      final end = endPkt ?? start.add(const Duration(days: 180));
+      _periodSkips = await _api.getTeacherScheduleSkips(
+        teacherId,
+        startDate: formatPktYyyyMmDd(start),
+        endDate: formatPktYyyyMmDd(end),
+      );
+      _isSkipsLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _skipsError = e.message;
+      _isSkipsLoading = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _skipsError = 'Failed to load skipped periods.';
+      _isSkipsLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// POST skip-period. Refreshes [periodSkips] on success. Rethrows [ApiConflictException].
+  Future<void> createPeriodSkip({
+    required String timetableId,
+    required String classDateYmd,
+    required String periodId,
+    String? reason,
+  }) async {
+    final teacherId = await StorageService.getUserId();
+    if (teacherId == null) {
+      throw AuthException('Teacher identity missing. Please login again.');
+    }
+    await _api.postTeacherScheduleSkipPeriod(
+      teacherId,
+      timetableId: timetableId,
+      classDate: classDateYmd,
+      periodId: periodId,
+      reason: reason,
+    );
+    await fetchPeriodSkips();
+  }
+
+  Future<bool> deletePeriodSkip(String skipId) async {
+    try {
+      final teacherId = await StorageService.getUserId();
+      if (teacherId == null) {
+        _skipsError = 'Teacher identity missing.';
+        notifyListeners();
+        return false;
+      }
+      await _api.deleteTeacherScheduleSkip(teacherId, skipId);
+      await fetchPeriodSkips();
+      return true;
+    } on AuthException catch (e) {
+      _skipsError = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _skipsError = 'Could not remove skip.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void clearSkipsError() {
+    _skipsError = null;
+    notifyListeners();
+  }
+
   /// Resets provider state (call on logout).
   void clear() {
     _teacherProfile = null;
@@ -159,8 +251,11 @@ class TeacherProvider extends ChangeNotifier {
     _mySchedule = [];
     _errorMessage = null;
     _scheduleError = null;
+    _periodSkips = [];
+    _skipsError = null;
     _isLoading = false;
     _isScheduleLoading = false;
+    _isSkipsLoading = false;
     notifyListeners();
   }
 }

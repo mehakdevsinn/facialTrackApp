@@ -19,6 +19,7 @@ import 'package:facialtrackapp/core/models/session_model.dart';
 import 'package:facialtrackapp/core/models/roster_student_model.dart';
 import 'package:facialtrackapp/core/models/attendance_record_model.dart';
 import 'package:facialtrackapp/core/models/teacher_schedule_slot_model.dart';
+import 'package:facialtrackapp/core/models/timetable_period_skip_model.dart';
 import 'package:facialtrackapp/core/models/teacher_profile_summary_model.dart';
 import 'package:facialtrackapp/core/models/report_models.dart';
 import 'package:facialtrackapp/core/models/complaint_models.dart';
@@ -35,6 +36,15 @@ import 'package:http_parser/http_parser.dart';
 class AuthException implements Exception {
   final String message;
   AuthException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+/// Thrown when the API returns HTTP 409 (e.g. duplicate timetable period skip).
+class ApiConflictException implements Exception {
+  final String message;
+  ApiConflictException(this.message);
 
   @override
   String toString() => message;
@@ -1714,6 +1724,107 @@ extension TeacherSessionApiMethods on ApiManager {
           .map((e) =>
               TeacherScheduleSlotModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  String _detailFromResponse(http.Response response) {
+    try {
+      final body = jsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        final d = body['detail'];
+        if (d != null) return d.toString();
+      }
+    } catch (_) {}
+    return 'Request failed (${response.statusCode}).';
+  }
+
+  /// POST /teachers/{teacher_id}/schedule/skip-period
+  Future<TimetablePeriodSkipResponse> postTeacherScheduleSkipPeriod(
+    String teacherId, {
+    required String timetableId,
+    required String classDate,
+    required String periodId,
+    String? reason,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'timetable_id': timetableId,
+        'class_date': classDate,
+        'period_id': periodId.trim(),
+      };
+      if (reason != null && reason.trim().isNotEmpty) {
+        body['reason'] = reason.trim();
+      }
+      final response = await http
+          .post(
+            Uri.parse(Endpoints.teacherScheduleSkipPeriod(teacherId)),
+            headers: await _authHeaders(),
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 409) {
+        throw ApiConflictException(_detailFromResponse(response));
+      }
+      _assertSuccess(response);
+      return TimetablePeriodSkipResponse.fromJson(
+          jsonDecode(response.body) as Map<String, dynamic>);
+    } on ApiConflictException {
+      rethrow;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /teachers/{teacher_id}/schedule/skips
+  Future<List<TimetablePeriodSkipResponse>> getTeacherScheduleSkips(
+    String teacherId, {
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final params = <String, String>{};
+      if (startDate != null && startDate.isNotEmpty) {
+        params['start_date'] = startDate;
+      }
+      if (endDate != null && endDate.isNotEmpty) {
+        params['end_date'] = endDate;
+      }
+      final uri = Uri.parse(Endpoints.teacherScheduleSkips(teacherId))
+          .replace(queryParameters: params.isEmpty ? null : params);
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
+      _assertSuccess(response);
+      final List data = jsonDecode(response.body) as List;
+      return data
+          .map((e) => TimetablePeriodSkipResponse.fromJson(
+              e as Map<String, dynamic>))
+          .toList();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// DELETE /teachers/{teacher_id}/schedule/skips/{skip_id} → 204
+  Future<void> deleteTeacherScheduleSkip(
+      String teacherId, String skipId) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse(Endpoints.teacherScheduleSkipById(teacherId, skipId)),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 204) return;
+      _assertSuccess(response);
     } on AuthException {
       rethrow;
     } catch (e) {
